@@ -26,6 +26,8 @@ interface Props {
   hideMobileBar?: boolean;
   /** opis og:image za dijeljenje */
   imageAlt?: string;
+  /** preload LCP slike (srcset/sizes moraju odgovarati <Picture> na stranici) */
+  preload?: { srcset: string; sizes: string; type: string };
 }
 const {
   title,
@@ -35,6 +37,7 @@ const {
   noindex = false,
   schema = [],
   hideMobileBar = false,
+  preload,
 } = Astro.props;
 
 // kanonski URL bez završne kose crte — isto kao svi interni linkovi
@@ -74,6 +77,11 @@ const business = {
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    {
+      preload && (
+        <link rel="preload" as="image" type={preload.type} imagesrcset={preload.srcset} imagesizes={preload.sizes} fetchpriority="high" />
+      )
+    }
     <link rel="preload" as="font" type="font/woff2" href={archivoLatin} crossorigin />
     <link rel="preload" as="font" type="font/woff2" href={archivoLatinExt} crossorigin />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -129,9 +137,9 @@ const business = {
 
     {
       PROTOTYPE && (
-        <div class="pointer-events-none fixed right-3 bottom-3 z-[60] hidden rounded-[2px] border border-dashed border-redline/60 bg-grafit/90 px-2 py-0.5 font-mono text-[0.5625rem] tracking-[0.12em] text-redline uppercase lg:block">
+        <aside aria-label="Prototip" class="pointer-events-none fixed right-3 bottom-3 z-[60] hidden rounded-[2px] border border-dashed border-redline/60 bg-grafit px-2 py-0.5 font-mono text-[0.5625rem] tracking-[0.12em] text-redline uppercase lg:block">
           Prototip · brojke, recenzije i kontakti su primjeri
-        </div>
+        </aside>
       )
     }
 

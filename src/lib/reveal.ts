@@ -93,7 +93,20 @@ function initReveal() {
       start: 'top 85%',
       once: true,
       onEnter: (batch) => {
-        (batch as HTMLElement[]).forEach((el, i) => {
+        // Nakon skoka na sidro batch sadrži i sve preskočene slike: one koje nisu
+        // na ekranu otkrij odmah, a animiraj samo vidljive (prva ima crvenu liniju).
+        const visible: HTMLElement[] = [];
+        (batch as HTMLElement[]).forEach((el) => {
+          const r = el.getBoundingClientRect();
+          const off = r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth;
+          if (off) {
+            gsap.set(el, { clearProps: 'clipPath' });
+            el.setAttribute('data-revealed', '');
+          } else {
+            visible.push(el);
+          }
+        });
+        visible.forEach((el, i) => {
           imageReady(el).then(() => {
             gsap.delayedCall(i * SCAN_STAGGER, () => playScan(el, i === 0));
           });
