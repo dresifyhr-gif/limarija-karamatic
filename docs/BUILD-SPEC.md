@@ -69,7 +69,7 @@ sve ostale sekcije na svim stranicama su svijetle (papir / bijela / papir-2).
 
 | # | Komponenta | id | Pozadina |
 |---|---|---|---|
-| 1 | Hero (samo crtež, bez fotografije; završava na gotovom crtežu) | `vrh` | grafit + grid-paper |
+| 1 | Hero (preko cijele širine: 3D modeli krovova `home/hero3d/RoofModels.astro` iza teksta + scrim; bez fotografije) | `vrh` | grafit + grid-paper |
 | 2 | Services (6 kartica s fotografijom) | `usluge` | papir |
 | 3 | Projects (Radovi, rail) | `radovi` | bijela |
 | 4 | Process (Kako radimo) | `kako-radimo` | papir + grid-paper-light |

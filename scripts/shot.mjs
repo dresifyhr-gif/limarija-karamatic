@@ -5,7 +5,7 @@
  *   node scripts/shot.mjs <putanja|url> <izlaz.png> [opcije]
  *
  * Opcije:
- *   --mobile            390×844 @2x, touch, mobilni UA
+ *   --mobile            390×844 @2x, touch, mobilni UA (s --w/--h druga veličina)
  *   --w=1440 --h=900    veličina prozora (desktop default 1440×900)
  *   --full              cijela stranica (prije toga polako skrola do dna da okine reveal animacije)
  *   --selector=CSS      snimi samo taj element (npr. --selector="#usluge")
@@ -41,7 +41,7 @@ const wait = Number(opt.wait ?? 600);
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const context = await browser.newContext({
-  viewport: mobile ? { width: 390, height: 844 } : { width: Number(opt.w || 1440), height: Number(opt.h || 900) },
+  viewport: mobile ? { width: Number(opt.w || 390), height: Number(opt.h || 844) } : { width: Number(opt.w || 1440), height: Number(opt.h || 900) },
   // cijela stranica na mobitelu @1x — Chrome ne može snimiti više od 16 384 px
   deviceScaleFactor: mobile && !opt.full ? 2 : 1,
   isMobile: mobile,

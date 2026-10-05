@@ -1,29 +1,24 @@
 ---
 /**
- * Hero (#vrh) — "NACRT → LIM".
- * Lijevo: H1 (LCP tekst, nikad animiran), podnaslov, CTA blok, jamstva.
- * Desno (na mobitelu prvo): list 01 — crtež koji se savije u lim; završava na gotovom crtežu
- * (bez fotografije). Animacija: ./hero/intro.ts. HTML je uvijek u završnom stanju.
- * Od lg naviše list je visok koliko stane u prozor (cijeli list s natpisom iznad pregiba).
+ * Hero (#vrh) — tamni, preko cijele širine.
+ * Tekst (H1 = LCP, nikad skriven ni animiran; podnaslov, CTA blok, jamstva) lijevo / dolje,
+ * iza njega 3D modeli krovova (./hero3d/RoofModels.astro: desno na desktopu, gore na mobitelu)
+ * i scrim koji drži tekst čitljivim.
+ *
+ * Redoslijed u DOM-u: tekst (z-index 1) → RoofModels → scrim. Tabulator najprije dolazi do CTA,
+ * H1 je prije statične slike modela, scrim leži preko modela i ispod teksta, a kontrole
+ * modela (.rm-ctrl, z-index 3) ostaju iznad teksta i klikabilne.
  */
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
-import HeroSheet from './hero/HeroSheet.astro';
+import RoofModels from './hero3d/RoofModels.astro';
 import { site, telHref, waHref } from '@/data/site';
 ---
 
-<section id="vrh" class="hx relative overflow-hidden bg-grafit grid-paper" data-hero aria-labelledby="vrh-naslov">
-  <script is:inline>
-    try {
-      if (sessionStorage.getItem('kr-hero-played') === '1') document.documentElement.classList.add('hx-played');
-    } catch (e) {}
-  </script>
-
-  <div
-    class="wrap relative grid grid-cols-[minmax(0,1fr)] items-start gap-y-6 pt-4 pb-14 sm:pt-6 md:gap-y-10 md:pt-8 md:pb-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-x-12 lg:pt-10 lg:pb-16 xl:gap-x-16 xl:pt-12 xl:pb-20"
-  >
-    <!-- tekst -->
-    <div class="hx-copy order-2 flex flex-col lg:order-1">
+<section id="vrh" class="hx relative overflow-hidden bg-grafit grid-paper" aria-labelledby="vrh-naslov">
+  <div class="wrap hx-in">
+    <!-- tekst (data-hero-copy: RoofModels ga mjeri — model nikad ne ide preko njega) -->
+    <div class="hx-copy flex flex-col" data-hero-copy>
       <h1 id="vrh-naslov" class="order-1">
         <span class="hx-kw eyebrow block text-celik">
           <span class="sr-only">Limarija Karamatić · </span><span class="hx-kw-seg">limeni krovovi, opšavi i oluci</span
@@ -39,17 +34,17 @@ import { site, telHref, waHref } from '@/data/site';
         savijeno po mjeri vašeg krova.
       </p>
 
-      <!-- CTA blok: na mobitelu (contents) primarni ide odmah ispod naslova; od md jedan blok
+      <!-- CTA blok: na mobitelu (contents) primarni ide odmah ispod naslova; od md jedan redak
            (na tabletu ispred podnaslova). Dva gumba: Besplatna procjena + WhatsApp;
            telefon je tihi tekstualni link ispod (poziv ostaje na jedan dodir, ali se ne gura).
            data-dock-anchor: mobilni dock se pojavi tek kad ovaj gumb izađe iz ekrana. -->
-      <div class="hx-ctas contents md:order-2 md:mt-8 md:grid md:gap-3 lg:order-3" data-hx-ctas>
+      <div class="hx-ctas contents md:order-2 md:mt-8 md:flex md:gap-3 lg:order-3">
         <Button
           href="#procjena"
           variant="primary"
           size="lg"
           iconRight="arrow-right"
-          class="hx-cta-main order-2 mt-6 w-full md:order-none md:mt-0"
+          class="hx-cta-main order-2 mt-6 w-full md:order-none md:mt-0 md:w-auto"
           data-dock-anchor
         >
           Besplatna procjena
@@ -59,7 +54,7 @@ import { site, telHref, waHref } from '@/data/site';
           variant="whatsapp"
           size="lg"
           icon="whatsapp"
-          class="hx-cta-wa order-3 mt-3 w-full md:order-none md:mt-0"
+          class="hx-cta-wa order-3 mt-3 w-full md:order-none md:mt-0 md:w-auto"
         >
           Pošaljite slike
         </Button>
@@ -84,20 +79,87 @@ import { site, telHref, waHref } from '@/data/site';
         </li>
       </ul>
     </div>
-
-    <!-- list 01 -->
-    <div class="order-1 lg:order-2">
-      <HeroSheet />
-    </div>
   </div>
+  <RoofModels align="right" />
+  <div class="hx-scrim" aria-hidden="true"></div>
 </section>
 
-<script>
-  import { initHeroes } from './hero/intro';
-  initHeroes();
-</script>
-
 <style is:global>
+  /* ── raspored ─────────────────────────────────────────────── */
+  .hx {
+    display: flex;
+    min-height: calc(100svh - 56px);
+  }
+  @media (width >= 64rem) {
+    .hx {
+      min-height: max(36rem, calc(100svh - 101px));
+    }
+  }
+  /* mobitel/tablet: tekst dolje, model iznad njega; od lg tekst lijevo, okomito centriran */
+  .hx-in {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-top: max(14rem, 38svh);
+    padding-bottom: 3rem;
+  }
+  /* niski mobiteli (npr. 360×640): glavni CTA (odmah ispod H1) ostaje iznad pregiba, a model ipak dobije mjesta */
+  @media (width < 64rem) and (height < 720px) {
+    .hx-in {
+      padding-top: max(13rem, 34svh);
+      padding-bottom: 2rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .hx-in {
+      justify-content: center;
+      padding-top: 3rem;
+      padding-bottom: 4.5rem;
+    }
+  }
+  /* niski desktop (1280×720, 1366×768, 1024×768…): sve do jamstava stane u prvi ekran */
+  @media (width >= 64rem) and (height < 57rem) {
+    .hx-in {
+      padding-top: 1.5rem;
+      padding-bottom: 2.25rem;
+    }
+    .hx .hx-display {
+      font-size: min(clamp(2.9rem, 4.95vw, 4.4rem), 7.4svh);
+      margin-top: 1rem;
+    }
+    .hx .hx-sub {
+      margin-top: 1rem;
+    }
+    .hx .hx-ctas {
+      margin-top: 1.5rem;
+    }
+    .hx .hx-trust {
+      margin-top: 1.5rem;
+    }
+  }
+  .hx-copy {
+    max-width: 40rem;
+  }
+  @media (width >= 64rem) {
+    .hx-copy {
+      max-width: min(38rem, 42vw);
+    }
+  }
+  /* scrim: tekst uvijek čitljiv preko modela (mobitel: odozdo; desktop: slijeva) */
+  .hx-scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to top, rgb(14 16 19 / 0.94) 0%, rgb(14 16 19 / 0.86) 50%, rgb(14 16 19 / 0) 70%);
+  }
+  @media (width >= 64rem) {
+    .hx-scrim {
+      background: linear-gradient(to right, rgb(14 16 19 / 0.92) 0%, rgb(14 16 19 / 0.8) 30%, rgb(14 16 19 / 0) 54%);
+    }
+  }
+
   /* ── tipografija ───────────────────────────────────────────── */
   .hx-display {
     font-size: clamp(2.6rem, 10.6vw, 3.6rem);
@@ -110,7 +172,7 @@ import { site, telHref, waHref } from '@/data/site';
       font-size: clamp(3.6rem, 8.4vw, 5rem);
     }
   }
-  /* lg+: stupac teksta je najviše ~520 px (wrap 88rem), pa veličina staje na 4,4rem */
+  /* lg+: stupac teksta je najviše min(38rem, 42vw), pa veličina staje na 4,4rem */
   @media (width >= 64rem) {
     .hx-display {
       font-size: clamp(2.9rem, 4.95vw, 4.4rem);
@@ -143,22 +205,15 @@ import { site, telHref, waHref } from '@/data/site';
   }
 
   /* ── CTA blok ─────────────────────────────────────────────── */
+  /* od md: dva gumba u retku (prelome se ako ne stanu), telefon ispod njih */
   @media (width >= 48rem) {
     .hx-ctas {
-      grid-template-columns: auto auto;
-      width: max-content;
-      max-width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
     }
     .hx-ctas .hx-tel {
-      grid-column: 1 / -1;
-    }
-  }
-  /* lg: uski stupac — dva gumba iste širine, jedan ispod drugog */
-  @media (width >= 64rem) and (width < 80rem) {
-    .hx-ctas {
-      grid-template-columns: minmax(0, 1fr);
-      width: 100%;
-      max-width: 21.5rem;
+      flex-basis: 100%;
     }
   }
   /* telefon: tihi link (≥ 44 px za dodir), ne treći gumb */
@@ -224,341 +279,5 @@ import { site, telHref, waHref } from '@/data/site';
     .hx-trust-l {
       font-size: 0.875rem;
     }
-  }
-
-  /* ── list ─────────────────────────────────────────────────── */
-  /* neprozirni list s vlastitom mrežom */
-  .hx-sheet {
-    background-color: #13161a;
-    background-image:
-      linear-gradient(to right, rgb(213 219 223 / 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(213 219 223 / 0.05) 1px, transparent 1px),
-      linear-gradient(to right, rgb(213 219 223 / 0.02) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(213 219 223 / 0.02) 1px, transparent 1px);
-    background-size:
-      40px 40px,
-      40px 40px,
-      8px 8px,
-      8px 8px;
-    background-position: -1px -1px;
-  }
-  .hx-sheet {
-    position: relative;
-    margin: 0;
-    border: 1px solid rgb(213 219 223 / 0.16);
-  }
-  .hx-top {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    height: 2.75rem;
-    padding: 0 0.25rem 0 0.875rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.12);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-celik);
-  }
-  .hx-readout {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    color: var(--color-linija);
-  }
-  @media (width < 40rem) {
-    .hx-readout-k {
-      display: none;
-    }
-  }
-  .hx-replay {
-    margin-left: auto;
-  }
-  .hx-readout-k {
-    color: var(--color-celik);
-  }
-  .hx-readout-k::after {
-    content: '';
-    display: inline-block;
-    width: 1rem;
-    height: 1px;
-    margin-left: 0.6rem;
-    vertical-align: middle;
-    background: currentColor;
-    opacity: 0.5;
-  }
-  .hx-replay {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    height: 2.75rem;
-    min-width: 2.75rem;
-    padding: 0 0.7rem;
-    font: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    color: var(--color-linija);
-    border-left: 1px solid rgb(213 219 223 / 0.12);
-    transition: color 0.15s var(--ease-press), background-color 0.15s var(--ease-press);
-  }
-  .hx-replay:hover {
-    color: #fff;
-    background: rgb(255 255 255 / 0.05);
-  }
-  .hx-replay:focus-visible {
-    outline-offset: -2px;
-  }
-  .hx-replay[hidden] {
-    display: none;
-  }
-  .hx-progress {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 1px;
-    pointer-events: none;
-  }
-  .hx-progress > span {
-    display: block;
-    height: 100%;
-    background: rgb(213 219 223 / 0.55);
-  }
-
-  /* pozornica: mobitel ~38 % visine, tablet (portret) ~42 %, od lg koliko stane u prozor */
-  .hx-stage {
-    position: relative;
-    overflow: hidden;
-    height: max(13.5rem, calc(38svh - 2.75rem));
-  }
-  @media (width >= 48rem) {
-    .hx-stage {
-      height: clamp(17rem, calc(42svh - 2.75rem), 30rem);
-    }
-  }
-  /* lg/xl: omjer (1:1, xl 1,1:1) kao gornja granica, a visina nikad veća od prozora
-     (zaglavlje 101 px + gornji razmak + traka lista + 24 px zraka). Bez aspect-ratio:
-     max-height bi se kroz omjer prenio na širinu i suzio pozornicu — zato cqi. */
-  @media (width >= 64rem) {
-    .hx-sheet {
-      container-type: inline-size;
-    }
-    .hx-stage {
-      height: max(18rem, min(100cqi, calc(100svh - 13.5rem)));
-    }
-  }
-  @media (width >= 80rem) {
-    .hx-stage {
-      height: max(18rem, min(calc(100cqi / 1.1), calc(100svh - 14rem)));
-    }
-  }
-
-  .hx-drawing {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-
-  /* zaglavlje lista (dolje desno) — od xl, gdje ima mjesta pored crteža */
-  .hx-tb {
-    position: absolute;
-    right: 0.875rem;
-    bottom: 0.875rem;
-    display: none;
-    grid-template-columns: auto auto;
-    border: 1px solid rgb(213 219 223 / 0.22);
-    background: rgb(14 16 19 / 0.82);
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-celik);
-  }
-  .hx-tb > span {
-    padding: 0.32rem 0.6rem;
-    border-top: 1px solid rgb(213 219 223 / 0.14);
-  }
-  .hx-tb > span:nth-child(odd):not(:first-child) {
-    border-left: 1px solid rgb(213 219 223 / 0.14);
-  }
-  .hx-tb-name {
-    grid-column: 1 / -1;
-    border-top: 0 !important;
-    color: var(--color-linija);
-    font-weight: 500;
-    letter-spacing: 0.16em;
-  }
-  @media (width >= 80rem) {
-    .hx-tb {
-      display: grid;
-    }
-  }
-
-  /* ── crtež ────────────────────────────────────────────────── */
-  .hx-svg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    --sw: 1.3;
-    --fs: 13px;
-    --fs-tiny: 9px;
-  }
-  @media (width < 48rem) {
-    .hx-svg {
-      --sw: 2.2;
-      --fs: 22px;
-      --fs-tiny: 15px;
-    }
-  }
-  .hx-l {
-    fill: none;
-    stroke: var(--color-linija);
-    stroke-opacity: 0.8;
-    stroke-width: var(--sw);
-    stroke-linejoin: miter;
-  }
-  .hx-thin {
-    stroke-opacity: 0.32;
-  }
-  .hx-guide {
-    fill: none;
-    stroke: var(--color-linija);
-    stroke-opacity: 0.24;
-    stroke-width: calc(var(--sw) * 0.7);
-  }
-  .hx-dash {
-    stroke-dasharray: 14 5 2 5;
-  }
-  .hx-tiny {
-    font-family: var(--font-mono);
-    font-size: var(--fs-tiny);
-    fill: var(--color-celik);
-    fill-opacity: 0.6;
-  }
-  .hx-hatch {
-    opacity: 1;
-  }
-  .hx-dl {
-    fill: none;
-    stroke: var(--color-redline);
-    stroke-width: calc(var(--sw) * 0.85);
-  }
-  .hx-dot {
-    fill: var(--color-redline);
-  }
-  .hx-dt {
-    font-family: var(--font-mono);
-    font-size: var(--fs);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    fill: var(--color-redline);
-  }
-  .hx-strip,
-  .hx-wingroof {
-    fill: url(#hx-metal);
-  }
-  .hx-seam {
-    fill: none;
-    stroke: #a9b1b7;
-    stroke-opacity: 0.6;
-    stroke-width: calc(var(--sw) * 1.15);
-  }
-  .hx-wingseams {
-    fill: none;
-    stroke: #a9b1b7;
-    stroke-opacity: 0.4;
-    stroke-width: var(--sw);
-  }
-  .hx-bar,
-  .hx-wingband {
-    fill: #383e42;
-    stroke: #79828a;
-    stroke-width: calc(var(--sw) * 0.75);
-    stroke-linejoin: miter;
-  }
-  .hx-chimfill {
-    fill: #1b1f23;
-  }
-  .hx-eave,
-  .hx-red2 {
-    fill: none;
-    stroke: var(--color-crvena);
-    stroke-width: 5;
-    stroke-linejoin: miter;
-  }
-  .hx-gbody {
-    fill: #2e3438;
-    stroke: #8a939b;
-    stroke-width: calc(var(--sw) * 0.75);
-  }
-  .hx-gline {
-    fill: none;
-    stroke: #b3bbc1;
-    stroke-width: calc(var(--sw) * 0.75);
-  }
-  .hx-cap {
-    fill: #383e42;
-    stroke: #8a939b;
-    stroke-width: calc(var(--sw) * 0.75);
-  }
-  .hx-guard {
-    fill: #959ea5;
-    stroke: #c9d0d5;
-    stroke-width: 0.6;
-  }
-  .hx-flash {
-    fill: none;
-    stroke: #fff;
-    stroke-width: 3;
-    opacity: 0;
-  }
-  .hx-sf {
-    fill: none;
-    stroke: #fff;
-    stroke-width: 2.4;
-    opacity: 0;
-  }
-  .hx-beam-ram {
-    fill: #1b1f23;
-    stroke: var(--color-linija);
-    stroke-opacity: 0.45;
-    stroke-width: var(--sw);
-  }
-  .hx-beam-body {
-    fill: #22272c;
-    stroke: var(--color-linija);
-    stroke-opacity: 0.75;
-    stroke-width: var(--sw);
-  }
-  .hx-beam-lines {
-    fill: none;
-    stroke: var(--color-linija);
-    stroke-opacity: 0.3;
-    stroke-width: var(--sw);
-  }
-  .hx-beam-lambda {
-    fill: none;
-    stroke: var(--color-crvena);
-    stroke-width: 8;
-    stroke-linejoin: miter;
-    stroke-miterlimit: 10;
-  }
-
-  /* ── ZAVRŠNO stanje (HTML, bez JS-a, reduced-motion, ponovni posjet) ──
-     gotov crtež; skrivena je samo greda preše (JS je spusti tijekom uvoda) */
-  .hx-beam {
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  /* prije nego JS preuzme: prazan list (bez bljeska gotovog crteža) */
-  .motion:not(.hx-played) .hx-sheet:not(.is-live) .hx-art {
-    visibility: hidden;
   }
 </style>

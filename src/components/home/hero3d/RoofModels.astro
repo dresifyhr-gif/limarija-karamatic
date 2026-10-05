@@ -1,0 +1,577 @@
+---
+/**
+ * RoofModels — pozadina heroja preko cijele širine: četiri krova (3D, Canvas 2D) se
+ * izmjenjuju i polako okreću. Svaki model: crtež zidova → letve → lim se polaže u trakama →
+ * opšavi, oluci, crvena streha → kote i oznaka "0X / 04 · NAZIV · MATERIJAL" → zadrži →
+ * rastavi (odozgo prema dolje) dok sljedeći već raste. Bez pečata i bez hvalisanja.
+ *
+ * Roditelj mora biti pozicioniran (relative); komponenta ga ispuni (inset 0).
+ * U DOM-u ide NAKON teksta heroja (redoslijed tabulatora: najprije CTA, onda kontrole);
+ * tekstni blok treba position:relative; z-index:1. Ako tekstni blok ima [data-hero-copy],
+ * na uskom ekranu model se smjesti iznad njega (nikad preko teksta).
+ *
+ * Statični SVG (model 1, gotov) generira se PRI BUILDU istim engineom — vide ga no-JS,
+ * reduced-motion / html.motion-off i svi prije nego JS preuzme. Canvas preuzima isti
+ * kadar bez skoka.
+ *
+ * Kontrole (dolje desno; na mobitelu gore desno): brojač, četiri crtice za skok na model,
+ * pauza (WCAG 2.2.2).
+ */
+import { compile, draw, camFor, T_DONE } from '@/lib/roof3d/engine';
+import { MODELS, NAMES } from '@/lib/roof3d/models';
+import { svgOut } from '@/lib/roof3d/svg';
+
+interface Props {
+  class?: string;
+  /** 'right' — model na ~66 % širine (tekst lijevo ostaje čist); 'center' — sredina */
+  align?: 'right' | 'center';
+}
+const { class: className = '', align = 'right' } = Astro.props;
+
+// statični kadar: model 1, gotov, osnovni kut (isti kao prvi kadar canvasa)
+const S = 1000;
+const m0 = compile(MODELS[0]());
+const out = svgOut();
+draw(m0, T_DONE, camFor(m0, 0, 0, S / 2, S / 2, S, S / 600), out);
+const staticSvg = out.html();
+---
+
+<div class:list={['rm', className]} data-roof3d data-align={align}>
+  <svg class="rm-static" viewBox={`0 0 ${S} ${S}`} aria-hidden="true" focusable="false" set:html={staticSvg} />
+  <canvas class="rm-canvas" aria-hidden="true"></canvas>
+
+  <div class="rm-ctrl" role="group" aria-label="Modeli krovova">
+    <span class="rm-count" aria-hidden="true"><span data-rm-n>01</span><span class="rm-of"> / 04</span></span>
+    <span class="rm-ticks">
+      {
+        NAMES.map((n, i) => (
+          <button
+            type="button"
+            class="rm-tick"
+            data-rm-go={i}
+            aria-label={`Prikaži model ${i + 1}: ${n}`}
+            aria-current={i === 0 ? 'true' : undefined}
+          >
+            <span class="rm-bar">
+              <span class="rm-fill" />
+            </span>
+          </button>
+        ))
+      }
+    </span>
+    <button type="button" class="rm-pp" data-rm-pp aria-label="Pauziraj animaciju">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+        <path class="rm-i-pause" d="M4.5 3h2v10h-2zM9.5 3h2v10h-2z" fill="currentColor"></path>
+        <path class="rm-i-play" d="M5 3l8 5-8 5z" fill="currentColor"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  import { gsap, motionOn } from '@/lib/motion';
+  import { compile, draw, camFor, setEases, T_END, T_NEXT, T_DONE, type Model, type Out } from '@/lib/roof3d/engine';
+  import { MODELS } from '@/lib/roof3d/models';
+
+  const FONT = '"IBM Plex Mono", ui-monospace, monospace';
+
+  /** canvas izlaz: ravna ispuna + okomiti gradijent i odsjaj na limu; k = prozirnost cijelog modela */
+  function canvasOut(ctx: CanvasRenderingContext2D) {
+    let vg: CanvasGradient | null = null,
+      gg: CanvasGradient | null = null,
+      dash = false,
+      font = '';
+    const path = (xy: number[], n: number) => {
+      ctx.beginPath();
+      ctx.moveTo(xy[0], xy[1]);
+      for (let j = 1; j < n; j++) ctx.lineTo(xy[2 * j], xy[2 * j + 1]);
+    };
+    const o: Out & { k: number; frame(by: number, bs: number, bx: number, g: number): void; reset(): void } = {
+      k: 1,
+      // canvas.width = … poništi stanje konteksta
+      reset() {
+        dash = false;
+        font = '';
+      },
+      frame(by, bs, bx, g) {
+        vg = ctx.createLinearGradient(0, by, 0, by + bs);
+        vg.addColorStop(0, 'rgba(255,255,255,0.07)');
+        vg.addColorStop(1, 'rgba(0,0,0,0.2)');
+        gg = null;
+        if (g > -0.3 && g < 1.3) {
+          const x = bx + g * bs;
+          gg = ctx.createLinearGradient(x - bs * 0.16, by, x + bs * 0.16, by + bs * 0.35);
+          gg.addColorStop(0, 'rgba(255,255,255,0)');
+          gg.addColorStop(0.5, 'rgba(255,255,255,0.14)');
+          gg.addColorStop(1, 'rgba(255,255,255,0)');
+        }
+      },
+      fill(xy, n, rgb, a, metal) {
+        path(xy, n);
+        ctx.closePath();
+        ctx.globalAlpha = a * o.k;
+        ctx.fillStyle = `rgb(${rgb})`;
+        ctx.fill();
+        if (metal && vg) {
+          ctx.fillStyle = vg;
+          ctx.fill();
+          if (gg) {
+            ctx.fillStyle = gg;
+            ctx.fill();
+          }
+        }
+      },
+      stroke(xy, n, rgb, a, w, d, close) {
+        if (n < 2) return;
+        path(xy, n);
+        if (close) ctx.closePath();
+        if (d !== dash) {
+          ctx.setLineDash(d ? [3, 4] : []);
+          dash = d;
+        }
+        ctx.globalAlpha = a * o.k;
+        ctx.strokeStyle = `rgb(${rgb})`;
+        ctx.lineWidth = w;
+        ctx.stroke();
+      },
+      text(x, y, s, rgb, a, ang, align, size, knock) {
+        const f = `500 ${size}px ${FONT}`;
+        if (f !== font) ctx.font = font = f;
+        ctx.save();
+        ctx.translate(x, y);
+        if (ang) ctx.rotate(ang);
+        ctx.textAlign = align === 1 ? 'center' : align === 2 ? 'right' : 'left';
+        if (knock) {
+          const w = ctx.measureText(s).width;
+          ctx.globalAlpha = a * 0.92 * o.k;
+          ctx.fillStyle = '#0E1013';
+          ctx.fillRect(-w / 2 - 5, -size * 0.75, w + 10, size * 1.5);
+        }
+        ctx.globalAlpha = a * o.k;
+        ctx.fillStyle = `rgb(${rgb})`;
+        ctx.fillText(s, 0, 0);
+        ctx.restore();
+      },
+    };
+    return o;
+  }
+
+  function init(root: HTMLElement) {
+    if (root.dataset.live) return;
+    root.dataset.live = '1';
+    const align = root.dataset.align;
+    const copy = root.parentElement?.querySelector<HTMLElement>('[data-hero-copy]');
+    let w = 0,
+      h = 0,
+      dpr = 1,
+      B = { cx: 0, cy: 0, S: 0, nd: false };
+
+    /**
+     * Okvir modela (središte, stranica). Desktop: desno od tekstnog bloka, najviše 860 px i
+     * unutar stupca sadržaja (88rem) + 6rem. Ispod 1024 px: između kontrola i tekstnog bloka.
+     */
+    const box = () => {
+      if (w >= 1024) {
+        const big = w >= 1280;
+        let S = Math.min(w * (big ? 0.42 : 0.4), h * 0.8, 860);
+        if (align === 'center') return { cx: w / 2, cy: h * 0.53, S, nd: false };
+        // između desnog ruba tekstnog bloka (+ razmak 2,5rem, da kote ne dodiruju jamstva) i stupca sadržaja (88rem) + 6rem
+        const L = copy ? copy.getBoundingClientRect().right - root.getBoundingClientRect().left + 40 : w * 0.45;
+        const R = (w + Math.min(w, 1408)) / 2 + 96;
+        S = Math.min(S, R - L);
+        const cx = Math.max(L + S / 2, Math.min(w * (big ? 0.66 : 0.68), R - S / 2));
+        return { cx, cy: h * 0.53, S, nd: false };
+      }
+      const top = 84;
+      const bot = copy ? copy.getBoundingClientRect().top - root.getBoundingClientRect().top - 18 : h * 0.4;
+      const room = Math.max(60, bot - top);
+      const S = Math.min(w * 0.92, room / 0.84);
+      // malo mjesta: bez kota, model veći
+      return { cx: w / 2, cy: (top + top + room) / 2 - 0.05 * S, S, nd: room < 230 };
+    };
+    // statični kadar u isti okvir (vidi ga i reduced-motion)
+    const place = () => {
+      const b = (B = box());
+      root.style.setProperty('--rm-x', `${b.cx.toFixed(1)}px`);
+      root.style.setProperty('--rm-y', `${b.cy.toFixed(1)}px`);
+      root.style.setProperty('--rm-s', `${b.S.toFixed(1)}px`);
+    };
+    const measure = () => {
+      w = root.clientWidth;
+      h = root.clientHeight;
+      place();
+    };
+    measure();
+    const motion = motionOn();
+    let onResize = () => {};
+    const ro = new ResizeObserver(() => {
+      measure();
+      onResize();
+    });
+    ro.observe(root);
+    if (copy) ro.observe(copy);
+    // bez pokreta: ostaje statični SVG (gotov model 1), bez okretanja i izmjene
+    if (!motion) return;
+
+    const canvas = root.querySelector('canvas')!;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    setEases(gsap.parseEase('draft') as (x: number) => number, gsap.parseEase('press') as (x: number) => number);
+    const out = canvasOut(ctx);
+    const models: (Model | undefined)[] = [];
+    const model = (i: number) => (models[i] ||= compile(MODELS[i]()));
+    const easeIn = gsap.parseEase('draft') as (x: number) => number;
+    // ostale modele pripremi u praznom hodu (bez zastoja pri izmjeni)
+    const idle =
+      (window as unknown as { requestIdleCallback?: (f: () => void) => void }).requestIdleCallback ||
+      ((f: () => void) => setTimeout(f, 200));
+    const warm = (i: number) => i < MODELS.length && idle(() => (model(i), warm(i + 1)));
+
+    const num = root.querySelector<HTMLElement>('[data-rm-n]')!;
+    const ticks = [...root.querySelectorAll<HTMLButtonElement>('[data-rm-go]')];
+    const fills = ticks.map((b) => b.querySelector<HTMLElement>('.rm-fill')!);
+    const pp = root.querySelector<HTMLButtonElement>('[data-rm-pp]')!;
+
+    let idx = 0,
+      t = T_DONE, // prvi kadar = statični SVG (gotov model 1)
+      hold0 = 2.4, // prvi put gotov model 1 ostaje ~4 s dok se čita naslov
+      prev = -1, // prethodni model (rastavlja se dok sljedeći raste)
+      tp = 0,
+      pk = 1,
+      pf = false, // prethodni samo blijedi (ručni skok)
+      clock = 0,
+      boot = 0,
+      playing = true,
+      visible = true,
+      raf = 0,
+      last = 0,
+      live = false,
+      ready = false;
+
+    function drawModel(i: number, tt: number, k: number, b: typeof B) {
+      const M = model(i);
+      const amp = clock >= 3 ? 1 : easeIn(clock / 3);
+      const cam = camFor(M, clock, amp, b.cx, b.cy, b.S, 1, b.nd);
+      if (w < 1024) {
+        // uži ekran: natpis smije cijelom širinom, ispod kontrola; natpisi se pojave nježno
+        cam.lx = 16;
+        cam.rx = w - 16;
+        cam.ty = 64;
+        cam.an = Math.min(1, boot / 0.6);
+      }
+      // odsjaj preko lima tijekom zadržavanja
+      cam.g = tt > 5.4 && tt < 6.9 ? -0.2 + ((tt - 5.4) / 1.5) * 1.4 : -1;
+      out.k = k;
+      out.frame(cam.by, cam.bs, cam.bx, cam.g);
+      draw(M, tt, cam, out);
+    }
+
+    function render() {
+      if (!w || !h) return;
+      const b = B;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx!.clearRect(0, 0, w, h);
+      if (prev >= 0) drawModel(prev, tp, pk, b);
+      drawModel(idx, t, 1, b);
+      ctx!.globalAlpha = 1;
+      fills[idx].style.transform = `scaleX(${Math.min(1, t / T_NEXT).toFixed(3)})`;
+      if (!live) {
+        live = true;
+        root.classList.add('is-live');
+      }
+    }
+
+    function setModel(i: number) {
+      fills[idx].style.transform = 'scaleX(0)';
+      idx = i;
+      num.textContent = '0' + (i + 1);
+      ticks.forEach((b, k) => (k === i ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
+    }
+
+    const running = () => playing && visible && !document.hidden;
+    function frame(now: number) {
+      raf = 0;
+      if (!running()) return;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      clock += dt;
+      boot += dt;
+      if (hold0 > 0) hold0 -= dt;
+      else t += dt;
+      if (prev >= 0) {
+        if (pf) pk -= dt / 0.35;
+        else tp += dt;
+        if (pk <= 0 || tp >= T_END) prev = -1;
+      }
+      if (t >= T_NEXT) {
+        prev = idx;
+        tp = t;
+        pf = false;
+        pk = 1;
+        setModel((idx + 1) % MODELS.length);
+        t = 0;
+      }
+      render();
+      raf = requestAnimationFrame(frame);
+    }
+    function sync() {
+      if (running() && !raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      } else if (!running() && raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    }
+
+    ticks.forEach((b, i) =>
+      b.addEventListener('click', () => {
+        hold0 = 0;
+        if (playing) {
+          // stari model kratko izblijedi, novi se gradi od početka
+          prev = idx;
+          tp = t;
+          pf = true;
+          pk = 1;
+          t = 0;
+        } else {
+          // u pauzi: gotov model
+          prev = -1;
+          t = T_DONE;
+        }
+        setModel(i);
+        render();
+      }),
+    );
+    pp.addEventListener('click', () => {
+      playing = !playing;
+      pp.setAttribute('aria-label', playing ? 'Pauziraj animaciju' : 'Pokreni animaciju');
+      root.classList.toggle('is-paused', !playing);
+      sync();
+    });
+
+    const size = () => {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.textBaseline = 'middle';
+      out.reset();
+      try {
+        (ctx as unknown as { letterSpacing: string }).letterSpacing = '0.12em';
+      } catch {}
+    };
+    size();
+    onResize = () => {
+      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) size();
+      if (ready) render();
+    };
+    new IntersectionObserver((es) => {
+      visible = es[es.length - 1].isIntersecting;
+      sync();
+    }).observe(root);
+    document.addEventListener('visibilitychange', sync);
+    root.classList.add('has-ctrl');
+    // ručno isključivanje animacija (MotionToggle): stani na gotovom trenutnom modelu, bez kontrola
+    new MutationObserver(() => {
+      if (motionOn()) return;
+      playing = false;
+      prev = -1;
+      hold0 = 0;
+      t = T_DONE;
+      root.classList.remove('has-ctrl', 'is-paused');
+      sync();
+      render();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    // natpisi na canvasu trebaju IBM Plex Mono — kratko pričekaj font (SVG je vidljiv do tada)
+    const go = () => {
+      if (ready) return;
+      ready = true;
+      render();
+      sync();
+      warm(1);
+    };
+    const fl = document.fonts?.load(`500 11px ${FONT}`);
+    if (fl) Promise.race([fl, new Promise((r) => setTimeout(r, 400))]).then(go, go);
+    else go();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-roof3d]').forEach(init);
+</script>
+
+<style is:global>
+  /* bez container-type: stvorio bi kontekst slaganja pa kontrole ne bi mogle iznad teksta */
+  .rm {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .rm-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  /* statični kadar — JS postavlja --rm-x/y/s iz istog okvira kao canvas; bez JS-a približno */
+  .rm-static {
+    position: absolute;
+    left: var(--rm-x, calc(66% + 2.5rem));
+    top: var(--rm-y, 53%);
+    width: var(--rm-s, min(42vw, calc((100svh - 101px) * 0.8), 860px));
+    height: auto;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    overflow: visible;
+    max-width: none;
+  }
+  .rm[data-align='center'] .rm-static {
+    left: var(--rm-x, 50%);
+  }
+  .rm-static path {
+    vector-effect: non-scaling-stroke;
+  }
+  .rm-static text {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+  }
+  .rm.is-live .rm-static {
+    visibility: hidden;
+  }
+  @media (64rem <= width < 80rem) {
+    .rm-static {
+      left: var(--rm-x, 68%);
+      width: var(--rm-s, min(40vw, calc((100svh - 101px) * 0.8)));
+    }
+  }
+  @media (width < 64rem) {
+    .rm-static {
+      left: var(--rm-x, 50%);
+      top: var(--rm-y, 21%);
+      width: var(--rm-s, min(88vw, 30svh));
+    }
+    .rm-static {
+      opacity: 0.74;
+    }
+    /* na mobitelu canvas može biti bez kota (veći model) — kratko pretapanje umjesto skoka */
+    .rm-canvas {
+      opacity: 0;
+      transition: opacity 0.6s var(--ease-draft, ease);
+    }
+    .rm.is-live .rm-canvas {
+      opacity: 0.74;
+    }
+    .rm.is-live .rm-static {
+      opacity: 0;
+      transition:
+        opacity 0.6s var(--ease-draft, ease),
+        visibility 0s 0.6s;
+    }
+    /* na uskom ekranu statični natpisi i kote bili bi presitni — canvas ih iscrta pri pokretanju */
+    .rm-static text,
+    .rm-static rect,
+    .rm-static .rm-dim,
+    .rm-static .rm-tag {
+      display: none;
+    }
+  }
+
+  /* ── kontrole ───────────────────────────────────────────── */
+  .rm-ctrl {
+    position: absolute;
+    right: max(0.5rem, calc((100% - 88rem) / 2 + 1rem));
+    bottom: 0.75rem;
+    z-index: 3;
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
+    pointer-events: auto;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    color: var(--color-celik);
+  }
+  .rm.has-ctrl .rm-ctrl {
+    display: flex;
+  }
+  .rm-count {
+    margin-right: 0.35rem;
+    color: var(--color-linija);
+    font-variant-numeric: tabular-nums;
+  }
+  .rm-of {
+    color: var(--color-celik);
+  }
+  .rm-ticks {
+    display: flex;
+  }
+  .rm-tick,
+  .rm-pp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    color: var(--color-linija);
+  }
+  .rm-tick {
+    width: 2.25rem;
+    min-width: 44px;
+  }
+  .rm-bar {
+    position: relative;
+    display: block;
+    width: 1.25rem;
+    height: 2px;
+    overflow: hidden;
+    background: rgb(213 219 223 / 0.28);
+    transition: background-color 0.15s var(--ease-press);
+  }
+  .rm-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--color-linija);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+  .rm-tick:hover .rm-bar {
+    background: rgb(213 219 223 / 0.55);
+  }
+  .rm-tick[aria-current='true'] .rm-bar {
+    background: rgb(213 219 223 / 0.4);
+  }
+  .rm-pp {
+    border: 1px solid rgb(213 219 223 / 0.18);
+    margin-left: 0.35rem;
+    transition:
+      border-color 0.15s var(--ease-press),
+      background-color 0.15s var(--ease-press);
+  }
+  .rm-pp:hover {
+    border-color: rgb(213 219 223 / 0.5);
+    background: rgb(255 255 255 / 0.04);
+  }
+  .rm-i-play,
+  .rm.is-paused .rm-i-pause {
+    display: none;
+  }
+  .rm.is-paused .rm-i-play {
+    display: inline;
+  }
+  .rm-tick:focus-visible,
+  .rm-pp:focus-visible {
+    outline-offset: -2px;
+  }
+  /* mobitel/tablet: kontrole gore desno (dolje je tekst i CTA); brojač ne treba — crtice pokazuju položaj,
+     a natpis na modelu već nosi "0X / 04" */
+  @media (width < 64rem) {
+    .rm-ctrl {
+      top: 0.25rem;
+      bottom: auto;
+      right: 0.25rem;
+    }
+    .rm-count {
+      display: none;
+    }
+  }
+</style>
