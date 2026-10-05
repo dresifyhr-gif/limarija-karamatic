@@ -11,6 +11,7 @@
  *  variant?       'standard' | 'zgrada' (forma za upravitelje, prilagođen kontakt i koraci)
  *  index?         zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju
  *  headingLevel?  2 | 3 — razina naslova koraka u formi; default 3 kad sekcija ima naslov, inače 2
+ *  contact?       false = bez stupca telefon/WhatsApp (npr. /kontakt, gdje je kontakt već u heru)
  * Slot "note": dodatni blok ispod kontakta (npr. "Za ponudu trebamo" na /upravitelji-zgrada).
  *
  * Desktop: lijevo naslov + izravni kontakt (5/12), desno forma (7/12). Mobitel: naslov → forma → kontakt.
@@ -32,12 +33,15 @@ interface Props {
   variant?: 'standard' | 'zgrada';
   index?: string;
   headingLevel?: 2 | 3;
+  /** stupac izravnog kontakta (telefon + WhatsApp); false na /kontakt, gdje ga hero već nudi */
+  contact?: boolean;
 }
 const {
   title = 'Ne čekajte da počne kapati.',
   lead = 'Besplatna procjena na terenu. Pisana ponuda stavku po stavku.',
   preselect,
   variant = 'standard',
+  contact = true,
 } = Astro.props;
 const zgrada = variant === 'zgrada';
 const hasHead = !!title;
@@ -98,10 +102,12 @@ const waLine = zgrada ? 'Ili pošaljite adresu i 3 slike krova na WhatsApp.' : '
       </div>
 
       <!-- izravni kontakt: telefon + WhatsApp -->
+      {(contact || Astro.slots.has('note')) && (
       <div
         class:list={['fc-contact lg:col-span-5 lg:col-start-1', hasHead ? 'lg:row-start-2' : 'lg:row-span-2 lg:row-start-1']}
         data-reveal-group
       >
+        {contact && (<>
         <div data-reveal>
           {!hasHead && <p class="mb-3 text-[1.0625rem] font-semibold">Radije razgovarate?</p>}
           <a
@@ -123,15 +129,17 @@ const waLine = zgrada ? 'Ili pošaljite adresu i 3 slike krova na WhatsApp.' : '
             Pošaljite slike
           </Button>
         </div>
+        </>)}
 
         {
           Astro.slots.has('note') && (
-            <div class="fc-note mt-12 border-t border-tinta/12 pt-8" data-reveal>
+            <div class:list={['fc-note', contact && 'mt-12 border-t border-tinta/12 pt-8']} data-reveal>
               <slot name="note" />
             </div>
           )
         }
       </div>
+      )}
     </div>
   </div>
 </section>

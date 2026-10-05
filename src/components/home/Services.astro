@@ -138,14 +138,16 @@ const focus: Record<string, string> = { dimnjaci: 'object-[50%_30%]' };
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 1.1875rem;
+    font-size: 1.125rem;
     line-height: 1.2;
     font-weight: 700;
     letter-spacing: -0.005em;
     font-variation-settings: 'wdth' 112;
     text-wrap: balance;
   }
+  /* mobitel: cijela kartica je link — strelica ne krade širinu naslovu */
   .svc-title :global(.svc-arrow) {
+    display: none;
     flex-shrink: 0;
     opacity: 0.55;
     transition:
@@ -180,6 +182,9 @@ const focus: Record<string, string> = { dimnjaci: 'object-[50%_30%]' };
     .svc-title {
       font-size: 1.5rem;
       justify-content: space-between;
+    }
+    .svc-title :global(.svc-arrow) {
+      display: block;
     }
     .svc-line {
       margin-top: 0.5rem;

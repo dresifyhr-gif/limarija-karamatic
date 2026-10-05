@@ -2,10 +2,8 @@
 /**
  * Recenzije (id="recenzije", bijela) — zaglavlje + četiri brojke kao lančana kota + (kad postoje) recenzije.
  *
- *  Brojke (iz site.ts `stats`) stoje kao kota tehničkog crteža: pomoćne linije, kotna linija s kosim
- *  crticama, broj iznad, opis ispod. Desktop (≥ md) jedna neprekinuta kota; mobitel 2 × 2, svaka ćelija
- *  svoja mala kota. Pokret (jednom): crveni pravac se nacrta ('draft'), crtice "pucnu" ('press').
- *  Odbrojavaju se SAMO cijeli brojevi s "+" (godine, krovovi); ocjena i jamstvo samo se pojave.
+ *  Brojke (iz site.ts `stats`) crta zajednička `ui/StatLine.astro` (kota, odbrojavanje, crtanje linije).
+ *  Bez recenzija i bez Google poveznice zaglavlje glasi "U brojkama · Brojke iza svakog krova."
  *
  *  Recenzije: `reviews` u site.ts je za sada PRAZAN — tada sekcija prikazuje samo brojke i ocjenu
  *  (bez kartica, bez niza, bez izmišljenih imena). Čim se u popis dodaju stvarne recenzije, kartice
@@ -14,7 +12,8 @@
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { site, reviews as allReviews, stats, type Review } from '@/data/site';
+import StatLine from '@/components/ui/StatLine.astro';
+import { site, reviews as allReviews, type Review } from '@/data/site';
 
 interface Props {
   /** zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju */
@@ -30,25 +29,17 @@ const reviewsHref = site.googleReviewsUrl as string;
 const reviewsExternal = reviewsHref.startsWith('http');
 const total = String(list.length).padStart(2, '0');
 
-const fmt = (n: number, d = 0) => {
-  const [int, dec] = n.toFixed(d).split('.');
-  const grouped = Math.abs(n) >= 10000 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : int;
-  return dec ? `${grouped},${dec}` : grouped;
-};
-// "+" ostaje uz broj; jedinice (" / 5", " god.") idu sitno — kao mjere na crtežu
-const split = (suffix = '') => {
-  const t = suffix.trim();
-  return t === '+' || t === '%' ? { big: t, unit: '' } : { big: '', unit: t };
-};
-// odbrojava se samo cijeli broj s "+" (15+, 600+)
-const counts = (s: (typeof stats)[number]) => !(s.decimals ?? 0) && (s.suffix ?? '').trim() === '+';
-const isRating = (s: (typeof stats)[number]) => /ocjena/i.test(s.label);
+// Bez recenzija (i bez poveznice na Google) zaglavlje ne obećava citate — govori o brojkama.
+const voices = hasReviews || reviewsExternal;
+const head = voices
+  ? { eyebrow: 'Recenzije', title: 'Pitajte one kojima više ne curi.' }
+  : { eyebrow: 'U brojkama', title: 'Brojke iza svakog krova.' };
 ---
 
 <section id="recenzije" class="bg-white py-24 text-tinta sm:py-28 lg:py-32">
   <div class="wrap">
     <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
-      <SectionHead tone="light" eyebrow="Recenzije" title="Pitajte one kojima više ne curi." />
+      <SectionHead tone="light" eyebrow={head.eyebrow} title={head.title} />
       {
         reviewsExternal && (
           <a
@@ -68,61 +59,8 @@ const isRating = (s: (typeof stats)[number]) => /ocjena/i.test(s.label);
       }
     </div>
 
-    <!-- brojke: lančana kota -->
-    <div class="mt-14 sm:mt-16 lg:mt-20" data-rv-kota>
-      <h3 class="sr-only">Limarija Karamatić u brojkama</h3>
-      <ul class="rk grid grid-cols-2 gap-x-6 gap-y-11 md:grid-cols-4 md:gap-x-0">
-        {
-          stats.map((s) => {
-            const { big, unit } = split(s.suffix);
-            const value = fmt(s.value, s.decimals ?? 0);
-            const full = `${s.prefix ?? ''}${value}${big}${unit ? ' ' + unit : ''}`;
-            const stars = Math.round(s.value);
-            return (
-              <li class="rk-seg relative text-center" data-seg>
-                <span class="sr-only">
-                  {full} — {s.label}
-                </span>
-                <div class="relative pt-1" aria-hidden="true">
-                  <span class="rk-ext rk-ext-l" />
-                  <span class="rk-ext rk-ext-r" />
-                  <p class="rk-num relative inline-flex items-baseline" data-num>
-                    {s.prefix && <span class="type-display">{s.prefix}</span>}
-                    <span class="type-display relative tabular-nums">
-                      <span class="invisible">{value}</span>
-                      <span class="absolute inset-0 pt-[0.06em] text-right" data-count={counts(s) ? s.value : undefined}>
-                        {value}
-                      </span>
-                    </span>
-                    {big && <span class="type-display">{big}</span>}
-                    {unit && <span class="rk-unit type-mono ml-1.5 font-medium text-tinta/70">{unit}</span>}
-                  </p>
-                  <div class="rk-dim relative h-[18px]">
-                    <span class="rk-line" data-line />
-                    <svg class="rk-tick rk-tick-l" viewBox="0 0 16 16">
-                      <path d="M3 13 13 3" />
-                    </svg>
-                    <svg class="rk-tick rk-tick-r" viewBox="0 0 16 16">
-                      <path d="M3 13 13 3" />
-                    </svg>
-                  </div>
-                </div>
-                <p class="rk-label mx-auto mt-4 max-w-[20ch] px-2 text-tinta/70 md:max-w-[24ch]" aria-hidden="true">
-                  {isRating(s) && (
-                    <span class="mr-2 inline-flex translate-y-[-0.0625rem] gap-0.5 align-middle text-tinta">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Icon name="star" size={12} class={i < stars ? '' : 'opacity-25'} />
-                      ))}
-                    </span>
-                  )}
-                  {s.label}
-                </p>
-              </li>
-            );
-          })
-        }
-      </ul>
-    </div>
+    <!-- brojke: lančana kota (zajednička komponenta) -->
+    <StatLine class="mt-14 sm:mt-16 lg:mt-20" />
   </div>
 
   {
@@ -189,97 +127,6 @@ const isRating = (s: (typeof stats)[number]) => /ocjena/i.test(s.label);
 </section>
 
 <style>
-  /* ── kota s brojkama ── */
-  .rk-num {
-    font-size: 2.25rem;
-    color: var(--color-tinta);
-  }
-  .rk-num .type-display {
-    line-height: 1;
-  }
-  .rk-unit {
-    font-size: 0.8125rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  @media (width >= 48rem) {
-    .rk-num {
-      font-size: 2.5rem;
-    }
-  }
-  @media (width >= 80rem) {
-    .rk-num {
-      font-size: 3rem;
-    }
-    .rk-unit {
-      font-size: 0.875rem;
-    }
-  }
-  .rk-label {
-    font-size: 0.9375rem;
-    line-height: 1.4;
-    text-wrap: balance;
-  }
-
-  /* pomoćne (odmjerne) linije — od vrha broja do malo ispod kote */
-  .rk-ext {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: rgb(21 24 27 / 0.16);
-  }
-  .rk-ext-l {
-    left: 0;
-  }
-  .rk-ext-r {
-    right: 0;
-  }
-
-  /* kotna linija (na svijetlom: tamnija crvena) */
-  .rk-line {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 11px;
-    height: 1px;
-    background: var(--color-redline-dark);
-    transform-origin: 0 50%;
-  }
-  .rk-tick {
-    position: absolute;
-    top: 3.5px;
-    width: 16px;
-    height: 16px;
-    overflow: visible;
-    fill: none;
-    stroke: var(--color-redline-dark);
-    stroke-width: 1.5;
-    stroke-linecap: square;
-  }
-  .rk-tick-l {
-    left: -8px;
-  }
-  .rk-tick-r {
-    right: -8px;
-  }
-  @media (width >= 48rem) {
-    /* lančana kota: susjedne ćelije dijele pomoćnu liniju i crticu */
-    .rk-seg + .rk-seg .rk-ext-l,
-    .rk-seg + .rk-seg .rk-tick-l {
-      display: none;
-    }
-  }
-
-  /* stanje prije animacije — samo dok JS ne preuzme */
-  :global(.motion) [data-rv-kota]:not([data-ready]) .rk-line {
-    transform: scaleX(0);
-  }
-  :global(.motion) [data-rv-kota]:not([data-ready]) .rk-tick,
-  :global(.motion) [data-rv-kota]:not([data-ready]) .rk-num {
-    opacity: 0;
-  }
-
   /* ── niz recenzija (samo kad postoje) ── */
   .rv {
     --pad: 1.25rem;
@@ -351,100 +198,7 @@ const isRating = (s: (typeof stats)[number]) => /ocjena/i.test(s.label);
 </style>
 
 <script>
-  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
-
-  const fmt = (n: number) => String(Math.round(n));
-
-  /* ── kota s brojkama ─────────────────────────────────────── */
-  function initKota() {
-    if (!motionOn()) return;
-    const draft = gsap.parseEase('draft');
-    // vrijeme (0–1) u kojem 'draft' dosegne zadani udio — da crtica pukne točno kad linija stigne
-    const at = (y: number) => {
-      for (let t = 0; t <= 1; t += 0.005) if (draft(t) >= y) return t;
-      return 1;
-    };
-
-    document.querySelectorAll<HTMLElement>('[data-rv-kota]:not([data-ready])').forEach((root) => {
-      const segs = Array.from(root.querySelectorAll<HTMLElement>('[data-seg]'));
-      if (!segs.length) return;
-      const lines = segs.map((s) => s.querySelector<HTMLElement>('[data-line]')!);
-      const ticksL = segs.map((s) => s.querySelector<SVGElement>('.rk-tick-l')!);
-      const ticksR = segs.map((s) => s.querySelector<SVGElement>('.rk-tick-r')!);
-      const nums = segs.map((s) => s.querySelector<HTMLElement>('[data-num]')!);
-      const counters = segs.map((s) => s.querySelector<HTMLElement>('[data-count]'));
-      const n = segs.length;
-
-      // broj se pojavi kad ga kota dosegne; odbrojava se samo ako ima data-count
-      const count = (tl: gsap.core.Timeline, i: number, t: number) => {
-        tl.to(nums[i], { opacity: 1, duration: 0.2, ease: 'none' }, t);
-        const el = counters[i];
-        if (!el) return;
-        const target = Math.round(parseFloat(el.dataset.count ?? '0'));
-        const o = { v: 0 };
-        tl.to(
-          o,
-          {
-            v: target,
-            duration: 1.1,
-            ease: 'draft',
-            snap: { v: 1 },
-            onStart: () => (el.textContent = fmt(0)),
-            onUpdate: () => (el.textContent = fmt(o.v)),
-            onComplete: () => (el.textContent = fmt(target)),
-          },
-          t,
-        );
-      };
-      const prep = () => {
-        gsap.set(lines, { scaleX: 0 });
-        gsap.set([...ticksL, ...ticksR], { scale: 0, opacity: 1, transformOrigin: '50% 50%' });
-        gsap.set(nums, { opacity: 0 });
-      };
-
-      const mm = gsap.matchMedia();
-
-      // desktop: jedna lančana kota s lijeva na desno, crtice na svakom odmjeru
-      mm.add('(min-width: 48rem)', () => {
-        prep();
-        const D = 0.9;
-        const proxy = { p: 0 };
-        const tl = gsap.timeline({ paused: true });
-        tl.to(
-          proxy,
-          {
-            p: 1,
-            duration: D,
-            ease: 'draft',
-            onUpdate: () => lines.forEach((l, i) => gsap.set(l, { scaleX: gsap.utils.clamp(0, 1, proxy.p * n - i) })),
-          },
-          0,
-        );
-        for (let j = 0; j <= n; j++) {
-          const tick = j === 0 ? ticksL[0] : ticksR[j - 1];
-          tl.to(tick, { scale: 1, duration: 0.22, ease: 'press' }, Math.max(0, D * at(j / n) - 0.03));
-        }
-        for (let i = 0; i < n; i++) count(tl, i, D * at(i / n) + 0.08);
-        ScrollTrigger.create({ trigger: root, start: 'top 85%', once: true, onEnter: () => tl.play() });
-      });
-
-      // mobitel: svaka ćelija svoju malu kotu, u nizu
-      mm.add('(max-width: 47.99rem)', () => {
-        prep();
-        const tl = gsap.timeline({ paused: true });
-        segs.forEach((_, i) => {
-          const t = i * 0.18;
-          tl.to(ticksL[i], { scale: 1, duration: 0.2, ease: 'press' }, t);
-          tl.to(lines[i], { scaleX: 1, duration: 0.6, ease: 'draft' }, t);
-          tl.to(ticksR[i], { scale: 1, duration: 0.2, ease: 'press' }, t + 0.56);
-          count(tl, i, t + 0.1);
-        });
-        ScrollTrigger.create({ trigger: root, start: 'top 88%', once: true, onEnter: () => tl.play() });
-      });
-
-      root.setAttribute('data-ready', '');
-    });
-  }
+  import { motionOn } from '@/lib/motion';
 
   /* ── niz recenzija ───────────────────────────────────────── */
   function initRail(root: HTMLElement) {
@@ -500,6 +254,5 @@ const isRating = (s: (typeof stats)[number]) => /ocjena/i.test(s.label);
     update();
   }
 
-  initKota();
   document.querySelectorAll<HTMLElement>('[data-reviews]').forEach(initRail);
 </script>

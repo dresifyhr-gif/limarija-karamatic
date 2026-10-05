@@ -90,14 +90,14 @@ const f = (name: string) => `${id}-${name}`;
             <H id={f('h1')} class="rn-h" tabindex="-1" data-rn-heading>Što treba?</H>
             <p class="rn-lead">Odaberite jedno. Detalje dogovaramo na krovu.</p>
           </div>
-          <div class="rn-chips grid gap-2 @[30rem]/rn:grid-cols-2" data-rn-group="vrsta">
+          <div class="rn-chips grid gap-2 @[17rem]/rn:grid-cols-2" data-rn-group="vrsta">
             {
               jobs.map((j) => (
                 <label
                   class:list={[
                     'rn-chip',
                     j.id === 'hitno' && 'rn-chip-urgent',
-                    j.id === 'hitno' && regularCount % 2 === 0 && '@[30rem]/rn:col-span-2',
+                    j.id === 'hitno' && regularCount % 2 === 0 && '@[17rem]/rn:col-span-2',
                   ]}
                 >
                   <input

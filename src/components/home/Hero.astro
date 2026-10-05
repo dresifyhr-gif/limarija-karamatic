@@ -26,16 +26,15 @@ import { site, telHref, waHref } from '@/data/site';
     <div class="hx-copy order-2 flex flex-col lg:order-1">
       <h1 id="vrh-naslov" class="order-1">
         <span class="hx-kw eyebrow block text-celik">
-          <span class="whitespace-nowrap">Limarija Karamatić</span><span class="hx-sep">&nbsp;· </span><span
-            class="whitespace-nowrap">limeni krovovi, opšavi i oluci</span
-          ><span class="hx-sep">&nbsp;· </span><span class="whitespace-nowrap">{site.area}</span>
+          <span class="sr-only">Limarija Karamatić · </span><span class="hx-kw-seg">limeni krovovi, opšavi i oluci</span
+          ><span class="hx-sep">&nbsp;· </span><span class="hx-kw-seg">{site.area}</span>
         </span>
         <span class="hx-display type-display mt-3 block text-white sm:mt-5 lg:mt-6">
           Sedam puta mjerimo.<br /> Jednom savijemo.
         </span>
       </h1>
 
-      <p class="hx-sub order-3 mt-5 max-w-[34rem] text-[1.0625rem] leading-relaxed text-pretty text-celik sm:text-lg md:mt-6 lg:order-2">
+      <p class="hx-sub order-5 mt-5 max-w-[34rem] text-[1.0625rem] leading-relaxed text-pretty text-celik sm:text-lg md:mt-6 lg:order-2">
         Limeni i falcani krovovi, popravci, opšavi atika i dimnjaka, oluci i snjegobrani&nbsp;— sve krojeno i
         savijeno po mjeri vašeg krova.
       </p>
@@ -60,7 +59,7 @@ import { site, telHref, waHref } from '@/data/site';
           variant="whatsapp"
           size="lg"
           icon="whatsapp"
-          class="hx-cta-wa order-4 mt-3 w-full md:order-none md:mt-0"
+          class="hx-cta-wa order-3 mt-3 w-full md:order-none md:mt-0"
         >
           Pošaljite slike
         </Button>
@@ -70,7 +69,7 @@ import { site, telHref, waHref } from '@/data/site';
         </a>
       </div>
 
-      <ul class="hx-trust order-5 mt-9 md:mt-10" aria-label="Što dobivate">
+      <ul class="hx-trust order-6 mt-9 md:mt-10" aria-label="Što dobivate">
         <li>
           <span class="hx-trust-i" aria-hidden="true"><Icon name="ruler" size={18} /></span>
           <span class="hx-trust-l">Besplatna procjena na terenu</span>
@@ -121,7 +120,18 @@ import { site, telHref, waHref } from '@/data/site';
     line-height: 1.55;
     text-wrap: balance;
   }
-  /* 360 px: dva retka (lom samo na separatorima), da primarni CTA ostane iznad donje trake */
+  .hx-kw-seg {
+    white-space: nowrap;
+  }
+  /* mobitel i uski lg stupac: dva čista retka, bez točke koja visi na kraju retka */
+  @media (width < 48rem), (width >= 64rem) and (width < 80rem) {
+    .hx-kw-seg {
+      display: block;
+    }
+    .hx-kw .hx-sep {
+      display: none;
+    }
+  }
   @media (width < 24rem) {
     .hx-kw {
       letter-spacing: 0.05em;
@@ -176,7 +186,15 @@ import { site, telHref, waHref } from '@/data/site';
 
   /* ── jamstva: tri ćelije kao zaglavlje nacrta ──────────────── */
   .hx-trust {
-    display: grid;
+    display: none;
+  }
+  /* jamstva tek od md — na mobitelu ih ponavljaju Kako radimo i završna forma */
+  @media (width >= 48rem) {
+    .hx-trust {
+      display: grid;
+    }
+  }
+  .hx-trust {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     border-top: 1px solid rgb(213 219 223 / 0.14);
   }
@@ -253,13 +271,12 @@ import { site, telHref, waHref } from '@/data/site';
     color: var(--color-linija);
   }
   @media (width < 40rem) {
-    .hx-readout-k,
-    .hx-sheetid {
+    .hx-readout-k {
       display: none;
     }
-    .hx-replay {
-      margin-left: auto;
-    }
+  }
+  .hx-replay {
+    margin-left: auto;
   }
   .hx-readout-k {
     color: var(--color-celik);
@@ -273,10 +290,6 @@ import { site, telHref, waHref } from '@/data/site';
     vertical-align: middle;
     background: currentColor;
     opacity: 0.5;
-  }
-  .hx-sheetid {
-    margin-left: auto;
-    white-space: nowrap;
   }
   .hx-replay {
     display: inline-flex;

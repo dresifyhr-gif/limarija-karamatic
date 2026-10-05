@@ -2,7 +2,7 @@
 /**
  * Mobilni "dok" (< lg): plutajuća pločica 12 px od rubova, 56 px visoka.
  *   [ WhatsApp ]  [ Besplatna procjena  → ]
- * Lijevo kvadrat 56 × 56 s WhatsApp znakom (samo ikona), desno crveni gumb do kraja.
+ * Lijevo kvadrat 56 × 56: zelena WhatsApp tipka (samo ikona), desno crveni gumb do kraja.
  * Grafit 92 % + blur, tanka linija (linija/12), rubovi ≤ 4 px, gore suptilni odsjaj.
  *
  * Pojavljuje se tek kad glavni CTA heroja izađe iz ekrana (IntersectionObserver).
@@ -126,7 +126,7 @@ import { waHref } from '@/data/site';
     place-items: center;
     width: calc(var(--h) - 2px);
     height: 100%;
-    color: var(--color-whatsapp);
+    color: #06290f;
     -webkit-tap-highlight-color: transparent;
   }
   .kr-dock__key {
@@ -135,16 +135,19 @@ import { waHref } from '@/data/site';
     width: calc(var(--h) - 2px - var(--pad) * 2);
     height: calc(var(--h) - 2px - var(--pad) * 2);
     border-radius: 2px;
-    background: rgb(37 211 102 / 0.1);
-    box-shadow: inset 0 0 0 1px rgb(37 211 102 / 0.28);
+    /* puna WhatsApp zelena, tamni znak — isto kao svaki "Pošaljite slike" gumb na stranici */
+    background: var(--color-whatsapp);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
     transition:
       background-color 150ms var(--ease-press),
       box-shadow 150ms var(--ease-press),
       transform 150ms var(--ease-press);
   }
+  .kr-dock__wa:hover .kr-dock__key {
+    filter: brightness(0.95);
+  }
   .kr-dock__wa:active .kr-dock__key {
-    background: rgb(37 211 102 / 0.16);
-    box-shadow: inset 0 0 0 1px rgb(37 211 102 / 0.45);
+    filter: brightness(0.92);
     transform: translateY(1px);
   }
   .kr-dock__wa:focus-visible {

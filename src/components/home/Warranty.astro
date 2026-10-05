@@ -7,7 +7,7 @@
  *  cta?    gumb "Besplatna procjena" ispod tablice (default true; /procjena + data-quote-link)
  * Tablica iz site.ts → standard[] (podaci su potvrđeni, bez oznaka nepotvrđenosti).
  * Red s highlight (jamstvo): crvena "rukom" povučena elipsa (DrawSVG, draft) + mali Λ pečat (press).
- * Zaglavlje i redovi dijele iste stupce (CSS grid) pa se sve okomite linije poklapaju.
+ * Bez zaglavlja crteža i bez broja pozicije (manje sitnih oznaka): stavka (sans, prigušeno) · izvedba.
  * Mobitel: oznaka iznad vrijednosti; ARIA uloge čuvaju semantiku tablice.
  * Raspored: do xl naslov iznad tablice (tablica treba punu širinu), od xl naslov lijevo 4/12.
  */
@@ -39,34 +39,18 @@ const { id = 'jamstvo', class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32'
 
     <div class="min-w-0 xl:col-span-8">
       <div class="tb border border-tinta" data-reveal>
-        <!-- zaglavlje crteža -->
-        <div class="tb-head">
-          <div class="tb-cell tb-h-izv">
-            <p class="tb-cap">Izvođač</p>
-            <p class="tb-title">Limarija Karamatić</p>
-          </div>
-          <div class="tb-cell tb-h-naz">
-            <p class="tb-cap">Naziv</p>
-            <p class="tb-title">Standard izvedbe</p>
-          </div>
-        </div>
-
         <table class="tb-table" role="table">
           <caption class="sr-only">Standard izvedbe i jamstvo</caption>
           <thead class="tb-thead" role="rowgroup">
             <tr role="row" class="tb-row">
-              <th scope="col" role="columnheader" class="tb-poz">Poz.</th>
               <th scope="col" role="columnheader" class="tb-k">Stavka</th>
               <th scope="col" role="columnheader" class="tb-v">Izvedba</th>
             </tr>
           </thead>
           <tbody role="rowgroup">
             {
-              rows.map((r, i) => (
+              rows.map((r) => (
                 <tr role="row" class:list={['tb-row', r.highlight && 'tb-row--hl']}>
-                  <td role="cell" class="tb-poz tabular-nums">
-                    {String(i + 1).padStart(2, '0')}
-                  </td>
                   <th scope="row" role="rowheader" class="tb-k">
                     <span>{r.k}</span>
                   </th>
@@ -127,61 +111,13 @@ const { id = 'jamstvo', class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32'
   .tb {
     position: relative;
     --line: 1px solid var(--color-tinta);
-    --cols: 2.75rem minmax(0, 1fr) 5.5rem;
+    --cols: minmax(0, 1fr);
     background: rgb(255 255 255 / 0.32);
   }
   @media (width >= 40rem) {
     .tb {
-      --cols: 3.5rem minmax(10rem, 14.5rem) minmax(0, 1fr) 6.5rem;
+      --cols: minmax(10rem, 15rem) minmax(0, 1fr);
     }
-  }
-
-  /* ── zaglavlje ── */
-  .tb-head {
-    display: grid;
-    grid-template-columns: var(--cols);
-  }
-  .tb-cell {
-    padding: 0.875rem 1rem 1rem;
-  }
-  .tb-h-izv {
-    grid-column: 1 / -1;
-    border-bottom: var(--line);
-  }
-  .tb-h-naz {
-    grid-column: 1 / -1;
-  }
-  @media (width >= 40rem) {
-    .tb-cell {
-      padding: 1rem 1.25rem 1.125rem;
-    }
-    .tb-h-izv {
-      grid-column: 1 / 3;
-      border-bottom: 0;
-    }
-    .tb-h-naz {
-      grid-column: 3 / -1;
-      border-left: var(--line);
-    }
-  }
-  .tb-cap {
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    line-height: 0.875rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgb(21 24 27 / 0.72);
-  }
-  .tb-title {
-    margin-top: 0.375rem;
-    font-stretch: 125%;
-    font-weight: 800;
-    font-size: 0.9375rem;
-    line-height: 1.2;
-    letter-spacing: 0.005em;
-    text-transform: uppercase;
-    padding-top: 0.06em;
-    white-space: nowrap;
   }
 
   /* ── tablica ── */
@@ -193,13 +129,15 @@ const { id = 'jamstvo', class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32'
   .tb-row {
     display: grid;
     grid-template-columns: var(--cols);
-    border-top: var(--line);
+  }
+  .tb-row + .tb-row {
+    border-top: 1px solid rgb(21 24 27 / 0.14);
   }
   .tb-row > * {
     text-align: left;
     font-weight: inherit;
   }
-  /* zaglavlje stupaca: na mobitelu samo za čitače ekrana.
+  /* zaglavlje stupaca: samo za čitače ekrana (manje sitnih oznaka).
      Specifičnost 0,2,0 — mora pobijediti blok pravila iznad, inače je thead širok 100 %
      viewporta i proširi stranicu (horizontalni scroll, mobilna traka ispadne s ekrana). */
   .tb-table .tb-thead {
@@ -213,29 +151,13 @@ const { id = 'jamstvo', class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32'
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .tb-poz {
-    grid-row: 1 / span 2;
-    padding-top: 0.9375rem;
-    text-align: center !important;
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    line-height: 1rem;
-    letter-spacing: 0.06em;
-    color: rgb(21 24 27 / 0.72);
-    border-right: var(--line);
-  }
   .tb-k {
-    grid-column: 2 / -1;
     padding: 0.9375rem 1rem 0;
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    line-height: 1rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgb(21 24 27 / 0.76);
+    font-size: 0.9375rem;
+    line-height: 1.35;
+    color: rgb(21 24 27 / 0.7);
   }
   .tb-v {
-    grid-column: 2 / -1;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -255,42 +177,13 @@ const { id = 'jamstvo', class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32'
   }
 
   @media (width >= 40rem) {
-    .tb-table .tb-thead {
-      position: static;
-      width: 100%;
-      height: auto;
-      overflow: visible;
-      clip-path: none;
-      white-space: normal;
-    }
-    .tb-thead .tb-row > * {
-      padding-block: 0.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.625rem;
-      line-height: 0.875rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: rgb(21 24 27 / 0.72);
-      background: rgb(21 24 27 / 0.04);
-      min-height: 0;
-    }
-    .tb-poz {
-      grid-row: auto;
-      padding-top: 0;
-      align-self: stretch;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
     .tb-k {
-      grid-column: 2;
       display: flex;
       align-items: center;
       padding: 1rem 1.25rem;
-      border-right: var(--line);
+      border-right: 1px solid rgb(21 24 27 / 0.14);
     }
     .tb-v {
-      grid-column: 3 / -1;
       padding: 1rem 1.25rem;
       min-height: 3.5rem;
     }

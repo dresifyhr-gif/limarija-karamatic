@@ -358,9 +358,9 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
       if (no) {
         root.querySelectorAll<HTMLElement>('[data-hv-no]').forEach((el) => (el.textContent = no));
         if (wa) {
-          const url = new URL(wa.href);
-          url.searchParams.set('text', `Pozdrav, šaljem slike krova uz upit #KR-${no}.`);
-          wa.href = url.toString();
+          // encodeURIComponent (ne URLSearchParams): razmak mora biti %20, ne "+"
+          const text = `Pozdrav, šaljem slike krova uz upit #KR-${no}.`;
+          wa.href = `${wa.href.split('?')[0]}?text=${encodeURIComponent(text)}`;
         }
         document.title = `Upit KR-${no} je primljen | Limarija Karamatić`;
       }

@@ -1,7 +1,7 @@
 ---
 /**
  * /usluge — SEO hub svih usluga (nav "Usluge"). Sve sekcije su SVIJETLE.
- * Ritam: hero (papir + mreža, kompaktan; desno tihi popis = sidra na kartice) →
+ * Ritam: hero (papir + mreža, kompaktan) →
  *        katalog 6 usluga (bijela) → procjena: FinalCta → footer.
  * Kartica (isti jezik kao naslovnica): fotografija 4:3 (data-scan), mala papirna pločica s presjekom
  * profila preko kuta fotografije (savije se pri ulasku / hoveru), naslov, jedan red opisa.
@@ -44,22 +44,7 @@ const listSchema = {
     lead="Od cijelog novog krova do jednog opšava uz dimnjak. Lim krojimo i savijamo po mjeri vašeg krova, a ne po katalogu."
     crumbs={crumbs}
     compact
-  >
-    <nav slot="aside" class="hb-index" aria-label="Popis usluga">
-      <ol>
-        {
-          services.map((s) => (
-            <li>
-              <a href={`#${s.slug}`}>
-                <span>{s.title}</span>
-                <Icon name="arrow-right" size={16} class="hb-index-a rotate-90" />
-              </a>
-            </li>
-          ))
-        }
-      </ol>
-    </nav>
-  </PageHero>
+  />
 
   <section id="popis" class="bg-white py-24 text-tinta sm:py-28 lg:py-32" aria-labelledby="popis-naslov">
     <div class="wrap">
@@ -112,45 +97,6 @@ const listSchema = {
 </Base>
 
 <style>
-  /* ── hero: tihi popis usluga (sidra), samo na desktopu ── */
-  .hb-index {
-    display: none;
-  }
-  @media (width >= 64rem) {
-    .hb-index {
-      display: block;
-      width: 100%;
-      max-width: 24rem;
-      margin-left: auto;
-      border-top: 1px solid rgb(21 24 27 / 0.16);
-    }
-  }
-  .hb-index li {
-    border-bottom: 1px solid rgb(21 24 27 / 0.1);
-  }
-  .hb-index a {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    min-height: 2.75rem;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: rgb(21 24 27 / 0.85);
-    transition: color 150ms var(--ease-press);
-  }
-  .hb-index a:hover {
-    color: var(--color-tinta);
-  }
-  .hb-index :global(.hb-index-a) {
-    color: rgb(21 24 27 / 0.45);
-    transition: transform 150ms var(--ease-press);
-  }
-  .hb-index a:hover :global(.hb-index-a) {
-    transform: rotate(90deg) translateX(2px);
-    color: var(--color-tinta);
-  }
-
   /* ── traka iznad kataloga ── */
   .hb-bar {
     display: flex;

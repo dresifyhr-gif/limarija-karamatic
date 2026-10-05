@@ -4,7 +4,7 @@ Kreativni smjer: **NACRT → LIM** — "Sedam puta mjerimo. Jednom savijemo."
 Cijeli brief: `docs/creative-direction.md` (pročitaj ga prije rada).
 
 Stranica izgleda kao tehnički crtež koji oživi. Crvene linije nacrtaju kuću, abkant (preša)
-s vrhom u obliku crvenog Λ iz loga savije lim, a crtež se otvori u fotografiju pravog krova.
+s vrhom u obliku crvenog Λ iz loga savije lim, a animacija završava na gotovom crtežu krova (bez fotografije).
 Prodaje se **preciznost**, dokazana stvarnim radovima (sav lim je antracit RAL 7016), dok je
 telefon uvijek na jedan dodir. Premium dolazi iz suzdržanosti, brzine i stvarnih radova, ne iz efekata.
 
@@ -49,7 +49,7 @@ Boje (Tailwind): `grafit` #0E1013, `grafit-2` #171A1E, `grafit-3` #22272C, `antr
 `celik` #8A939B, `linija` #D5DBDF, `papir` #EEECE7, `papir-2` #E2DFD8, `tinta` #15181B,
 `crvena` #D7141A (**samo** CTA pozadine, Λ, linija strehe), `crvena-hover`,
 `redline` #FF3B3F (mali crveni tekst/linije na tamnom), `redline-dark` #B80F15 (na svijetlom),
-`whatsapp` #25D366, `viber` #7360F2.
+`whatsapp` #25D366.
 
 Klase:
 
@@ -57,32 +57,33 @@ Klase:
 - `type-wide`: samo širina 125
 - `type-mono`: mono font
 - `eyebrow`: mono oznaka velikim slovima
-- `grid-paper` / `grid-paper-light`: milimetarski papir, **samo** hero, kotna linija, završni CTA i footer
+- `grid-paper` / `grid-paper-light`: milimetarski papir — hero, footer, Kako radimo, PageHero podstranica i završni CTA
 - `wrap`: kontejner, max 88rem, padding 20/32/48
 
 Ease u CSS-u: `ease-[var(--ease-draft)]`, `ease-[var(--ease-press)]`. U GSAP-u: `ease: 'draft'` i `ease: 'press'`.
 
 ## Ritam sekcija naslovnice (id-jevi su fiksni)
 
+Manje buke (povratna informacija klijenta): 8 sekcija. Tamno je SAMO zaglavlje + traka, hero, footer i mobilni dock/izbornik;
+sve ostale sekcije na svim stranicama su svijetle (papir / bijela / papir-2).
+
 | # | Komponenta | id | Pozadina |
 |---|---|---|---|
-| 1 | Hero | `vrh` | grafit + grid-paper |
-| 2 | ProofStrip ("Kotna linija") | `dokazi` | grafit (grid-paper) |
-| 3 | Services | `usluge` | papir (svijetlo) |
-| 4 | WhatsAppBand | `slike` | antracit |
-| 5 | Projects (Radovi) | `radovi` | grafit |
-| 6 | DetailSignature | `detalj` | papir |
-| 7 | Process (Kako radimo) | `kako-radimo` | grafit |
-| 8 | Warranty (Standard i jamstvo) | `jamstvo` | papir |
-| 9 | Managers (Za upravitelje) | `zgrade` | grafit-2 |
-| 10 | Reviews | `recenzije` | papir |
-| 11 | ServiceArea | `podrucje` | grafit |
-| 12 | Faq | `pitanja` | papir |
-| 13 | FinalCta + RadniNalog | `procjena` | grafit + grid-paper |
-| — | Footer (blok s podacima + veliki znak KARAMATIĆ; telefon/WhatsApp/Viber su u FinalCta) | — | grafit + grid-paper |
+| 1 | Hero (samo crtež, bez fotografije; završava na gotovom crtežu) | `vrh` | grafit + grid-paper |
+| 2 | Services (6 kartica s fotografijom) | `usluge` | papir |
+| 3 | Projects (Radovi, rail) | `radovi` | bijela |
+| 4 | Process (Kako radimo) | `kako-radimo` | papir + grid-paper-light |
+| 5 | Reviews (+ brojke: `ui/StatLine`) | `recenzije` | bijela |
+| 6 | Managers (kompaktna traka) | `zgrade` | papir-2 |
+| 7 | Faq (5 pitanja, `ask={false}`) | `pitanja` | bijela |
+| 8 | FinalCta + RadniNalog (telefon + WhatsApp) | `procjena` | papir + grid-paper-light |
+| — | Footer | — | grafit + grid-paper |
 
-Na svijetlim sekcijama tekst je `text-tinta`, a mutni tekst `text-tinta/60`. Na tamnim je tekst `text-linija`, naslovi `text-white`, a mutni tekst `text-celik`.
-Vertikalni ritam: `py-20 sm:py-28 lg:py-32`. Zaglavlje sekcije radi se preko `SectionHead` (index "02", eyebrow, title, lead, tone).
+DetailSignature živi na /usluge/opsav-atike, Warranty na /o-nama. ProofStrip, WhatsAppBand i ServiceArea su obrisani.
+Poruke idu samo preko WhatsAppa (Viber je uklonjen). Pozicioniranje: `site.area` / `site.areaLine` (nije "samo Zagreb").
+Na svijetlim sekcijama tekst je `text-tinta`, mutni tekst `text-tinta/70`; crvena na svijetlom `redline-dark`.
+Vertikalni ritam punih sekcija: `py-24 sm:py-28 lg:py-32`. Zaglavlje: `SectionHead` (eyebrow, title, lead, tone) — bez brojeva sekcija.
+Jedne brojke na cijeloj stranici: `ui/StatLine.astro` (kota, odbrojavanje, crtanje linije).
 
 ## Pravila pokreta: "lim se savija, ne skakuće"
 
@@ -108,8 +109,8 @@ Vertikalni ritam: `py-20 sm:py-28 lg:py-32`. Zaglavlje sekcije radi se preko `Se
 
 - Hrvatski, prirodno i kratko. Govori se kao majstor koji zna posao, ne kao agencija. Bez "kvalitetno i povoljno".
 - Podatke (kontakt, brojke, usluge, radovi, koraci, FAQ, recenzije, područja) uzimaj iz `src/data/site.ts`.
-  **Ne izmišljaj nove činjenice** (godine, brojke, certifikate, cijene). Nepotvrđeno označi s `<ExampleTag />`.
-- Linkovi: `telHref`, `waHref(text?)`, `viberHref` iz `site.ts`.
+  **Ne izmišljaj nove činjenice** (godine, brojke, certifikate, cijene). Podaci su potvrđeni (nema oznaka "primjer"); recenzije se ne izmišljaju (`reviews` je prazan dok ne stignu stvarne).
+- Linkovi: `telHref`, `waHref(text?)` iz `site.ts` (bez Vibera).
 - Format brojeva: hrvatski, `0,6 mm`, `12 450 mm`, `35°`.
 
 ## Fotografije
@@ -124,8 +125,8 @@ Daj točan `sizes` atribut. Nikad ne učitavaj original bez `Photo`/`Picture`.
 - Ciljevi za dodir moraju biti ≥ 44 px. Fokus mora biti vidljiv. Kontrast mora zadovoljiti AA.
 - Interaktivni elementi trebaju ispravne `aria-*` atribute (accordion, tabovi, forma).
 - Mobile-first. Provjeri na **360/390 px** i na **1440 px**. Nigdje ne smije biti horizontalnog scrolla.
-- Na mobitelu donja CTA traka zauzima oko 64 px, pa sadržaj ne smije ostati skriven ispod nje
-  (footer ima `pb` za to, to radi agent B).
+- Na mobitelu plutajući dock (WhatsApp + Besplatna procjena) zauzima do ~68 px + safe area; pojavi se tek kad
+  glavni CTA heroja izađe iz ekrana, a skriva se na #procjena, footeru, `[data-hide-mobile-cta]` i uz otvoren izbornik.
 
 ## Performanse
 

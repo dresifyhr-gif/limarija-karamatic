@@ -42,7 +42,7 @@ for (const p of [...projects.filter((p) => p.featured), ...projects.filter((p) =
 const btn =
   'grid h-11 w-11 place-items-center border border-tinta/20 text-tinta transition-[border-color,background-color,color,opacity] duration-150 ease-[var(--ease-press)] hover:border-tinta hover:bg-tinta hover:text-white aria-disabled:cursor-default aria-disabled:opacity-30 aria-disabled:hover:border-tinta/20 aria-disabled:hover:bg-transparent aria-disabled:hover:text-tinta';
 const allLink =
-  'group/all inline-flex min-h-11 items-center gap-2 text-[0.9375rem] font-semibold text-tinta underline-offset-4 hover:underline';
+  'group/all min-h-11 items-center gap-2 text-[0.9375rem] font-semibold text-tinta underline-offset-4 hover:underline';
 ---
 
 <section id="radovi" class="bg-white py-24 text-tinta sm:py-28 lg:py-32" data-rail>
@@ -74,7 +74,7 @@ const allLink =
         {
           cards.map(({ project, image }) => (
             <li class="rail-item w-[78vw] max-w-[22rem] shrink-0 text-tinta sm:w-[22rem] lg:w-[26rem] lg:max-w-none">
-              <ProjectCard project={project} image={image} />
+              <ProjectCard project={project} image={image} meta={false} />
             </li>
           ))
         }
@@ -104,7 +104,7 @@ const allLink =
         </button>
       </div>
     </div>
-    <a href="/radovi" class:list={[allLink, 'ml-auto shrink-0 lg:hidden']}>
+    <a href="/radovi" class:list={[allLink, 'ml-auto inline-flex shrink-0 lg:hidden']}>
       Svi radovi
       <Icon name="arrow-right" size={18} class="transition-transform duration-150 group-hover/all:translate-x-0.5" />
     </a>

@@ -1,14 +1,14 @@
 ---
 /**
  * Gumbi. Crvena (primary) je jedina "glasna" boja — koristiti 1× po ekranu.
- *  variant: primary | outline | outline-dark | ghost | whatsapp | viber
+ *  variant: primary | outline | outline-dark | ghost | whatsapp
  *  size: md | lg
  */
 import Icon, { type IconName } from './Icon.astro';
 
 interface Props {
   href?: string;
-  variant?: 'primary' | 'outline' | 'outline-dark' | 'ghost' | 'whatsapp' | 'viber';
+  variant?: 'primary' | 'outline' | 'outline-dark' | 'ghost' | 'whatsapp';
   size?: 'md' | 'lg';
   icon?: IconName;
   iconRight?: IconName;
@@ -39,10 +39,9 @@ const variants = {
   'outline-dark': 'border border-tinta/30 text-tinta hover:border-tinta hover:bg-tinta/5',
   ghost: 'text-linija hover:text-white underline-offset-4 hover:underline',
   whatsapp: 'bg-whatsapp text-[#06290f] hover:brightness-95',
-  viber: 'bg-viber-btn text-white hover:brightness-110',
 };
 const cls = `${base} ${sizes[size]} ${variants[variant]} ${className}`;
-const external = href?.startsWith('http') || href?.startsWith('viber:');
+const external = href?.startsWith('http');
 ---
 
 {

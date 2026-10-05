@@ -1,14 +1,13 @@
 ---
 /**
  * Ikone (inline SVG, currentColor). Linijske ikone 24×24, stroke 1.75.
- * Brend ikone (whatsapp, viber, google) dolaze iz simple-icons.
+ * Brend ikone (whatsapp, google) dolaze iz simple-icons.
  */
-import { siWhatsapp, siViber, siGoogle } from 'simple-icons';
+import { siWhatsapp, siGoogle } from 'simple-icons';
 
 export type IconName =
   | 'phone'
   | 'whatsapp'
-  | 'viber'
   | 'google'
   | 'arrow-right'
   | 'arrow-up-right'
@@ -37,7 +36,6 @@ const { name, class: className = '', size = 20, label } = Astro.props;
 
 const brand: Record<string, string> = {
   whatsapp: siWhatsapp.path,
-  viber: siViber.path,
   google: siGoogle.path,
 };
 

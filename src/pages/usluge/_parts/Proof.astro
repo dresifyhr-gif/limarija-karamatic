@@ -1,8 +1,8 @@
 ---
 /**
  * Kratki dokaz uz formu (papir), bez broja sekcije. Sve vrijednosti dolaze iz site.ts.
- *  - Bez recenzija (reviews = []): samo brojke iz `stats` (godine, krovovi, Google ocjena sa
- *    zvjezdicama, jamstvo) — bez citata, imena i izmišljenog teksta.
+ *  - Bez recenzija (reviews = []): samo brojke iz `stats` kao zajednička kota (ui/StatLine) —
+ *    bez citata, imena i izmišljenog teksta.
  *  - Čim se u site.ts doda stvarna recenzija: ocjena · recenzija (najbliža usluzi) · jamstvo.
  * Poveznica "Recenzije na Googleu" samo kad postoji site.googleReviewsUrl.
  *  slug?   usluga → bira recenziju koja joj najbolje odgovara
@@ -10,6 +10,7 @@
  *          teče u bijela Pitanja ispod; kao zasebna traka npr. "bg-papir py-20 sm:py-24")
  */
 import Icon from '@/components/ui/Icon.astro';
+import StatLine from '@/components/ui/StatLine.astro';
 import { site, stats, type Stat } from '@/data/site';
 import { reviewFor } from './media';
 
@@ -85,28 +86,8 @@ const reviewsHref = site.googleReviewsUrl;
           )}
         </div>
       ) : (
-        <div class="pf-wrap" data-reveal-group>
-          <dl class="pf pf--stats">
-            {stats.map((s) => (
-              <div class="pf-cell" data-reveal>
-                <dt class="pf-note">
-                  {isRating(s) && (
-                    <span class="pf-stars" aria-hidden="true">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Icon name="star" size={14} class={i < Math.round(s.value) ? '' : 'opacity-25'} />
-                      ))}
-                    </span>
-                  )}
-                  <span>{s.label}</span>
-                </dt>
-                <dd class="pf-big type-display">
-                  {s.prefix}
-                  {fmt(s.value, s.decimals ?? 0)}
-                  <span class="pf-unit">{s.suffix?.trim()}</span>
-                </dd>
-              </div>
-            ))}
-          </dl>
+        <div class="pf-wrap">
+          <StatLine heading={false} />
           {reviewsHref && (
             <p class="pf-foot" data-reveal>
               <a href={reviewsHref} class="pf-more" target="_blank" rel="noopener">
@@ -133,39 +114,10 @@ const reviewsHref = site.googleReviewsUrl;
     min-width: 0;
   }
 
-  /* ── brojke (bez recenzija): 2 × 2 → 4 u redu ── */
-  .pf--stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .pf--stats .pf-cell {
-    display: flex;
-    flex-direction: column-reverse;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    padding: 1.5rem 1rem 0.25rem 0;
-  }
-  .pf--stats .pf-cell:nth-child(even) {
-    padding-left: 1.25rem;
-    border-left: 1px solid rgb(21 24 27 / 0.12);
-  }
-  @media (width >= 64rem) {
-    .pf--stats {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-    .pf--stats .pf-cell {
-      padding: 1.75rem 1.5rem 0.25rem;
-    }
-    .pf--stats .pf-cell:first-child {
-      padding-left: 0;
-    }
-    .pf--stats .pf-cell + .pf-cell {
-      border-left: 1px solid rgb(21 24 27 / 0.12);
-    }
-  }
   .pf-foot {
     display: flex;
-    justify-content: flex-end;
-    margin-top: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
   }
 
   /* ── s recenzijom: ocjena · citat · jamstvo ── */

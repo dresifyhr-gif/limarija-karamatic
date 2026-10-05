@@ -2,7 +2,8 @@
 /**
  * Česta pitanja — višekratna sekcija (naslovnica: 5 pitanja preko `items`; podstranice: 3–5).
  * Ugovor: items?: {q,a}[]; tone?: 'light' | 'paper' | 'dark' | 'dark2' (default light); id? (default 'pitanja');
- *         title?; index? (zadržano radi kompatibilnosti); compact?: boolean (default: items ≤ 4).
+ *         title?; index? (zadržano radi kompatibilnosti); compact?: boolean (default: items ≤ 4);
+ *         ask?: boolean (default true) — blok "Niste našli odgovor?"; false kad slijedi FinalCta.
  *
  *  Sve varijante su SVIJETLE (tamno je samo zaglavlje, hero, footer i mobilni dock):
  *   light  bijela (default — sekcija najčešće stoji iznad završne forme na papiru)
@@ -28,8 +29,11 @@ interface Props {
   title?: string;
   index?: string;
   compact?: boolean;
+  /** blok "Niste našli odgovor?" (telefon + WhatsApp). false kad odmah ispod slijedi završna forma
+   *  (FinalCta već nudi telefon i WhatsApp) — default true */
+  ask?: boolean;
 }
-const { items = defaultFaq, tone = 'light', id = 'pitanja', title = 'Pitanja koja čujemo na svakom krovu.' } = Astro.props;
+const { items = defaultFaq, tone = 'light', id = 'pitanja', title = 'Pitanja koja čujemo na svakom krovu.', ask = true } = Astro.props;
 const compact = Astro.props.compact ?? items.length <= 4;
 
 const bg = tone === 'paper' || tone === 'dark' ? 'bg-papir' : tone === 'dark2' ? 'bg-papir-2' : 'bg-white';
@@ -45,7 +49,7 @@ const sectionCls = ['faq text-tinta', bg, compact ? 'faq--compact py-20 sm:py-24
       <div class="contents lg:sticky lg:top-28 lg:block">
         <SectionHead class="faq-head order-1 lg:pr-6" tone="light" eyebrow="Česta pitanja" title={title} />
 
-        <aside class:list={['order-3', compact ? 'lg:mt-10' : 'lg:mt-14']} aria-labelledby={`${id}-ask`} data-reveal>
+        {ask && (<aside class:list={['order-3', compact ? 'lg:mt-10' : 'lg:mt-14']} aria-labelledby={`${id}-ask`} data-reveal>
           <h3 id={`${id}-ask`} class="text-[1.125rem] font-semibold">
             Niste našli odgovor?
           </h3>
@@ -60,7 +64,7 @@ const sectionCls = ['faq text-tinta', bg, compact ? 'faq--compact py-20 sm:py-24
               <span class="faq-u">Pitajte na WhatsAppu</span>
             </a>
           </div>
-        </aside>
+        </aside>)}
       </div>
     </div>
 

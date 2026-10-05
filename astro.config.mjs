@@ -14,5 +14,10 @@ export default defineConfig({
   devToolbar: { enabled: false },
   vite: {
     plugins: [tailwindcss()],
+    // dev: svi GSAP moduli unaprijed u istom paketu — inače Vite tek na /radovi otkrije gsap/Flip,
+    // ponovno optimizira ovisnosti i otvorena stranica dobije 504 (Outdated Optimize Dep)
+    optimizeDeps: {
+      include: ['gsap', 'gsap/ScrollTrigger', 'gsap/DrawSVGPlugin', 'gsap/MorphSVGPlugin', 'gsap/CustomEase', 'gsap/Flip'],
+    },
   },
 });

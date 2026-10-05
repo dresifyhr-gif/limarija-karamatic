@@ -21,9 +21,6 @@
   --color-redline: #ff3b3f;
   --color-redline-dark: #b80f15;
   --color-whatsapp: #25d366;
-  --color-viber: #7360f2;
-  /* pozadina Viber gumba: bijeli tekst ≥ 4,5:1 */
-  --color-viber-btn: #6b57ef;
 
   --font-sans: "Archivo Variable", "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;

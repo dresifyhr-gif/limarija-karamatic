@@ -44,9 +44,14 @@ const crumbs = [homeCrumb, { href: '/usluge', label: 'Usluge' }, { href: `/uslug
 
 /* hero → kartice radova → galerija → sličice: svaka fotografija jednom
    (fotografija iz Detalja je rezervirana, da se ne ponovi u galeriji) */
-const { heroProject, cards, gallery, thumbs } = servicePhotos(service, hasDetail ? [detailPhoto] : []);
+const { heroProject, cards, gallery: allGallery, thumbs } = servicePhotos(service, hasDetail ? [detailPhoto] : []);
+/* manje gužve: galerija + kartice radova zajedno najviše 3 fotografije (kartice imaju prednost) */
+const gallery = allGallery.slice(0, Math.max(0, 3 - cards.length));
 const others = services.filter((s) => s.slug !== service.slug);
 
+/* "Svi radovi": s tri kartice samo tiha poveznica u zaglavlju; s jednom ili dvije pločica sa sličicama
+   popunjava red; bez kartica pločica sa sličicama drugih radova stoji sama */
+const showTile = cards.length < 3;
 /* "Svi radovi" pločica popunjava ostatak zadnjeg reda (sm: 2 stupca, lg: 3) */
 const lgSpan = cards.length % 3 === 0 ? 3 : 3 - (cards.length % 3);
 const smSpan = cards.length % 2 === 0 ? 2 : 1;
@@ -175,11 +180,21 @@ const faqSchema = {
   >
     <div class="wrap">
       <div class:list={[gallery.length > 0 && 'border-t border-tinta/10 pt-16 sm:pt-20']}>
-        <header class="max-w-3xl">
-          <p class="eyebrow mb-4 text-tinta/70" data-reveal>Radovi</p>
-          <h2 id="radovi-naslov" class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.25rem,3.4vw,3rem)]" data-reveal>
-            {cards.length ? (service.relatedTitle ?? 'Već izvedeno.') : 'Pogledajte i druge krovove.'}
-          </h2>
+        <header class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between sm:gap-10">
+          <div class="max-w-3xl">
+            <p class="eyebrow mb-4 text-tinta/70" data-reveal>Radovi</p>
+            <h2 id="radovi-naslov" class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.25rem,3.4vw,3rem)]" data-reveal>
+              {cards.length ? (service.relatedTitle ?? 'Već izvedeno.') : 'Pogledajte i druge krovove.'}
+            </h2>
+          </div>
+          {
+            !showTile && (
+              <a href="/radovi" class="xl-all group/a flex-none" data-reveal>
+                Svi radovi
+                <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/a:translate-x-0.5" />
+              </a>
+            )
+          }
         </header>
 
         <ul class:list={['rad-grid mt-12 sm:mt-14', cards.length > 0 && 'rad-grid--rail']} role="list">
@@ -190,6 +205,7 @@ const faqSchema = {
               </li>
             ))
           }
+          {showTile && (
           <li class:list={['rad-all', `rad-all--lg${lgSpan}`, `rad-all--sm${smSpan}`, cards.length === 0 && 'rad-all--solo']}>
             <div class="rad-all-in">
               <p class="eyebrow text-tinta/70">{radova(projects.length)}</p>
@@ -212,6 +228,7 @@ const faqSchema = {
               </span>
             </div>
           </li>
+          )}
         </ul>
       </div>
     </div>
@@ -227,6 +244,7 @@ const faqSchema = {
     id="pitanja"
     title={service.faqTitle ?? 'Što nas najčešće pitaju.'}
     compact={faqItems.length <= 4}
+    ask={false}
   />
 
   <!-- Procjena (zajednička završna forma, predodabrana usluga) -->

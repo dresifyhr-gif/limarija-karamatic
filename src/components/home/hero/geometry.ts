@@ -226,9 +226,6 @@ const dims = {
   })(),
 };
 
-/* ── pečat ────────────────────────────────────────────────── */
-const stamp = { x: 562, y: 414, r: -6 };
-
 /* ── glint: maska za odsjaj (ploha glavnog krova + krila) ─── */
 const roofClip = path([A, A2, ER2, ER], true) + wingRoof;
 
@@ -266,7 +263,6 @@ export const drawing = {
   ruler,
   rulerLabels,
   dims,
-  stamp,
   roofClip,
   metal: { x1: n(ridge(KB / 2)[0]), y1: n(ridge(KB / 2)[1]), x2: n(eave(KB / 2)[0]), y2: n(eave(KB / 2)[1]) },
   beam: (() => {

@@ -1,19 +1,19 @@
 ---
 /**
- * /kontakt · "Gdje radimo" + kontakt + poveznica za zgrade (bijela, mirna traka).
+ * /kontakt · "Gdje radimo" + poveznica za zgrade (bijela, mirna traka). Telefon/e-pošta su samo u heru.
  * Gdje radimo: jedna rečenica iz site.areaLine — bez karte, krugova i popisa mjesta
  * (ne radimo samo Zagreb: radimo gdje god se posao isplati).
  * Radnje na dodir (WhatsApp, telefon, e-pošta) su u heru (ContactSheet).
  */
 import Icon from '@/components/ui/Icon.astro';
-import { site, telHref } from '@/data/site';
+import { site } from '@/data/site';
 
 /* crtica ostaje na kraju retka, nikad na početku sljedećeg */
 const areaLine = site.areaLine.replace(' — ', '\u00a0— ');
 ---
 
 <section id="podaci" class="bg-white py-24 text-tinta sm:py-28 lg:py-32" aria-labelledby="gdje-radimo">
-  <div class="wrap">
+  <div class="wrap ct-grid">
     <div class="ct-area" data-reveal>
       <p class="eyebrow text-tinta/70">Gdje radimo</p>
       <h2 id="gdje-radimo" class="ct-area-t text-pretty">{areaLine}</h2>
@@ -22,39 +22,33 @@ const areaLine = site.areaLine.replace(' — ', '\u00a0— ');
       </p>
     </div>
 
-    <div class="ct-facts">
-      <div class="ct-fact" data-reveal>
-        <h2 class="ct-h">Kontakt</h2>
-        <dl class="ct-legal mt-5">
-          <div>
-            <dt>Telefon i WhatsApp</dt>
-            <dd class="font-mono tracking-[0.04em]"><a href={telHref}>{site.phoneDisplay}</a></dd>
-          </div>
-          <div>
-            <dt>E-pošta</dt>
-            <dd class="min-w-0 break-all">{site.email}</dd>
-          </div>
-        </dl>
-      </div>
-      <div class="ct-fact" data-reveal>
-        <h2 class="ct-h">Za upravitelje zgrada</h2>
-        <p class="mt-5 max-w-[28rem] text-[1.0625rem] leading-relaxed text-pretty text-tinta/75">
-          Ponuda za suvlasnike, račun na zgradu i fotografije krova prije i poslije radova.
-        </p>
-        <a
-          href="/upravitelji-zgrada"
-          class="mt-4 inline-flex min-h-11 items-center gap-2 font-semibold text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta"
-        >
-          Za zgrade <Icon name="arrow-right" size={18} />
-        </a>
-      </div>
+    <div class="ct-fact" data-reveal>
+      <h2 class="ct-h">Za upravitelje zgrada</h2>
+      <p class="mt-4 max-w-[28rem] text-[1.0625rem] leading-relaxed text-pretty text-tinta/75">
+        Ponuda za suvlasnike, račun na zgradu i fotografije krova prije i poslije radova.
+      </p>
+      <a
+        href="/upravitelji-zgrada"
+        class="mt-4 inline-flex min-h-11 items-center gap-2 font-semibold text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta"
+      >
+        Za zgrade <Icon name="arrow-right" size={18} />
+      </a>
     </div>
   </div>
 </section>
 
 <style>
-  .ct-area {
-    max-width: 52rem;
+  .ct-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3.5rem;
+  }
+  @media (width >= 64rem) {
+    .ct-grid {
+      grid-template-columns: 7fr 5fr;
+      column-gap: 6rem;
+      align-items: end;
+    }
   }
   /* mirna rečenica, ne drugi naslov stranice */
   .ct-area-t {
@@ -70,46 +64,11 @@ const areaLine = site.areaLine.replace(' — ', '\u00a0— ');
       font-size: 2rem;
     }
   }
-  .ct-facts {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 3.5rem;
-    margin-top: 4.5rem;
-  }
-  @media (width >= 48rem) {
-    .ct-facts {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: 4rem;
-    }
-  }
-  @media (width >= 64rem) {
-    .ct-facts {
-      grid-template-columns: 7fr 5fr;
-      column-gap: 6rem;
-      margin-top: 6rem;
-    }
-  }
   .ct-h {
     font-size: 1.5rem;
     line-height: 1.1;
     font-weight: 800;
     font-stretch: 118%;
     letter-spacing: -0.01em;
-  }
-  .ct-legal {
-    border-top: 1px solid rgb(21 24 27 / 0.2);
-  }
-  .ct-legal > div {
-    display: grid;
-    grid-template-columns: 6rem minmax(0, 1fr);
-    gap: 1rem;
-    align-items: baseline;
-    padding: 0.875rem 0;
-    border-bottom: 1px solid rgb(21 24 27 / 0.1);
-    font-size: 1rem;
-  }
-  .ct-legal dt {
-    font-size: 0.875rem;
-    color: rgb(21 24 27 / 0.65);
   }
 </style>

@@ -1,0 +1,288 @@
+---
+/**
+ * StatLine — četiri brojke iz site.ts `stats` kao lančana kota tehničkog crteža.
+ * Jedan dizajn brojki na cijeloj stranici (naslovnica Recenzije, /usluge/* Proof, /o-nama).
+ *
+ *  Pomoćne linije, kotna linija s kosim crticama, broj iznad, opis ispod. Desktop (≥ md) jedna
+ *  neprekinuta kota; mobitel 2 × 2, svaka ćelija svoja mala kota. Pokret (jednom): crveni pravac se
+ *  nacrta ('draft'), crtice "pucnu" ('press'). Odbrojavaju se SAMO cijeli brojevi s "+" (godine,
+ *  krovovi); ocjena i jamstvo samo se pojave. HTML je uvijek u završnom stanju (bez JS-a sve se vidi).
+ *
+ *  heading?  sr-only naslov liste (default "Limarija Karamatić u brojkama"); false = bez naslova
+ *  level?    razina tog naslova (default 3)
+ *  class?    razmaci izvana
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { stats } from '@/data/site';
+
+interface Props {
+  heading?: string | false;
+  level?: 2 | 3;
+  class?: string;
+}
+const { heading = 'Limarija Karamatić u brojkama', level = 3, class: className } = Astro.props;
+const H = level === 2 ? 'h2' : 'h3';
+
+const fmt = (n: number, d = 0) => {
+  const [int, dec] = n.toFixed(d).split('.');
+  const grouped = Math.abs(n) >= 10000 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : int;
+  return dec ? `${grouped},${dec}` : grouped;
+};
+// "+" ostaje uz broj; jedinice (" / 5", " god.") idu sitno — kao mjere na crtežu
+const split = (suffix = '') => {
+  const t = suffix.trim();
+  return t === '+' || t === '%' ? { big: t, unit: '' } : { big: '', unit: t };
+};
+// odbrojava se samo cijeli broj s "+" (15+, 600+)
+const counts = (s: (typeof stats)[number]) => !(s.decimals ?? 0) && (s.suffix ?? '').trim() === '+';
+const isRating = (s: (typeof stats)[number]) => /ocjena/i.test(s.label);
+---
+
+<div class:list={['sl', className]} data-statline>
+  {heading && <H class="sr-only">{heading}</H>}
+  <ul class="grid grid-cols-2 gap-x-6 gap-y-11 md:grid-cols-4 md:gap-x-0">
+    {
+      stats.map((s) => {
+        const { big, unit } = split(s.suffix);
+        const value = fmt(s.value, s.decimals ?? 0);
+        const full = `${s.prefix ?? ''}${value}${big}${unit ? ' ' + unit : ''}`;
+        const stars = Math.round(s.value);
+        return (
+          <li class="sl-seg relative text-center" data-seg>
+            <span class="sr-only">
+              {full} — {s.label}
+            </span>
+            <div class="relative pt-1" aria-hidden="true">
+              <span class="sl-ext sl-ext-l" />
+              <span class="sl-ext sl-ext-r" />
+              <p class="sl-num relative inline-flex items-baseline" data-num>
+                {s.prefix && <span class="type-display">{s.prefix}</span>}
+                <span class="type-display relative tabular-nums">
+                  <span class="invisible">{value}</span>
+                  <span class="absolute inset-0 pt-[0.06em] text-right" data-count={counts(s) ? s.value : undefined}>
+                    {value}
+                  </span>
+                </span>
+                {big && <span class="type-display">{big}</span>}
+                {unit && <span class="sl-unit type-mono ml-1.5 font-medium text-tinta/70">{unit}</span>}
+              </p>
+              <div class="sl-dim relative h-[18px]">
+                <span class="sl-line" data-line />
+                <svg class="sl-tick sl-tick-l" viewBox="0 0 16 16">
+                  <path d="M3 13 13 3" />
+                </svg>
+                <svg class="sl-tick sl-tick-r" viewBox="0 0 16 16">
+                  <path d="M3 13 13 3" />
+                </svg>
+              </div>
+            </div>
+            <p class="sl-label mx-auto mt-4 max-w-[20ch] px-2 text-tinta/70 md:max-w-[24ch]" aria-hidden="true">
+              {isRating(s) && (
+                <span class="mr-2 inline-flex translate-y-[-0.0625rem] gap-0.5 align-middle text-tinta">
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Icon name="star" size={12} class={i < stars ? '' : 'opacity-25'} />
+                  ))}
+                </span>
+              )}
+              {s.label}
+            </p>
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<style>
+  .sl-num {
+    font-size: 2.25rem;
+    color: var(--color-tinta);
+  }
+  .sl-num .type-display {
+    line-height: 1;
+  }
+  .sl-unit {
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  @media (width >= 48rem) {
+    .sl-num {
+      font-size: 2.5rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .sl-num {
+      font-size: 3rem;
+    }
+    .sl-unit {
+      font-size: 0.875rem;
+    }
+  }
+  .sl-label {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+
+  /* pomoćne (odmjerne) linije — od vrha broja do malo ispod kote */
+  .sl-ext {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgb(21 24 27 / 0.16);
+  }
+  .sl-ext-l {
+    left: 0;
+  }
+  .sl-ext-r {
+    right: 0;
+  }
+
+  /* kotna linija (na svijetlom: tamnija crvena) */
+  .sl-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 11px;
+    height: 1px;
+    background: var(--color-redline-dark);
+    transform-origin: 0 50%;
+  }
+  .sl-tick {
+    position: absolute;
+    top: 3.5px;
+    width: 16px;
+    height: 16px;
+    overflow: visible;
+    fill: none;
+    stroke: var(--color-redline-dark);
+    stroke-width: 1.5;
+    stroke-linecap: square;
+  }
+  .sl-tick-l {
+    left: -8px;
+  }
+  .sl-tick-r {
+    right: -8px;
+  }
+  @media (width >= 48rem) {
+    /* lančana kota: susjedne ćelije dijele pomoćnu liniju i crticu */
+    .sl-seg + .sl-seg .sl-ext-l,
+    .sl-seg + .sl-seg .sl-tick-l {
+      display: none;
+    }
+  }
+
+  /* stanje prije animacije — samo dok JS ne preuzme */
+  :global(.motion) [data-statline]:not([data-ready]) .sl-line {
+    transform: scaleX(0);
+  }
+  :global(.motion) [data-statline]:not([data-ready]) .sl-tick,
+  :global(.motion) [data-statline]:not([data-ready]) .sl-num {
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
+
+  const fmt = (n: number) => String(Math.round(n));
+
+  function init() {
+    const roots = document.querySelectorAll<HTMLElement>('[data-statline]:not([data-ready])');
+    if (!motionOn()) {
+      roots.forEach((r) => r.setAttribute('data-ready', ''));
+      return;
+    }
+    const draft = gsap.parseEase('draft');
+    // vrijeme (0–1) u kojem 'draft' dosegne zadani udio — da crtica pukne točno kad linija stigne
+    const at = (y: number) => {
+      for (let t = 0; t <= 1; t += 0.005) if (draft(t) >= y) return t;
+      return 1;
+    };
+
+    roots.forEach((root) => {
+      const segs = Array.from(root.querySelectorAll<HTMLElement>('[data-seg]'));
+      if (!segs.length) return;
+      const lines = segs.map((s) => s.querySelector<HTMLElement>('[data-line]')!);
+      const ticksL = segs.map((s) => s.querySelector<SVGElement>('.sl-tick-l')!);
+      const ticksR = segs.map((s) => s.querySelector<SVGElement>('.sl-tick-r')!);
+      const nums = segs.map((s) => s.querySelector<HTMLElement>('[data-num]')!);
+      const counters = segs.map((s) => s.querySelector<HTMLElement>('[data-count]'));
+      const n = segs.length;
+
+      // broj se pojavi kad ga kota dosegne; odbrojava se samo ako ima data-count
+      const count = (tl: gsap.core.Timeline, i: number, t: number) => {
+        tl.to(nums[i], { opacity: 1, duration: 0.2, ease: 'none' }, t);
+        const el = counters[i];
+        if (!el) return;
+        const target = Math.round(parseFloat(el.dataset.count ?? '0'));
+        const o = { v: 0 };
+        tl.to(
+          o,
+          {
+            v: target,
+            duration: 1.1,
+            ease: 'draft',
+            snap: { v: 1 },
+            onStart: () => (el.textContent = fmt(0)),
+            onUpdate: () => (el.textContent = fmt(o.v)),
+            onComplete: () => (el.textContent = fmt(target)),
+          },
+          t,
+        );
+      };
+      const prep = () => {
+        gsap.set(lines, { scaleX: 0 });
+        gsap.set([...ticksL, ...ticksR], { scale: 0, opacity: 1, transformOrigin: '50% 50%' });
+        gsap.set(nums, { opacity: 0 });
+      };
+
+      const mm = gsap.matchMedia();
+
+      // desktop: jedna lančana kota s lijeva na desno, crtice na svakom odmjeru
+      mm.add('(min-width: 48rem)', () => {
+        prep();
+        const D = 0.9;
+        const proxy = { p: 0 };
+        const tl = gsap.timeline({ paused: true });
+        tl.to(
+          proxy,
+          {
+            p: 1,
+            duration: D,
+            ease: 'draft',
+            onUpdate: () => lines.forEach((l, i) => gsap.set(l, { scaleX: gsap.utils.clamp(0, 1, proxy.p * n - i) })),
+          },
+          0,
+        );
+        for (let j = 0; j <= n; j++) {
+          const tick = j === 0 ? ticksL[0] : ticksR[j - 1];
+          tl.to(tick, { scale: 1, duration: 0.22, ease: 'press' }, Math.max(0, D * at(j / n) - 0.03));
+        }
+        for (let i = 0; i < n; i++) count(tl, i, D * at(i / n) + 0.08);
+        ScrollTrigger.create({ trigger: root, start: 'top 85%', once: true, onEnter: () => tl.play() });
+      });
+
+      // mobitel: svaka ćelija svoju malu kotu, u nizu
+      mm.add('(max-width: 47.99rem)', () => {
+        prep();
+        const tl = gsap.timeline({ paused: true });
+        segs.forEach((_, i) => {
+          const t = i * 0.18;
+          tl.to(ticksL[i], { scale: 1, duration: 0.2, ease: 'press' }, t);
+          tl.to(lines[i], { scaleX: 1, duration: 0.6, ease: 'draft' }, t);
+          tl.to(ticksR[i], { scale: 1, duration: 0.2, ease: 'press' }, t + 0.56);
+          count(tl, i, t + 0.1);
+        });
+        ScrollTrigger.create({ trigger: root, start: 'top 88%', once: true, onEnter: () => tl.play() });
+      });
+
+      root.setAttribute('data-ready', '');
+    });
+  }
+
+  init();
+</script>

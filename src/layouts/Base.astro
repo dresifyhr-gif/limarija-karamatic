@@ -43,7 +43,7 @@ const {
 // kanonski URL bez završne kose crte — isto kao svi interni linkovi
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const canonical = new URL(path, Astro.site);
-// landscape 1200×630 za WhatsApp / Facebook / Viber pregled
+// landscape 1200×630 za WhatsApp / Facebook pregled
 const og = await getImage({ src: image, width: 1200, height: 630, fit: 'cover', position: 'center', format: 'jpg', quality: 72 });
 const ogUrl = new URL(og.src, Astro.site).toString();
 
