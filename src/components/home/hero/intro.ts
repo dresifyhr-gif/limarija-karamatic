@@ -7,7 +7,7 @@
  *           savije u Λ opšav (MorphSVG, 0,22 s), bljesak uz sljeme
  *  1,2–1,9  trake stojećeg falca polažu se slijeva nadesno, bljesak na svakom šavu
  *  1,9–2,4  crvena linija strehe, oluk i vertikala, kapa dimnjaka, snjegobrani
- *  2,4–2,8  jedan odsjaj preko lima, pečat "IZVEDENO" — kraj
+ *  2,4–2,8  jedan odsjaj preko lima — kraj (bez pečata)
  *
  * HTML je uvijek u ZAVRŠNOM stanju (gotov crtež). JS ga vrati na prazan list samo kad je
  * motionOn(), a nakon kraja (ili preskakanja) vrati sve inline stilove — ostaje čisti CSS.
@@ -18,7 +18,7 @@ import { gsap, motionOn } from '@/lib/motion';
 export type IntroMode = 'full' | 'short' | 'none';
 
 const KEY = 'kr-hero-played';
-const PHASES = ['01 · Nacrt', '02 · Savijanje', '03 · Polaganje lima', '04 · Opšav i oluk', '05 · Izvedeno'];
+const PHASES = ['01 · Nacrt', '02 · Savijanje', '03 · Polaganje lima', '04 · Opšav i oluk', '05 · Gotov krov'];
 
 const fmt = (v: number, suffix = '') =>
   Math.round(v)
@@ -43,7 +43,6 @@ export function buildIntro(root: HTMLElement, mode: IntroMode): gsap.core.Timeli
   const beam = one('.hx-beam');
   const flash = one('.hx-flash');
   const glint = one('.hx-glint');
-  const stamp = one('.hx-stamp-in');
   const strips = $<SVGPathElement>('.hx-strip');
   const seams = $<SVGPathElement>('.hx-seam');
   const seamFlash = $<SVGPathElement>('.hx-sf');
@@ -67,7 +66,6 @@ export function buildIntro(root: HTMLElement, mode: IntroMode): gsap.core.Timeli
   gsap.set(beam, { autoAlpha: 1, y: -340 });
   gsap.set(flash, { opacity: 0, drawSVG: '50% 50%' });
   gsap.set(glint, { x: -160 });
-  gsap.set(stamp, { opacity: 0, scale: 1.15, transformOrigin: '50% 50%' });
   gsap.set(progress, { scaleX: 0, transformOrigin: '0% 50%' });
   nums.forEach((el) => (el.textContent = fmt(0, el.dataset.suffix)));
   phase.textContent = PHASES[0];
@@ -152,12 +150,12 @@ export function buildIntro(root: HTMLElement, mode: IntroMode): gsap.core.Timeli
     trimAt + (short ? 0.22 : 0.26),
   );
 
-  /* ── 5 · odsjaj + pečat ──────────────────────────────────── */
+  /* ── 5 · odsjaj ──────────────────────────────────── */
   const doneAt = Math.max(at(2.44), trimAt + (short ? 0.38 : 0.48));
   setPhase(4, doneAt);
   if (!short) tl.to(glint, { x: 900, duration: 0.42 }, doneAt);
-  const stampAt = doneAt + (short ? 0.02 : 0.18);
-  tl.to(stamp, { opacity: 1, scale: 1, duration: 0.22, ease: 'press' }, stampAt);
+  // kratka stanka na gotovom krovu prije kraja trake napretka
+  tl.to({}, { duration: short ? 0.2 : 0.45 }, doneAt);
 
   tl.to(progress, { scaleX: 1, duration: tl.duration(), ease: 'none' }, 0);
   return tl;

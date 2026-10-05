@@ -2,7 +2,7 @@
 /**
  * LIST 01 — tehnički crtež kuće iz loga. U HTML-u je u ZAVRŠNOM stanju
  * (gotov crtež: lim, opšavi, oluk, dimnjak, snjegobrani, kote, pečat); ./intro.ts ga
- * vrati na prazan list i odvrti nacrt → savijanje → polaganje → opšav → izvedeno.
+ * vrati na prazan list i odvrti nacrt → savijanje → polaganje → opšav → gotov krov.
  *
  * Skupine (hooks za JS):
  *  .hx-ink   linije crteža (DrawSVG), .hx-guide crtkane konstrukcijske linije
@@ -10,7 +10,6 @@
  *  .hx-fill  lim, opšavi, oluk, dimnjak, snjegobrani
  *  .hx-beam  greda abkanta s crvenim Λ
  *  .hx-fx    bljeskovi i odsjaj
- *  .hx-stamp pečat "IZVEDENO"
  */
 import { drawing as d } from './geometry';
 ---
@@ -143,11 +142,4 @@ import { drawing as d } from './geometry';
   </g>
 
   <!-- pečat -->
-  <g class="hx-stamp" transform={`translate(${d.stamp.x} ${d.stamp.y}) rotate(${d.stamp.r})`}>
-    <g class="hx-stamp-in">
-      <rect x="-80" y="-23" width="160" height="46" />
-      <rect x="-75" y="-18" width="150" height="36" class="hx-stamp-inner" />
-      <text x="3" y="7.5" text-anchor="middle">IZVEDENO</text>
-    </g>
-  </g>
 </svg>
