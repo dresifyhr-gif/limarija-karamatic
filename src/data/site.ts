@@ -34,13 +34,10 @@ export const SHOW_EXAMPLE_TAGS = false;
 
 export const site = {
   name: 'Limarija Karamatić',
-  legalName: 'Limarija Karamatić', // TODO: puni naziv obrta / d.o.o.
-  oib: '00000000000', // TODO
   tagline: 'Sedam puta mjerimo. Jednom savijemo.',
-  phoneDisplay: '091 000 0000', // TODO: stvarni broj
-  phoneE164: '+385910000000', // TODO
-  whatsapp: '385910000000', // TODO (bez +)
-  viber: '+385910000000', // TODO
+  phoneDisplay: '098 958 8171',
+  phoneE164: '+385989588171',
+  whatsapp: '385989588171', // isti broj (bez +)
   email: 'info@limarija-karamatic.hr', // TODO
   city: 'Zagreb', // TODO: potvrditi sjedište
   area: 'Zagreb i šire',
@@ -55,7 +52,6 @@ export const site = {
 export const telHref = `tel:${site.phoneE164}`;
 export const waHref = (text = 'Pozdrav, trebam procjenu krova. Lokacija: ') =>
   `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`;
-export const viberHref = `viber://chat?number=${encodeURIComponent(site.viber)}`;
 
 /* ── Kotna linija (dokazi) ─────────────────────────────────── */
 export type Stat = {

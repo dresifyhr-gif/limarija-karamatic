@@ -2,7 +2,7 @@
 /**
  * Footer kao "sastavnica" — zaglavlje tehničkog crteža, svedeno na bitno:
  *  1. četiri polja: znak + potpis + područje · Usluge · Stranice · Kontakt (telefon, WhatsApp, e-mail, radno vrijeme)
- *     i jedan tanki red: © · OIB · Privatnost | Mjerilo 1 : 1 | prekidač animacija.
+ *     i jedan tanki red: © · Privatnost | Mjerilo 1 : 1 | prekidač animacija.
  *     Područje je jedan redak (site.area — "Zagreb i šire") s linkom na /kontakt ("Gdje radimo").
  *     Poruke samo preko WhatsAppa (nema Vibera).
  *  2. golemi KARAMATIĆ preko cijele širine kontejnera — na desktopu se "razvije" po osi širine
@@ -29,7 +29,7 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
 ---
 
 <footer class="kr-footer grid-paper relative bg-grafit text-linija" aria-labelledby="kr-footer-title" data-site-footer>
-  <h2 id="kr-footer-title" class="sr-only">Navigacija, kontakt i podaci o tvrtki</h2>
+  <h2 id="kr-footer-title" class="sr-only">Navigacija i kontakt</h2>
 
   <div class="wrap pt-14 sm:pt-20 lg:pt-28">
     <div class="kr-tb grid grid-cols-2 lg:grid-cols-12">
@@ -91,8 +91,7 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
       <!-- tanki red sastavnice -->
       <div class="kr-cell kr-cell--thin col-span-2 lg:col-span-7">
         <p class="kr-fine">
-          <span>© {year} {site.legalName}</span>
-          <span>OIB {site.oib}</span>
+          <span>© {year} {site.name}</span>
           <a href="/privatnost">Privatnost</a>
         </p>
       </div>
@@ -311,7 +310,7 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
     }
   }
 
-  /* © · OIB · Privatnost: dijelovi se lome cijeli, točka nikad na početku retka */
+  /* © · Privatnost: dijelovi se lome cijeli, točka nikad na početku retka */
   .kr-fine {
     display: flex;
     flex-wrap: wrap;

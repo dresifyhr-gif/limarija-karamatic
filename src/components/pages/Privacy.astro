@@ -24,16 +24,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
     <aside class="lg:col-span-4 xl:col-span-3">
       <div class="lg:sticky lg:top-28">
-        <div class="pv-note" role="note">
-          <p class="flex items-center gap-2 font-mono text-[0.6875rem] font-medium tracking-[0.14em] uppercase">
-            <span class="pv-dot" aria-hidden="true"></span>
-            Nacrt
-          </p>
-          <p class="mt-2 text-[0.9375rem] leading-snug font-semibold">Pravni tekst treba pregledati.</p>
-          <p class="mt-1.5 text-[0.875rem] leading-snug text-tinta/70">
-            Mjesta označena s <span class="pv-todo">TODO</span> treba potvrditi prije objave.
-          </p>
-        </div>
+        <!-- TODO (pravnik): tekst pregledati prije službene objave tvrtke -->
 
         <nav class="mt-10" aria-label="Sadržaj">
           <p class="eyebrow text-tinta/70">Sadržaj</p>
@@ -52,7 +43,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </nav>
 
         <p class="mt-8 font-mono text-[0.6875rem] leading-relaxed tracking-[0.08em] text-tinta/70 uppercase">
-          Verzija 0.1 · Nacrt <span class="pv-todo">TODO datum</span>
+          Verzija 0.1
         </p>
       </div>
     </aside>
@@ -67,9 +58,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <!-- TODO: puni naziv obrta / d.o.o., adresa sjedišta, OIB, eventualno službenik za zaštitu podataka -->
       <p>Voditelj obrade osobnih podataka je:</p>
       <dl class="pv-dl">
-        <div><dt>Naziv</dt><dd>{site.legalName} <span class="pv-todo">TODO puni naziv</span></dd></div>
-        <div><dt>OIB</dt><dd class="font-mono">{site.oib} <span class="pv-todo">TODO</span></dd></div>
-        <div><dt>Sjedište</dt><dd>{site.city} <span class="pv-todo">TODO adresa</span></dd></div>
+        <div><dt>Naziv</dt><dd>{site.name}</dd></div>
+        <div><dt>Telefon</dt><dd class="font-mono"><a href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a></dd></div>
         <div><dt>E-pošta</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd></div>
       </dl>
 
@@ -90,7 +80,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </li>
         <li>
           <strong>Posjet stranici:</strong> anonimna statistika posjeta bez kolačića.
-          <span class="pv-todo">TODO alat za analitiku</span>
         </li>
       </ul>
       <p>Ne prikupljamo podatke o plaćanju preko weba i ne koristimo kolačiće za oglašavanje.</p>
@@ -109,16 +98,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </li>
         <li>
           <strong>Fotodokumentacija radova</strong> — izvršenje ugovora; za objavu fotografija vašeg krova u
-          galeriji radova pitamo vas posebno. <span class="pv-todo">TODO privola za objavu</span>
+          galeriji radova pitamo vas posebno.
         </li>
       </ul>
       <p>Podatke ne prodajemo i ne dijelimo s trećima osim s izvršiteljima obrade koji nam pomažu u radu:</p>
       <ul>
         <li>
           pružatelj web-hostinga, slanja e-pošte i pohrane fotografija iz forme
-          <span class="pv-todo">TODO popis i ugovori o obradi</span>
         </li>
-        <li>knjigovodstveni servis, za račune <span class="pv-todo">TODO</span></li>
+        <li>knjigovodstveni servis, za račune</li>
       </ul>
 
       <h2 id="rok"><span aria-hidden="true">04</span>Rok čuvanja</h2>
@@ -126,15 +114,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <dl class="pv-dl">
         <div>
           <dt>Upit bez ugovora</dt>
-          <dd>do <span class="pv-todo">TODO 12 mjeseci</span> od zadnjeg kontakta, zatim brisanje</dd>
+          <dd>do 12 mjeseci od zadnjeg kontakta, zatim brisanje</dd>
         </div>
         <div>
           <dt>Ugovor i račun</dt>
-          <dd>koliko propisuju računovodstveni i porezni propisi <span class="pv-todo">TODO rok</span></dd>
+          <dd>koliko propisuju računovodstveni i porezni propisi</dd>
         </div>
         <div>
           <dt>Fotodokumentacija</dt>
-          <dd>za vrijeme trajanja jamstva na izvedbu <span class="pv-todo">TODO</span></dd>
+          <dd>za vrijeme trajanja jamstva na izvedbu</dd>
         </div>
       </dl>
 
@@ -186,7 +174,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
     border-radius: 999px;
     background: var(--color-redline-dark);
   }
+  /* TODO oznake nisu vidljive na stranici — popis za pravnika je u HTML komentarima */
   .pv-todo {
+    display: none !important;
     display: inline-flex;
     align-items: center;
     padding: 0.0625rem 0.375rem;

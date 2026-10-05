@@ -1,12 +1,12 @@
 ---
 /**
- * /kontakt · "Gdje radimo" + podaci o tvrtki + poveznica za zgrade (bijela, mirna traka).
+ * /kontakt · "Gdje radimo" + kontakt + poveznica za zgrade (bijela, mirna traka).
  * Gdje radimo: jedna rečenica iz site.areaLine — bez karte, krugova i popisa mjesta
  * (ne radimo samo Zagreb: radimo gdje god se posao isplati).
  * Radnje na dodir (WhatsApp, telefon, e-pošta) su u heru (ContactSheet).
  */
 import Icon from '@/components/ui/Icon.astro';
-import { site } from '@/data/site';
+import { site, telHref } from '@/data/site';
 
 /* crtica ostaje na kraju retka, nikad na početku sljedećeg */
 const areaLine = site.areaLine.replace(' — ', '\u00a0— ');
@@ -24,19 +24,11 @@ const areaLine = site.areaLine.replace(' — ', '\u00a0— ');
 
     <div class="ct-facts">
       <div class="ct-fact" data-reveal>
-        <h2 class="ct-h">Podaci o tvrtki</h2>
+        <h2 class="ct-h">Kontakt</h2>
         <dl class="ct-legal mt-5">
           <div>
-            <dt>Naziv</dt>
-            <dd>{site.legalName}</dd>
-          </div>
-          <div>
-            <dt>OIB</dt>
-            <dd class="font-mono tracking-[0.04em]">{site.oib}</dd>
-          </div>
-          <div>
-            <dt>Sjedište</dt>
-            <dd>{site.city}</dd>
+            <dt>Telefon i WhatsApp</dt>
+            <dd class="font-mono tracking-[0.04em]"><a href={telHref}>{site.phoneDisplay}</a></dd>
           </div>
           <div>
             <dt>E-pošta</dt>
