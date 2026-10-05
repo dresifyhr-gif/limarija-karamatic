@@ -1,0 +1,719 @@
+---
+/**
+ * Hero (#vrh) — "NACRT → LIM".
+ * Lijevo: H1 (LCP tekst, nikad animiran), podnaslov, CTA blok, jamstva.
+ * Desno (na mobitelu prvo): list 01 — crtež koji se savije u lim i otvori u pravi krov.
+ * Animacija: src/lib/hero.ts. HTML je uvijek u završnom stanju.
+ * Od lg naviše list je visok koliko stane u prozor (cijeli list s natpisom iznad pregiba).
+ */
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import HeroSheet from './hero/HeroSheet.astro';
+import { site, telHref, waHref } from '@/data/site';
+---
+
+<section id="vrh" class="hx relative overflow-hidden bg-grafit grid-paper" data-hero aria-labelledby="vrh-naslov">
+  <script is:inline>
+    try {
+      if (sessionStorage.getItem('kr-hero-played') === '1') document.documentElement.classList.add('hx-played');
+    } catch (e) {}
+  </script>
+
+  <div
+    class="wrap relative grid grid-cols-[minmax(0,1fr)] items-start gap-y-6 pt-4 pb-14 sm:pt-6 md:gap-y-10 md:pt-8 md:pb-20 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-x-12 lg:pt-10 lg:pb-16 xl:gap-x-16 xl:pt-12 xl:pb-20"
+  >
+    <!-- tekst -->
+    <div class="hx-copy order-2 flex flex-col lg:order-1">
+      <h1 id="vrh-naslov" class="order-1">
+        <span class="hx-kw eyebrow block text-celik">
+          <span class="whitespace-nowrap">Limarija Karamatić</span><span class="hx-sep">&nbsp;· </span><span
+            class="whitespace-nowrap">limeni krovovi, opšavi i oluci</span
+          ><span class="hx-sep">&nbsp;· </span><span class="whitespace-nowrap">Zagreb</span>
+        </span>
+        <span class="hx-display type-display mt-3 block text-white sm:mt-5 lg:mt-6">
+          Sedam puta mjerimo.<br /> Jednom savijemo.
+        </span>
+      </h1>
+
+      <p class="hx-sub order-3 mt-5 max-w-[34rem] text-[1.0625rem] leading-relaxed text-pretty text-celik sm:text-lg md:mt-6 lg:order-2">
+        Limeni i falcani krovovi, popravci, opšavi atika i dimnjaka, oluci i snjegobrani&nbsp;— sve krojeno i
+        savijeno po mjeri vašeg krova. Zagreb i okolica.
+      </p>
+
+      <!-- CTA blok: na mobitelu (contents) primarni ide odmah ispod naslova; od md jedan blok
+           (na tabletu ispred podnaslova, da stane iznad donje trake)
+           (primarni preko cijele širine, ispod dva sekundarna) -->
+      <div class="hx-ctas contents md:order-2 md:mt-8 md:grid md:gap-3 lg:order-3" data-hx-ctas>
+        <Button
+          href="#procjena"
+          variant="primary"
+          size="lg"
+          iconRight="arrow-right"
+          class="hx-cta-main order-2 mt-6 w-full md:order-none md:mt-0"
+        >
+          Besplatna procjena
+        </Button>
+        <div class="order-4 mt-3 flex flex-col gap-3 sm:flex-row md:contents">
+          <Button href={telHref} variant="outline" icon="phone" class="w-full sm:flex-1 md:w-full">
+            Nazovite <span class="type-mono">{site.phoneDisplay}</span>
+          </Button>
+          <Button href={waHref()} variant="whatsapp" icon="whatsapp" class="w-full sm:flex-1 md:w-full">
+            Pošaljite slike
+          </Button>
+        </div>
+      </div>
+
+      <ul class="hx-trust order-5 mt-9 md:mt-10" aria-label="Što dobivate">
+        <li>
+          <span class="hx-trust-i" aria-hidden="true"><Icon name="ruler" size={18} /></span>
+          <span class="hx-trust-l">Besplatna procjena na terenu</span>
+        </li>
+        <li>
+          <span class="hx-trust-i" aria-hidden="true"><Icon name="file" size={18} /></span>
+          <span class="hx-trust-l">Pisana ponuda stavku po stavku</span>
+        </li>
+        <li>
+          <span class="hx-trust-i" aria-hidden="true"><Icon name="clock" size={18} /></span>
+          <span class="hx-trust-l">
+            {site.responseTime}
+            <ExampleTag class="hx-trust-tag" />
+          </span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- list 01 -->
+    <div class="order-1 lg:order-2">
+      <HeroSheet />
+    </div>
+  </div>
+</section>
+
+<script>
+  import { initHeroes } from '@/lib/hero';
+  initHeroes();
+</script>
+
+<style is:global>
+  /* ── tipografija ───────────────────────────────────────────── */
+  .hx-display {
+    font-size: clamp(2.6rem, 10.6vw, 3.6rem);
+    line-height: 0.94;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  @media (width >= 48rem) {
+    .hx-display {
+      font-size: clamp(3.6rem, 8.4vw, 5rem);
+    }
+  }
+  /* lg+: stupac teksta je najviše ~520 px (wrap 88rem), pa veličina staje na 4,4rem */
+  @media (width >= 64rem) {
+    .hx-display {
+      font-size: clamp(2.9rem, 4.95vw, 4.4rem);
+    }
+  }
+  .hx-kw {
+    line-height: 1.55;
+    text-wrap: balance;
+  }
+  /* 360 px: dva retka (lom samo na separatorima), da primarni CTA ostane iznad donje trake */
+  @media (width < 24rem) {
+    .hx-kw {
+      letter-spacing: 0.05em;
+    }
+  }
+  /* crvena samo za CTA, Λ, strehu i kote — separatori su neutralni */
+  .hx-sep {
+    color: var(--color-linija);
+  }
+
+  /* ── CTA blok ─────────────────────────────────────────────── */
+  @media (width >= 48rem) {
+    .hx-ctas {
+      grid-template-columns: auto auto;
+      width: max-content;
+      max-width: 100%;
+    }
+    .hx-ctas .hx-cta-main {
+      grid-column: 1 / -1;
+    }
+  }
+  /* lg: uski stupac — tri gumba iste širine, jedan ispod drugog */
+  @media (width >= 64rem) and (width < 80rem) {
+    .hx-ctas {
+      grid-template-columns: minmax(0, 1fr);
+      width: 100%;
+      max-width: 21.5rem;
+    }
+  }
+
+  /* ── jamstva: tri ćelije kao zaglavlje nacrta ──────────────── */
+  .hx-trust {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid rgb(213 219 223 / 0.14);
+  }
+  .hx-trust li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.9rem 0.9rem 0 0;
+  }
+  .hx-trust li + li {
+    border-left: 1px solid rgb(213 219 223 / 0.14);
+    padding-left: 0.9rem;
+  }
+  .hx-trust-i {
+    display: flex;
+    align-items: center;
+    height: 1.25rem;
+    color: #fff;
+  }
+  .hx-trust-l {
+    color: var(--color-linija);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    text-wrap: pretty;
+  }
+  @media (width >= 40rem) {
+    .hx-trust-l {
+      font-size: 0.875rem;
+    }
+  }
+  .hx-trust-tag {
+    display: table;
+    margin-top: 0.4rem;
+    color: var(--color-celik);
+  }
+
+  /* ── list ─────────────────────────────────────────────────── */
+  /* neprozirni list s vlastitom mrežom; pokrov i veo imaju isti papir (poravnat) */
+  .hx-sheet,
+  .hx-cover,
+  .hx-veil {
+    background-color: #13161a;
+    background-image:
+      linear-gradient(to right, rgb(213 219 223 / 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(213 219 223 / 0.05) 1px, transparent 1px),
+      linear-gradient(to right, rgb(213 219 223 / 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(213 219 223 / 0.02) 1px, transparent 1px);
+    background-size:
+      40px 40px,
+      40px 40px,
+      8px 8px,
+      8px 8px;
+    background-position: -1px -1px;
+  }
+  .hx-sheet {
+    position: relative;
+    margin: 0;
+    border: 1px solid rgb(213 219 223 / 0.16);
+  }
+  .hx-top {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 2.75rem;
+    padding: 0 0.25rem 0 0.875rem;
+    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .hx-readout {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--color-linija);
+  }
+  @media (width < 40rem) {
+    .hx-readout-k,
+    .hx-sheetid {
+      display: none;
+    }
+    .hx-replay {
+      margin-left: auto;
+    }
+  }
+  .hx-readout-k {
+    color: var(--color-celik);
+  }
+  .hx-readout-k::after {
+    content: '';
+    display: inline-block;
+    width: 1rem;
+    height: 1px;
+    margin-left: 0.6rem;
+    vertical-align: middle;
+    background: currentColor;
+    opacity: 0.5;
+  }
+  .hx-sheetid {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .hx-replay {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0 0.7rem;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: var(--color-linija);
+    border-left: 1px solid rgb(213 219 223 / 0.12);
+    transition: color 0.15s var(--ease-press), background-color 0.15s var(--ease-press);
+  }
+  .hx-replay:hover {
+    color: #fff;
+    background: rgb(255 255 255 / 0.05);
+  }
+  .hx-replay:focus-visible {
+    outline-offset: -2px;
+  }
+  .hx-replay[hidden] {
+    display: none;
+  }
+  .hx-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    pointer-events: none;
+  }
+  .hx-progress > span {
+    display: block;
+    height: 100%;
+    background: rgb(213 219 223 / 0.55);
+  }
+
+  /* pozornica: mobitel ~38 % visine, tablet (portret) ~42 %, od lg koliko stane u prozor */
+  .hx-stage {
+    position: relative;
+    overflow: hidden;
+    height: max(13.5rem, calc(38svh - 2.75rem));
+  }
+  @media (width >= 48rem) {
+    .hx-stage {
+      height: clamp(17rem, calc(42svh - 2.75rem), 30rem);
+    }
+  }
+  /* lg/xl: omjer (1:1, xl 1,1:1) kao gornja granica, a visina nikad veća od prozora
+     (zaglavlje 101 px + gornji razmak + traka lista + 24 px zraka). Bez aspect-ratio:
+     max-height bi se kroz omjer prenio na širinu i suzio pozornicu — zato cqi. */
+  @media (width >= 64rem) {
+    .hx-sheet {
+      container-type: inline-size;
+    }
+    .hx-stage {
+      height: max(18rem, min(100cqi, calc(100svh - 13.5rem)));
+    }
+  }
+  @media (width >= 80rem) {
+    .hx-stage {
+      height: max(18rem, min(calc(100cqi / 1.1), calc(100svh - 14rem)));
+    }
+  }
+
+  .hx-photo {
+    position: absolute;
+    inset: 0;
+    background: var(--color-grafit-3);
+  }
+  .hx-photo picture,
+  .hx-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .hx-photo img {
+    object-fit: cover;
+    object-position: 50% 0%;
+  }
+  .hx-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      180deg,
+      rgb(14 16 19 / 0.28) 0%,
+      rgb(14 16 19 / 0.04) 26%,
+      rgb(14 16 19 / 0.08) 60%,
+      rgb(14 16 19 / 0.72) 100%
+    );
+  }
+
+  /* jedna bijela oznaka koja leži na snjegobranu (samo kad je list dovoljno velik) */
+  .hx-note {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: none;
+    pointer-events: none;
+  }
+  @media (width >= 64rem) {
+    .hx-note {
+      display: block;
+    }
+  }
+  .hx-note-l {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+  }
+  .hx-note-dot {
+    fill: #fff;
+  }
+  .hx-note-t {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    fill: #fff;
+    paint-order: stroke;
+    stroke: rgb(14 16 19 / 0.6);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+  }
+  @media (width >= 80rem) {
+    .hx-note-t {
+      font-size: 17px;
+    }
+  }
+
+  /* pokrov lista (samo tijekom uvoda): fotografija ispod je naslikana od prvog kadra */
+  .hx-veil,
+  .hx-cover {
+    position: absolute;
+    inset: 0;
+    display: none;
+    background-position: -1px calc(-1px - 2.75rem);
+  }
+  .motion:not(.hx-played) .hx-sheet:not(.is-live) :is(.hx-cover, .hx-veil),
+  .hx-sheet.is-intro :is(.hx-cover, .hx-veil) {
+    display: block;
+  }
+
+  .hx-drawing {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* zaglavlje lista: samo tijekom crtanja na širokim ekranima; u završnom kadru
+     natpis je jedini sloj preko fotografije */
+  .hx-tb {
+    position: absolute;
+    right: 0.875rem;
+    bottom: 0.875rem;
+    display: none;
+    grid-template-columns: auto auto;
+    border: 1px solid rgb(213 219 223 / 0.22);
+    background: rgb(14 16 19 / 0.82);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .hx-tb > span {
+    padding: 0.32rem 0.6rem;
+    border-top: 1px solid rgb(213 219 223 / 0.14);
+  }
+  .hx-tb > span:nth-child(odd):not(:first-child) {
+    border-left: 1px solid rgb(213 219 223 / 0.14);
+  }
+  .hx-tb-name {
+    grid-column: 1 / -1;
+    border-top: 0 !important;
+    color: var(--color-linija);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+  }
+  @media (width >= 80rem) {
+    .motion:not(.hx-played) .hx-sheet:not(.is-live) .hx-tb,
+    .hx-sheet.is-intro .hx-tb {
+      display: grid;
+    }
+  }
+
+  /* natpis ispod fotografije */
+  .hx-caption-wrap {
+    position: absolute;
+    left: 0.625rem;
+    right: 0.625rem;
+    bottom: 0.625rem;
+    z-index: 3;
+  }
+  @media (width >= 40rem) {
+    .hx-caption-wrap {
+      left: 0.875rem;
+      right: auto;
+      bottom: 0.875rem;
+    }
+  }
+  .hx-caption {
+    display: inline-grid;
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    column-gap: 0.6rem;
+    row-gap: 0.2rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 0.85rem;
+    background: rgb(14 16 19 / 0.84);
+    border: 1px solid rgb(213 219 223 / 0.2);
+    color: #fff;
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    transition: border-color 0.15s var(--ease-press), background-color 0.15s var(--ease-press);
+  }
+  .hx-caption strong {
+    font-weight: 650;
+  }
+  .hx-caption-meta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-linija);
+  }
+  @media (width < 40rem) {
+    .hx-caption {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      font-size: 0.875rem;
+    }
+    .hx-caption-meta {
+      grid-row: 2;
+      font-size: 0.625rem;
+      letter-spacing: 0.03em;
+    }
+    .hx-caption-arrow {
+      grid-row: 1 / 3;
+      grid-column: 2;
+    }
+  }
+  /* 360 px: natpis u dva retka */
+  @media (width < 24rem) {
+    .hx-cap-mat {
+      display: none;
+    }
+  }
+  .hx-caption-arrow {
+    color: #fff;
+    transition: transform 0.15s var(--ease-press);
+  }
+  .hx-caption:hover {
+    border-color: rgb(213 219 223 / 0.5);
+    background: rgb(14 16 19 / 0.94);
+  }
+  .hx-caption:hover .hx-caption-arrow {
+    transform: translateX(3px);
+  }
+
+  /* ── crtež ────────────────────────────────────────────────── */
+  .hx-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    --sw: 1.3;
+    --fs: 13px;
+    --fs-tiny: 9px;
+  }
+  @media (width < 48rem) {
+    .hx-svg {
+      --sw: 2.2;
+      --fs: 22px;
+      --fs-tiny: 15px;
+    }
+  }
+  .hx-l {
+    fill: none;
+    stroke: var(--color-linija);
+    stroke-opacity: 0.8;
+    stroke-width: var(--sw);
+    stroke-linejoin: miter;
+  }
+  .hx-thin {
+    stroke-opacity: 0.32;
+  }
+  .hx-guide {
+    fill: none;
+    stroke: var(--color-linija);
+    stroke-opacity: 0.24;
+    stroke-width: calc(var(--sw) * 0.7);
+  }
+  .hx-dash {
+    stroke-dasharray: 14 5 2 5;
+  }
+  .hx-tiny {
+    font-family: var(--font-mono);
+    font-size: var(--fs-tiny);
+    fill: var(--color-celik);
+    fill-opacity: 0.6;
+  }
+  .hx-hatch {
+    opacity: 1;
+  }
+  .hx-dl {
+    fill: none;
+    stroke: var(--color-redline);
+    stroke-width: calc(var(--sw) * 0.85);
+  }
+  .hx-dot {
+    fill: var(--color-redline);
+  }
+  .hx-dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    fill: var(--color-redline);
+  }
+  .hx-strip,
+  .hx-wingroof {
+    fill: url(#hx-metal);
+  }
+  .hx-seam {
+    fill: none;
+    stroke: #a9b1b7;
+    stroke-opacity: 0.6;
+    stroke-width: calc(var(--sw) * 1.15);
+  }
+  .hx-wingseams {
+    fill: none;
+    stroke: #a9b1b7;
+    stroke-opacity: 0.4;
+    stroke-width: var(--sw);
+  }
+  .hx-bar,
+  .hx-wingband {
+    fill: #383e42;
+    stroke: #79828a;
+    stroke-width: calc(var(--sw) * 0.75);
+    stroke-linejoin: miter;
+  }
+  .hx-chimfill {
+    fill: #1b1f23;
+  }
+  .hx-eave,
+  .hx-red2 {
+    fill: none;
+    stroke: var(--color-crvena);
+    stroke-width: 5;
+    stroke-linejoin: miter;
+  }
+  .hx-gbody {
+    fill: #2e3438;
+    stroke: #8a939b;
+    stroke-width: calc(var(--sw) * 0.75);
+  }
+  .hx-gline {
+    fill: none;
+    stroke: #b3bbc1;
+    stroke-width: calc(var(--sw) * 0.75);
+  }
+  .hx-cap {
+    fill: #383e42;
+    stroke: #8a939b;
+    stroke-width: calc(var(--sw) * 0.75);
+  }
+  .hx-guard {
+    fill: #959ea5;
+    stroke: #c9d0d5;
+    stroke-width: 0.6;
+  }
+  .hx-flash {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 3;
+    opacity: 0;
+  }
+  .hx-sf {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.4;
+    opacity: 0;
+  }
+  .hx-beam-ram {
+    fill: #1b1f23;
+    stroke: var(--color-linija);
+    stroke-opacity: 0.45;
+    stroke-width: var(--sw);
+  }
+  .hx-beam-body {
+    fill: #22272c;
+    stroke: var(--color-linija);
+    stroke-opacity: 0.75;
+    stroke-width: var(--sw);
+  }
+  .hx-beam-lines {
+    fill: none;
+    stroke: var(--color-linija);
+    stroke-opacity: 0.3;
+    stroke-width: var(--sw);
+  }
+  .hx-beam-lambda {
+    fill: none;
+    stroke: var(--color-crvena);
+    stroke-width: 8;
+    stroke-linejoin: miter;
+    stroke-miterlimit: 10;
+  }
+  .hx-stamp rect {
+    fill: none;
+    stroke: var(--color-redline);
+    stroke-width: 2.6;
+  }
+  .hx-stamp .hx-stamp-inner {
+    stroke-width: 1;
+  }
+  .hx-stamp text {
+    font-family: var(--font-mono);
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    fill: var(--color-redline);
+  }
+
+
+  /* ── ZAVRŠNO stanje (HTML, bez JS-a, reduced-motion, ponovni posjet) ──
+     samo fotografija + natpis (+ oznaka na snjegobranu); crtež je ugašen */
+  .hx-fill,
+  .hx-fx,
+  .hx-ink,
+  .hx-ruler,
+  .hx-dash,
+  .hx-dim {
+    opacity: 0;
+  }
+  .hx-beam {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .hx-stamp-in {
+    opacity: 0;
+  }
+
+  /* prije nego JS preuzme: prazan list (bez bljeska gotovog crteža) */
+  .motion:not(.hx-played) .hx-sheet:not(.is-live) .hx-art {
+    visibility: hidden;
+  }
+</style>

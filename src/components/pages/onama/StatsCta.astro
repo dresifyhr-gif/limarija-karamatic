@@ -1,0 +1,169 @@
+---
+/**
+ * /o-nama · "U brojkama" (kotna linija iz `stats`, nepotvrđene → <ExampleTag/>) + završni poziv.
+ * Grafit + milimetarski papir (dopušteno: kotna linija i završni CTA), prelazi u footer.
+ */
+import Button from '@/components/ui/Button.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import { stats, site, telHref } from '@/data/site';
+
+interface Props {
+  index?: string;
+}
+const { index = '04' } = Astro.props;
+
+const fmt = (v: number, d = 0) =>
+  v.toLocaleString('hr-HR', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\./g, ' ');
+---
+
+<section id="brojke" class="relative isolate bg-grafit grid-paper py-20 text-linija sm:py-28 lg:py-32" aria-labelledby="brojke-cta">
+  <div class="wrap">
+    <p class="eyebrow flex items-center gap-3 text-celik" data-reveal>
+      <span class="text-redline" aria-hidden="true">{index}</span>
+      <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+      <span>U brojkama</span>
+    </p>
+
+    <dl class="sc-stats mt-10" data-reveal-group>
+      {
+        stats.map((s) => (
+          <div class="sc-cell" data-reveal>
+            <dt class="sc-label">
+              <span>{s.label}</span>
+              {!s.confirmed && <ExampleTag />}
+            </dt>
+            <dd class="sc-num type-display text-white">
+              {s.prefix}
+              {fmt(s.value, s.decimals)}
+              <span class="sc-suf">{s.suffix}</span>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <div class="mt-20 grid gap-y-10 border-t border-linija/15 pt-14 lg:mt-28 lg:grid-cols-12 lg:items-end lg:gap-x-8 lg:pt-20">
+      <div class="lg:col-span-7">
+        <h2
+          id="brojke-cta"
+          class="type-display text-[2.125rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]"
+          data-reveal
+        >
+          Izmjerit ćemo i vaš krov.
+        </h2>
+        <p class="mt-6 max-w-lg text-lg leading-relaxed text-pretty text-linija" data-reveal>
+          Besplatna procjena na terenu i pisana ponuda stavku po stavku. Bez obveze.
+        </p>
+      </div>
+      <div class="flex flex-col gap-3 min-[30rem]:flex-row min-[30rem]:flex-wrap lg:col-span-5 lg:justify-end" data-reveal>
+        <Button href="/procjena" size="lg" iconRight="arrow-right">Besplatna procjena</Button>
+        <Button href={telHref} variant="outline" size="lg" icon="phone">
+          Nazovite <span class="font-mono tracking-[0.02em]">{site.phoneDisplay}</span>
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* kotna linija: vodoravna crta s kosim zarezima na granicama ćelija */
+  .sc-stats {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 2.5rem;
+    padding-top: 2.25rem;
+  }
+  .sc-stats::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0.4375rem;
+    height: 1px;
+    background: rgb(213 219 223 / 0.3);
+  }
+  @media (width >= 64rem) {
+    .sc-stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .sc-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    gap: 0.875rem;
+    padding-right: 1rem;
+  }
+  /* zarez na lijevom rubu ćelije */
+  .sc-cell::before {
+    content: '';
+    position: absolute;
+    left: -0.4375rem;
+    top: calc(-2.25rem);
+    width: 0.875rem;
+    height: 0.875rem;
+    background: linear-gradient(
+      to top right,
+      transparent calc(50% - 0.75px),
+      var(--color-linija) calc(50% - 0.75px),
+      var(--color-linija) calc(50% + 0.75px),
+      transparent calc(50% + 0.75px)
+    );
+  }
+  .sc-cell::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -1.75rem;
+    height: 1.25rem;
+    width: 1px;
+    background: rgb(213 219 223 / 0.3);
+  }
+  /* na mobitelu drugi red nema crtu iznad — zarezi samo u prvom redu */
+  @media (width < 64rem) {
+    .sc-cell:nth-child(n + 3)::before,
+    .sc-cell:nth-child(n + 3)::after {
+      display: none;
+    }
+    .sc-cell:nth-child(n + 3) {
+      border-top: 1px solid rgb(213 219 223 / 0.12);
+      padding-top: 1.5rem;
+    }
+  }
+  .sc-num {
+    font-size: 2.75rem;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  @media (width >= 40rem) {
+    .sc-num {
+      font-size: 3.75rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .sc-num {
+      font-size: clamp(3.25rem, 4.6vw, 3.75rem);
+    }
+  }
+  .sc-suf {
+    font-size: 0.5em;
+    letter-spacing: 0;
+    color: var(--color-celik);
+  }
+  .sc-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.625rem;
+    max-width: 15rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+</style>

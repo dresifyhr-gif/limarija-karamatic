@@ -1,0 +1,135 @@
+---
+/**
+ * Vektorski wordmark Limarija Karamatić.
+ *
+ *  full    → tanki "LIMARIJA" između dvije sužene linije + teški široki KARAMATIĆ
+ *  compact → samo KARAMATIĆ
+ *  mark    → Λ monogram (sljeme + mali crveni zabat), za favicon, kombi i radnu odjeću
+ *
+ * Λ nije grčko slovo nego SVG glif nacrtan u mjernim jedinicama Archiva:
+ * širina = širina slova A na wdth 125 / wght 900 (0,954 em), visina = visina verzala (0,688 em),
+ * pa sjeda točno na pismovnu liniju i ne mijenja razmak riječi.
+ * Veličina se zadaje font-sizeom (npr. class="text-[24px]").
+ */
+interface Props {
+  variant?: 'full' | 'compact' | 'mark';
+  tone?: 'light' | 'dark';
+  class?: string;
+}
+const { variant = 'full', tone = 'light', class: className = '' } = Astro.props;
+const ink = tone === 'light' ? 'text-white' : 'text-tinta';
+
+/* Λ u jedinicama fonta (1000 upm): baza krakova 285 (malo teže od slova A — crvena optički lakša), vrh 10 jedinica iznad verzala (optička korekcija) */
+const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
+/* Crveni zabat u monogramu: paralelan s unutarnjim rubovima krakova */
+const GABLE = 'M353 688 477 383 601 688Z';
+---
+
+{
+  variant === 'mark' ? (
+    <svg
+      class:list={['kr-mark', ink, className]}
+      viewBox="0 -10 954 698"
+      role="img"
+      aria-label="Limarija Karamatić"
+    >
+      <path d={LAMBDA} fill="currentColor" />
+      <path d={GABLE} class="fill-crvena" />
+    </svg>
+  ) : (
+    <span class:list={['kr-logo', `kr-logo--${variant}`, ink, className]}>
+      <span class="sr-only">Limarija Karamatić</span>
+      {variant === 'full' && (
+        <span class="kr-logo__top" aria-hidden="true">
+          <span class="kr-logo__topin">
+            <span class="kr-logo__rule kr-logo__rule--l" />
+            <span class="kr-logo__sub">Limarija</span>
+            <span class="kr-logo__rule kr-logo__rule--r" />
+          </span>
+        </span>
+      )}
+      {/* bez razmaka između slova i Λ — sve u jednom retku */}
+      <span class="kr-logo__word" aria-hidden="true">KAR<svg class="kr-logo__lam" viewBox="0 0 954 688"><path d={LAMBDA} /></svg>MATIĆ</span>
+    </span>
+  )
+}
+
+<style>
+  .kr-logo {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    font-family: var(--font-sans);
+    line-height: 1;
+    vertical-align: middle;
+  }
+
+  /* Gornji red je u gridu da se u headeru može "presaviti" (grid-template-rows 1fr → 0fr) */
+  .kr-logo__top {
+    display: grid;
+    grid-template-rows: 1fr;
+  }
+  .kr-logo__topin {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    /* linije završavaju točno na tinti K i Ć (bočni razmaci glifova) */
+    padding: 0 0.045em 0.25em 0.074em;
+  }
+  /* sužene linije: span (ne SVG), da ne nose vlastitu intrinzičnu širinu */
+  .kr-logo__rule {
+    display: block;
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0.5em;
+    height: max(0.075em, 1.5px);
+    background: currentColor;
+    opacity: 0.92;
+  }
+  .kr-logo__rule--l {
+    clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  }
+  .kr-logo__rule--r {
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+  .kr-logo__sub {
+    font-size: 0.355em;
+    font-weight: 600;
+    font-stretch: 125%;
+    letter-spacing: 0.46em;
+    margin-right: -0.46em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .kr-logo__word {
+    display: block;
+    font-size: 1em;
+    font-weight: 900;
+    font-stretch: 125%;
+    letter-spacing: 0;
+    /* kutija = visina verzala; kvačica na Ć izlazi iznad, zato nema overflow:hidden */
+    line-height: 0.69;
+    white-space: nowrap;
+    font-kerning: normal;
+  }
+  .kr-logo__lam {
+    display: inline-block;
+    width: 0.954em;
+    height: 0.688em;
+    vertical-align: baseline;
+    overflow: visible;
+    fill: var(--color-crvena);
+  }
+
+  .kr-mark {
+    display: inline-block;
+    height: 1em;
+    width: auto;
+    aspect-ratio: 954 / 698;
+    overflow: visible;
+  }
+</style>

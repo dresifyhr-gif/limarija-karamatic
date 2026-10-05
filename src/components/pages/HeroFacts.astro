@@ -1,0 +1,83 @@
+---
+/**
+ * Traka od tri činjenice za PageHero default slot (lijevi stupac, dno uz fotografiju).
+ * Mobitel: redovi (oznaka lijevo, vrijednost desno). ≥ 40rem: tri stupca s tankim linijama.
+ *  items  { k: oznaka, v: vrijednost, example?: nepotvrđeno → <ExampleTag/> }[]
+ */
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+
+interface Props {
+  items: { k: string; v: string; example?: boolean }[];
+  class?: string;
+}
+const { items, class: className = '' } = Astro.props;
+---
+
+<dl class:list={['hf', className]}>
+  {
+    items.map((it) => (
+      <div>
+        <dt>{it.k}</dt>
+        <dd>
+          {it.v}
+          {it.example && <ExampleTag />}
+        </dd>
+      </div>
+    ))
+  }
+</dl>
+
+<style>
+  .hf {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    border-top: 1px solid rgb(213 219 223 / 0.16);
+  }
+  .hf > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+  }
+  .hf dt {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .hf dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem 0.625rem;
+    font-weight: 600;
+    text-align: right;
+    color: #fff;
+  }
+  @media (width >= 40rem) {
+    .hf {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    }
+    .hf > div {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 0.5rem;
+      padding: 1rem 1.25rem 1.125rem 0;
+      border-bottom: 0;
+    }
+    .hf > div + div {
+      padding-left: 1.25rem;
+      border-left: 1px solid rgb(213 219 223 / 0.12);
+    }
+    .hf dd {
+      justify-content: flex-start;
+      text-align: left;
+    }
+  }
+</style>

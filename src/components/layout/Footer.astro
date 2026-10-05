@@ -1,0 +1,515 @@
+---
+/**
+ * Footer kao "sastavnica" — zaglavlje tehničkog crteža:
+ *  1. tablica polja s mono oznakama (NAZIV, USLUGE, STRANICE, KONTAKT, PODRUČJE, RADNO VRIJEME, PODACI O TVRTKI).
+ *     Veliki telefon i WhatsApp/Viber su u završnom CTA-u (FinalCta), ne ovdje.
+ *  2. golemi KARAMATIĆ preko cijele širine kontejnera — na desktopu se "razvije" po osi širine
+ *     (font-stretch 62 % → 125 %, ScrollTrigger once, ease draft); na mobitelu / reduced statičan.
+ * Mobitel: Usluge | Stranice u dva stupca, popis mjesta u <details>, podaci o tvrtki u jednom retku.
+ * Na < lg ima donji padding za mobilnu CTA traku.
+ */
+import Logo from '@/components/ui/Logo.astro';
+import Icon from '@/components/ui/Icon.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import MotionToggle from './MotionToggle.astro';
+import { site, services, areas, telHref, waHref, viberHref } from '@/data/site';
+
+const year = new Date().getFullYear();
+const pages = [
+  { href: '/radovi', label: 'Radovi' },
+  { href: '/upravitelji-zgrada', label: 'Za upravitelje zgrada' },
+  { href: '/o-nama', label: 'O nama' },
+  { href: '/kontakt', label: 'Kontakt' },
+  { href: '/procjena', label: 'Besplatna procjena', quote: true },
+  { href: '/privatnost', label: 'Privatnost' },
+];
+const hours = site.hours.split(' · ');
+const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
+---
+
+<footer class="kr-footer grid-paper relative bg-grafit text-linija" aria-labelledby="kr-footer-title">
+  <h2 id="kr-footer-title" class="sr-only">Navigacija, kontakt i podaci o tvrtki</h2>
+
+  <div class="wrap pt-10 sm:pt-16 lg:pt-24">
+    <div class="kr-tb grid grid-flow-row-dense grid-cols-2 lg:grid-cols-12">
+      <!-- A1 · Naziv (na mobitelu ga zamjenjuje potpis + golemi KARAMATIĆ ispod tablice) -->
+      <div class="kr-cell col-span-2 hidden sm:block lg:col-span-4">
+        <p class="kr-label"><span>Naziv</span><span aria-hidden="true">A1</span></p>
+        <a href="/" class="inline-block" aria-label={`${site.name} — naslovnica`}>
+          <Logo class="text-[1.625rem] sm:text-[2.125rem]" />
+        </a>
+        <p class="type-display mt-5 text-[1.25rem] leading-[1.1] text-white sm:mt-7 sm:text-2xl lg:text-[1.375rem] xl:text-2xl">
+          Sedam puta mjerimo.<br />Jednom savijemo.
+        </p>
+        <p class="mt-2.5 text-sm text-celik sm:mt-3">Limeni krovovi, opšavi i oluci · {site.city}</p>
+      </div>
+
+      <!-- A2 · Usluge (cilj linka "Izbornik" kad JS ne radi) -->
+      <nav id="navigacija" class="kr-cell col-span-1 lg:col-span-3" aria-labelledby="kr-f-usluge">
+        <p class="kr-label" id="kr-f-usluge"><span>Usluge</span><span aria-hidden="true">A2</span></p>
+        <ul class="kr-links">
+          {
+            services.map((s) => (
+              <li>
+                <a href={`/usluge/${s.slug}`}>{s.title}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <!-- A3 · Stranice -->
+      <nav class="kr-cell col-span-1 lg:col-span-2" aria-labelledby="kr-f-stranice">
+        <p class="kr-label" id="kr-f-stranice"><span>Stranice</span><span aria-hidden="true">A3</span></p>
+        <ul class="kr-links">
+          {
+            pages.map((p) => (
+              <li>
+                <a href={p.href} {...(p.quote ? { 'data-quote-link': '' } : {})}>
+                  {p.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <!-- A4 · Kontakt -->
+      <div class="kr-cell col-span-2 lg:col-span-3">
+        <p class="kr-label"><span>Kontakt</span><span aria-hidden="true">A4</span></p>
+        <ul class="kr-links kr-links--contact">
+          <li>
+            <a href={telHref} class="kr-tel" aria-label={`Nazovite ${site.phoneDisplay}`}>{site.phoneDisplay}</a>
+          </li>
+          <li><a href={waHref()} target="_blank" rel="noopener">WhatsApp</a></li>
+          <li class="kr-viber">
+            <a href={viberHref}>Viber</a>
+            {/* na računalu viber:// bez instalirane aplikacije ne radi ništa: tamo samo podatak */}
+            <span class="kr-viber__fine">Viber: isti broj</span>
+          </li>
+          <li class="kr-mail"><a href={`mailto:${site.email}`}>{site.email}</a></li>
+        </ul>
+      </div>
+
+      <!-- B1 · Područje -->
+      <div class="kr-cell kr-cell--area col-span-1 lg:col-span-4">
+        <p class="kr-label"><span>Područje</span><span aria-hidden="true">B1</span></p>
+        <p class="text-[0.9375rem] leading-snug font-semibold text-white">{site.area}</p>
+        <div class="mt-2 hidden text-sm leading-relaxed text-celik lg:block">
+          <ul class="kr-areas inline">{areas.map((a) => <li>{a}</li>)}</ul>
+          <ExampleTag class="ml-1" />
+        </div>
+        <details class="kr-areas-d lg:hidden">
+          <summary>
+            <span>{areas.length} mjesta</span>
+            <Icon name="plus" size={14} class="kr-areas-d__icon" />
+          </summary>
+          <div class="pb-1 text-sm leading-relaxed text-celik">
+            <ul class="kr-areas inline">{areas.map((a) => <li>{a}</li>)}</ul>
+            <ExampleTag class="ml-1" />
+          </div>
+        </details>
+      </div>
+
+      <!-- B2 · Radno vrijeme -->
+      <div class="kr-cell kr-cell--hours col-span-1 lg:col-span-3">
+        <p class="kr-label"><span>Radno vrijeme</span><span aria-hidden="true">B2</span></p>
+        <ul class="font-mono text-xs leading-6 text-linija sm:text-[0.8125rem] lg:leading-7">
+          {
+            hours.map((h, i) => (
+              <li>
+                {h}
+                {i === hours.length - 1 && <ExampleTag class="ml-1 sm:ml-1.5" />}
+              </li>
+            ))
+          }
+        </ul>
+        <p class="mt-1.5 text-[0.8125rem] leading-snug text-celik sm:mt-2 sm:text-sm">{site.responseTime}</p>
+      </div>
+
+      <!-- B3 · Podaci o tvrtki -->
+      <div class="kr-cell col-span-2 lg:col-span-5">
+        <p class="kr-label"><span>Podaci o tvrtki</span><span aria-hidden="true">B3</span></p>
+        <dl class="kr-dl">
+          <div>
+            <dt>Naziv</dt>
+            <dd>{site.legalName}</dd>
+          </div>
+          <div>
+            <dt>OIB</dt>
+            <dd class="font-mono tracking-[0.04em]">{site.oib} <ExampleTag class="ml-1" /></dd>
+          </div>
+          <div>
+            <dt>Sjedište</dt>
+            <dd>{site.city}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="kr-cell kr-cell--thin col-span-2 lg:col-span-4">
+        <p class="font-mono text-xs leading-5 text-celik">
+          <span class="whitespace-nowrap">© {year} {site.name}</span><span class="hidden sm:inline"
+            ><span aria-hidden="true"> · </span><span class="whitespace-nowrap">Sva prava pridržana</span></span
+          >
+        </p>
+      </div>
+      <div class="kr-cell kr-cell--thin kr-cell--meta col-span-1 lg:col-span-3" aria-hidden="true">
+        <p class="kr-meta"><span>Mjerilo</span><span>1 : 1</span></p>
+      </div>
+      <div class="kr-cell kr-cell--thin kr-cell--meta col-span-1 lg:col-span-2" aria-hidden="true">
+        <p class="kr-meta"><span>List</span><span>01 / 01</span></p>
+      </div>
+      <div class="kr-cell kr-cell--thin col-span-2 !py-0 lg:col-span-3">
+        <MotionToggle />
+      </div>
+    </div>
+
+    <!-- Potpis (samo mobitel; od sm je u polju A1) + golemi wordmark -->
+    <p class="type-display mt-9 text-[1.375rem] leading-[1.1] text-white sm:hidden">
+      Sedam puta mjerimo.<br />Jednom savijemo.
+    </p>
+    <div class="kr-giant-wrap" aria-hidden="true">
+      <p class="kr-giant" data-giant>KAR<svg class="kr-giant__lam" viewBox="0 0 954 688" preserveAspectRatio="none"><path d={LAMBDA} /></svg>MATIĆ</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .kr-footer {
+    /* mjesto za mobilnu CTA traku (64 px + safe area) */
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  @media (width >= 64rem) {
+    .kr-footer {
+      padding-bottom: 0;
+    }
+  }
+
+  /* ── Sastavnica: deblji vanjski okvir, tanke unutarnje linije ── */
+  .kr-tb {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-grafit);
+    border: 1px solid rgb(213 219 223 / 0.3);
+  }
+  .kr-cell {
+    margin: 0 -1px -1px 0;
+    padding: 1rem 1rem 1.125rem;
+    border-right: 1px solid rgb(213 219 223 / 0.12);
+    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    min-width: 0;
+  }
+  .kr-cell--thin {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    padding-block: 0.625rem;
+  }
+  /* Mjerilo i List su ukras — na mobitelu ne troše redak */
+  .kr-cell--meta {
+    display: none;
+  }
+  @media (width >= 40rem) {
+    .kr-cell {
+      padding: 1.25rem 1.25rem 1.5rem;
+    }
+    .kr-cell--meta {
+      display: flex;
+    }
+    .kr-cell--thin {
+      min-height: 3.25rem;
+      padding-block: 0.75rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .kr-cell--thin {
+      padding-block: 0.5rem;
+      min-height: 3.5rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .kr-cell {
+      padding: 1.5rem 1.5rem 1.75rem;
+    }
+  }
+
+  .kr-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.625rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  /* indeks polja (A1–B3) je ukras: aria-hidden, ista čelik boja (AA na grafitu) */
+  .kr-label > span:last-child {
+    letter-spacing: 0.08em;
+  }
+  @media (width >= 40rem) {
+    .kr-label {
+      margin-bottom: 1rem;
+    }
+  }
+
+  .kr-links {
+    display: grid;
+  }
+  .kr-links a,
+  .kr-viber__fine {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-block: 0.375rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
+    color: var(--color-linija);
+    overflow-wrap: anywhere;
+    transition: color 150ms var(--ease-press);
+  }
+  .kr-links a:hover {
+    color: #fff;
+  }
+  @media (width >= 40rem) {
+    .kr-links a,
+    .kr-viber__fine {
+      font-size: 0.9375rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .kr-links a,
+    .kr-viber__fine {
+      min-height: 2rem;
+      padding-block: 0.25rem;
+    }
+  }
+
+  /* Kontakt: na mobitelu telefon · WhatsApp · Viber u jednom retku, e-mail ispod */
+  .kr-links--contact {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 1.5rem;
+  }
+  .kr-mail {
+    flex-basis: 100%;
+  }
+  @media (width >= 64rem) {
+    .kr-links--contact {
+      display: grid;
+    }
+  }
+  .kr-links .kr-tel {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    word-spacing: -0.15em;
+    color: #fff;
+  }
+  .kr-links .kr-tel:hover {
+    color: var(--color-linija);
+  }
+  .kr-viber__fine {
+    display: none;
+    color: var(--color-celik);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .kr-viber > a {
+      display: none;
+    }
+    .kr-viber__fine {
+      display: inline-flex;
+    }
+  }
+
+  /* točka ostaje na kraju retka, nikad na početku */
+  .kr-areas li {
+    display: inline-block;
+    white-space: nowrap;
+  }
+  .kr-areas li:not(:last-child)::after {
+    content: ' ·';
+  }
+  .kr-areas li:not(:last-child) {
+    margin-right: 0.3em;
+  }
+
+  /* Područje na mobitelu: popis mjesta na klik */
+  .kr-areas-d summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-size: 0.875rem;
+    color: var(--color-linija);
+    list-style: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .kr-areas-d summary::-webkit-details-marker {
+    display: none;
+  }
+  .kr-areas-d summary > span {
+    text-decoration: underline;
+    text-decoration-color: rgb(213 219 223 / 0.35);
+    text-underline-offset: 4px;
+  }
+  .kr-areas-d :global(.kr-areas-d__icon) {
+    color: var(--color-celik);
+    transition: transform 180ms var(--ease-press);
+  }
+  .kr-areas-d[open] :global(.kr-areas-d__icon) {
+    transform: rotate(45deg);
+  }
+
+  /* otvoren popis mjesta dobiva punu širinu (radno vrijeme ide ispod, isto puno) */
+  @media (width < 64rem) {
+    .kr-tb:has(.kr-areas-d[open]) :is(.kr-cell--area, .kr-cell--hours) {
+      grid-column: span 2;
+    }
+  }
+
+  /* Podaci o tvrtki: na mobitelu jedan (prelomljeni) redak, od sm tri stupca */
+  .kr-dl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+  }
+  .kr-dl > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .kr-dl dt {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    color: var(--color-celik);
+  }
+  .kr-dl dd {
+    font-size: 0.875rem;
+    color: var(--color-linija);
+    white-space: nowrap;
+  }
+  @media (width >= 40rem) {
+    .kr-dl {
+      gap: 0.75rem 2rem;
+    }
+    .kr-dl > div {
+      display: block;
+    }
+    .kr-dl dd {
+      margin-top: 0.25rem;
+      font-size: 0.9375rem;
+    }
+  }
+
+  .kr-meta {
+    display: flex;
+    width: 100%;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+  .kr-meta > span:first-child {
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .kr-meta > span:last-child {
+    color: var(--color-linija);
+  }
+
+  /* ── Golemi KARAMATIĆ ──
+     Riječ na wdth 125 / wght 900 široka je 7,982 em; tinta počinje 0,074 em od ruba (K)
+     i završava ~0,05 em prije kraja (Ć). Veličina se računa iz širine kontejnera (cqi). */
+  .kr-giant-wrap {
+    container-type: inline-size;
+    padding-top: 0.5rem;
+    padding-bottom: clamp(1.25rem, 2.4vw, 2.25rem);
+  }
+  @media (width >= 40rem) {
+    .kr-giant-wrap {
+      padding-top: clamp(2rem, 6vw, 5rem);
+    }
+  }
+  .kr-giant {
+    --lb: 0.074;
+    --rb: 0.045;
+    font-size: calc(100cqi / (7.982 - var(--lb) - var(--rb)));
+    margin-left: calc(var(--lb) * -1em);
+    padding-top: 0.22em;
+    font-weight: 900;
+    font-stretch: 125%;
+    line-height: 0.69;
+    letter-spacing: 0;
+    white-space: nowrap;
+    color: var(--color-antracit-2);
+    user-select: none;
+  }
+  .kr-giant__lam {
+    display: inline-block;
+    width: 0.954em;
+    height: 0.688em;
+    vertical-align: baseline;
+    overflow: visible;
+    fill: var(--color-crvena);
+  }
+  /* Početno stanje animacije: samo uz .motion i samo na desktopu */
+  @media (width >= 64rem) {
+    :global(html.motion) .kr-giant {
+      font-stretch: 62%;
+    }
+    :global(html.motion) .kr-giant__lam {
+      width: 0.53em;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, motionOn } from '@/lib/motion';
+
+  /* Širina slova A (= širina Λ) u em po osi wdth, izmjereno na Archivo 900: 62 → 0,530 · 100 → 0,778 · 125 → 0,954 */
+  const advance = (w: number) => (w <= 100 ? 0.53 + ((w - 62) * 0.248) / 38 : 0.778 + ((w - 100) * 0.176) / 25);
+
+  function initGiant() {
+    if (!motionOn()) return;
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 64rem)', () => {
+      document.querySelectorAll<HTMLElement>('[data-giant]').forEach((el) => {
+        const lam = el.querySelector<SVGElement>('.kr-giant__lam');
+        const s = { w: 62 };
+        const apply = () => {
+          el.style.fontStretch = `${s.w}%`;
+          if (lam) lam.style.width = `${advance(s.w)}em`;
+        };
+        apply();
+        gsap.to(s, {
+          w: 125,
+          duration: 0.9,
+          ease: 'draft',
+          onUpdate: apply,
+          scrollTrigger: { trigger: el, start: 'top 92%', once: true },
+        });
+      });
+      // izlazak iz desktop upita: vrati statično (CSS) stanje
+      return () =>
+        document.querySelectorAll<HTMLElement>('[data-giant]').forEach((el) => {
+          el.style.fontStretch = '';
+          el.querySelector<SVGElement>('.kr-giant__lam')?.style.removeProperty('width');
+        });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGiant, { once: true });
+  } else {
+    initGiant();
+  }
+</script>

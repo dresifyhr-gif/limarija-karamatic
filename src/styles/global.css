@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Limarija Karamatić — design tokeni
+   Boje: grafit (pozadina), antracit (lim RAL 7016), čelik, papir,
+   crvena iz loga (SAMO CTA, Λ i linija strehe).
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  --color-grafit: #0e1013;
+  --color-grafit-2: #171a1e;
+  --color-grafit-3: #22272c;
+  --color-antracit: #383e42;
+  --color-antracit-2: #4a5156;
+  --color-celik: #8a939b;
+  --color-linija: #d5dbdf;
+  --color-papir: #eeece7;
+  --color-papir-2: #e2dfd8;
+  --color-tinta: #15181b;
+  --color-crvena: #d7141a;
+  --color-crvena-hover: #b80f15;
+  --color-redline: #ff3b3f;
+  --color-redline-dark: #b80f15;
+  --color-whatsapp: #25d366;
+  --color-viber: #7360f2;
+  /* pozadina Viber gumba: bijeli tekst ≥ 4,5:1 */
+  --color-viber-btn: #6b57ef;
+
+  --font-sans: "Archivo Variable", "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Dvije krivulje pokreta: "draft" za linije, "press" za savijanje/pečate */
+  --ease-draft: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-press: cubic-bezier(0.2, 0.9, 0.1, 1);
+
+  --breakpoint-xs: 24rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-grafit);
+    color: var(--color-linija);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5.5rem;
+    color-scheme: dark;
+  }
+  /* fokus i sidra ne smiju završiti ispod mobilne CTA trake */
+  @media (width < 64rem) {
+    html {
+      scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom) + 0.5rem);
+    }
+  }
+  body {
+    font-family: var(--font-sans);
+    font-stretch: 100%;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-crvena);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-redline);
+    outline-offset: 3px;
+  }
+  /* na svijetlim sekcijama tamnija crvena (≥ 3:1) */
+  .bg-papir :focus-visible,
+  .bg-papir-2 :focus-visible,
+  .bg-white :focus-visible {
+    outline-color: var(--color-redline-dark);
+  }
+  img,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+  }
+  button {
+    cursor: pointer;
+  }
+}
+
+/* Naslovni rez: Archivo široki (wdth 125) i težak — prati KARAMATIĆ wordmark */
+@utility type-display {
+  font-family: var(--font-sans);
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 0.95;
+  /* prostor iznad za Č Ć Š Ž Đ kad je tekst maskiran */
+  padding-top: 0.06em;
+}
+
+@utility type-wide {
+  font-stretch: 125%;
+}
+
+/* Kote, specifikacije, broj telefona */
+@utility type-mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* Mala oznaka iznad naslova sekcije: "01 — USLUGE" */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Milimetarski papir — samo hero, kotna linija i footer */
+@utility grid-paper {
+  background-image:
+    linear-gradient(to right, rgb(213 219 223 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(213 219 223 / 0.07) 1px, transparent 1px),
+    linear-gradient(to right, rgb(213 219 223 / 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(213 219 223 / 0.025) 1px, transparent 1px);
+  background-size:
+    40px 40px,
+    40px 40px,
+    8px 8px,
+    8px 8px;
+  background-position: -1px -1px;
+}
+
+@utility grid-paper-light {
+  background-image:
+    linear-gradient(to right, rgb(21 24 27 / 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(21 24 27 / 0.08) 1px, transparent 1px),
+    linear-gradient(to right, rgb(21 24 27 / 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(21 24 27 / 0.03) 1px, transparent 1px);
+  background-size:
+    40px 40px,
+    40px 40px,
+    8px 8px,
+    8px 8px;
+  background-position: -1px -1px;
+}
+
+/* Standardni kontejner */
+@utility wrap {
+  width: 100%;
+  max-width: 88rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 48rem) {
+    padding-inline: 2rem;
+  }
+  @media (width >= 80rem) {
+    padding-inline: 3rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Pokret: <html class="motion"> postavlja inline skripta u <head>
+   (nema reduced-motion, Save-Data ni korisničkog isključivanja).
+   Elementi su u HTML-u u ZAVRŠNOM stanju; skriveni su samo dok
+   .motion vrijedi, a ako JS ne javi spremnost za 3,5 s, klasa
+   se miče i sve je vidljivo.
+   ───────────────────────────────────────────────────────────── */
+.motion [data-reveal]:not([data-revealed]) {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.motion [data-scan]:not([data-revealed]) {
+  clip-path: inset(0 0 100% 0);
+}
+[data-scan] {
+  position: relative;
+}
+[data-scan] > .scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--color-redline);
+  box-shadow: 0 0 12px 1px rgb(255 59 63 / 0.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  will-change: transform;
+}
+/* skenovi koji nisu prvi u nizu: neutralna linija (samo jedna crvena u pokretu) */
+[data-scan] > .scanline.is-neutral {
+  background: rgb(213 219 223 / 0.85);
+  box-shadow: 0 0 10px 1px rgb(213 219 223 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Valoviti rub crijep-lima — razdjelnik sekcija (najviše 2× na stranici) */
+.wave-edge {
+  height: 14px;
+  background-repeat: repeat-x;
+  background-size: 56px 14px;
+}

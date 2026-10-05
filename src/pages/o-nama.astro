@@ -1,0 +1,46 @@
+---
+/**
+ * /o-nama — "Lim je naš zanat."
+ * Ritam: hero (grafit) → priča + fotografija (papir) → vrijednosti (grafit)
+ *        → kolaž radova (papir) → u brojkama + završni poziv (grafit + mreža) → footer.
+ * Slike su numerirane redom: hero Sl. 01, priča Sl. 02, kolaž od Sl. 03.
+ * TODO (klijent): priča radionice, fotografija ekipe i potvrđene brojke — vidi komentare u komponentama.
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
+import HeroFacts from '@/components/pages/HeroFacts.astro';
+import Story from '@/components/pages/onama/Story.astro';
+import Values from '@/components/pages/onama/Values.astro';
+import Collage from '@/components/pages/onama/Collage.astro';
+import StatsCta from '@/components/pages/onama/StatsCta.astro';
+import heroImg from '@/assets/projects/krov-crijep-lim-uvala-radnik.jpg';
+
+const crumbs = [homeCrumb, { href: '/o-nama', label: 'O nama' }];
+---
+
+<Base
+  title="O nama — limari iz Zagreba | Limarija Karamatić"
+  description="Limarija Karamatić iz Zagreba: limeni krovovi, opšavi, dimnjaci i oluci. Mjerimo na krovu, krojimo po mjeri, radimo uredno i dajemo pisano jamstvo."
+  schema={[breadcrumbSchema(crumbs, Astro.site)]}
+>
+  <PageHero
+    eyebrow="O nama · Limarija Karamatić"
+    title="Lim je naš zanat."
+    lead="Krovove, opšave, dimnjake i oluke radimo tako da se na njima vidi mjera. Uredno, po dogovoru i s pisanim jamstvom."
+    crumbs={crumbs}
+    image={heroImg}
+    imageAlt="Limar na krovu montira opšav uvale, crijep-lim RAL 7016"
+  >
+    <HeroFacts
+      items={[
+        { k: 'Mjera', v: 'Na licu mjesta' },
+        { k: 'Kroj', v: 'Po mjeri krova' },
+        { k: 'Jamstvo', v: 'Pisano' },
+      ]}
+    />
+  </PageHero>
+  <Story index="01" figure={2} />
+  <Values index="02" />
+  <Collage index="03" startAt={3} />
+  <StatsCta index="04" />
+</Base>

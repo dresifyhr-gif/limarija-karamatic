@@ -1,0 +1,441 @@
+---
+/**
+ * /radovi — arhiva radova s filtrom po vrsti.
+ * Filtar: gumbi s aria-pressed, GSAP Flip (draft, bez odskoka); ?vrsta=<kind> odabire filtar pri dolasku.
+ * Bez JS-a traka filtra se ne prikazuje i vide se svi radovi (vidi .rf-bar).
+ * Mreža: 1 stupac < 30rem, 2 od 30rem, 3 od lg. Kad filtar ostavi nepun zadnji red,
+ * pločica "Vaš krov je sljedeći." (.rf-cta) popuni ostatak reda (animira se s karticama).
+ * Hero je kompaktan (bez CTA-a): prve fotografije su vidljive već na prvom ekranu.
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
+import ProjectCard from '@/components/ui/ProjectCard.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { projects, projectKinds, site, telHref, waHref, type ProjectKind } from '@/data/site';
+import { pad, radova, vrsta } from '../usluge/_parts/media';
+
+const crumbs = [homeCrumb, { href: '/radovi', label: 'Radovi' }];
+
+const kinds = (Object.keys(projectKinds) as ProjectKind[])
+  .map((k) => ({ k, label: projectKinds[k], n: projects.filter((p) => p.kind === k).length }))
+  .filter((x) => x.n > 0);
+
+const listSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Radovi — Limarija Karamatić',
+  itemListElement: projects.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url: new URL(`/radovi/${p.slug}`, Astro.site).toString(),
+    name: p.title,
+  })),
+};
+---
+
+<Base
+  title="Radovi — krovovi, atike, dimnjaci | Limarija Karamatić"
+  description="Naši radovi u Zagrebu i okolici: limeni i falcani krovovi, opšavi atika, dimnjaci i snjegobrani u antracitu RAL 7016. Fotografije s gradilišta."
+  schema={[breadcrumbSchema(crumbs, Astro.site), listSchema]}
+>
+  <PageHero
+    eyebrow={`Radovi · ${site.area}`}
+    title="Naši krovovi."
+    lead="Svaka fotografija je s našeg gradilišta. Antracit RAL 7016, kutovi savijeni na licu mjesta, preklopi okrenuti niz vodu."
+    crumbs={crumbs}
+    cta={false}
+    compact
+  >
+    <p slot="meta" class="rh-meta">
+      <span>{radova(projects.length)}</span>
+      <span>{vrsta(kinds.length)}</span>
+      <span>RAL 7016</span>
+    </p>
+  </PageHero>
+
+  <section id="arhiva" class="bg-papir pt-8 pb-20 text-tinta sm:pb-28 lg:pt-10 lg:pb-32" aria-labelledby="arhiva-naslov" data-rf>
+    <div class="wrap">
+      <h2 id="arhiva-naslov" class="sr-only">Arhiva radova</h2>
+
+      <div class="rf-bar">
+        <div class="rf-chips" role="group" aria-label="Filtriraj radove po vrsti">
+          <button type="button" class="rf-chip" aria-pressed="true" data-rf-filter="sve">
+            <span>Svi</span>
+            <span class="rf-chip-n">{pad(projects.length)}</span>
+          </button>
+          {
+            kinds.map((x) => (
+              <button type="button" class="rf-chip" aria-pressed="false" data-rf-filter={x.k}>
+                <span>{x.label}</span>
+                <span class="rf-chip-n">{pad(x.n)}</span>
+              </button>
+            ))
+          }
+        </div>
+        <p class="rf-count" aria-live="polite" data-rf-count>
+          Prikazano: {radova(projects.length)}
+        </p>
+      </div>
+
+      <ul class="rf-grid" role="list" data-rf-grid>
+        {
+          projects.map((p, i) => (
+            <li class="rf-item" data-kind={p.kind}>
+              <ProjectCard
+                project={p}
+                eager={i < 3}
+                sizes="(min-width: 88rem) 26rem, (min-width: 64rem) 30vw, (min-width: 30rem) 46vw, 92vw"
+              />
+            </li>
+          ))
+        }
+        <li class="rf-cta" data-rf-cta>
+          <div class="rf-cta-in">
+            <p class="eyebrow flex items-center gap-2 text-celik">
+              <Icon name="camera" size={14} />
+              <span>Besplatna procjena</span>
+            </p>
+            <p class="rf-cta-t type-display text-white">Vaš krov je sljedeći.</p>
+            <p class="rf-cta-d">Pošaljite tri slike krova. Javimo vam što vidimo i kada možemo izaći izmjeriti.</p>
+            <div class="rf-cta-btns">
+              <Button href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} variant="whatsapp" icon="whatsapp">
+                Pošaljite slike
+              </Button>
+              <Button href="/procjena" variant="outline" iconRight="arrow-right" data-quote-link>
+                Besplatna procjena
+              </Button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="rc bg-antracit py-16 text-linija sm:py-20 lg:py-24" aria-labelledby="rc-naslov">
+    <div class="wrap grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
+      <div class="lg:col-span-7">
+        <p class="eyebrow flex items-center gap-3 text-linija" data-reveal>
+          <Icon name="ruler" size={14} />
+          <span>Besplatna procjena</span>
+        </p>
+        <h2 id="rc-naslov" class="type-display mt-4 text-[2.125rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
+          Izmjerimo i vaš krov.
+        </h2>
+        <p class="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-linija" data-reveal>
+          Pošaljite tri slike krova ili nas nazovite. Na teren izlazimo besplatno, ponuda stiže na papiru.
+        </p>
+      </div>
+      <div class="lg:col-span-5 lg:justify-self-end" data-reveal>
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-end">
+          <Button href="/procjena" size="lg" iconRight="arrow-right" data-quote-link>Besplatna procjena</Button>
+          <Button href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} variant="whatsapp" size="lg" icon="whatsapp">
+            Pošaljite slike
+          </Button>
+        </div>
+        <a
+          href={telHref}
+          class="mt-5 inline-flex min-h-11 items-center gap-3 font-mono text-[1.0625rem] text-white underline decoration-linija/30 underline-offset-[6px] transition-colors duration-150 hover:decoration-white lg:float-right"
+        >
+          <Icon name="phone" size={18} class="text-linija" />
+          <span class="sr-only">Nazovite </span>{site.phoneDisplay}
+        </a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ── hero: jedan mono redak umjesto tablice ── */
+  .rh-meta {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.75rem;
+    row-gap: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .rh-meta > span {
+    white-space: nowrap;
+  }
+  .rh-meta > span + span::before {
+    content: '·';
+    margin-right: 0.75rem;
+    color: rgb(213 219 223 / 0.35);
+  }
+
+  /* ── filtar ── */
+  .rf-bar {
+    display: none;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgb(21 24 27 / 0.14);
+  }
+  /* inline skripta u <head> postavlja .motion / .motion-off → JS radi */
+  :global(html.motion) .rf-bar,
+  :global(html.motion-off) .rf-bar {
+    display: flex;
+  }
+  @media (width >= 64rem) {
+    .rf-bar {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2.5rem;
+    }
+  }
+  .rf-chips {
+    display: flex;
+    gap: 0.5rem;
+    margin-inline: -1.25rem;
+    padding-inline: 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rf-chips::-webkit-scrollbar {
+    display: none;
+  }
+  @media (width >= 48rem) {
+    .rf-chips {
+      flex-wrap: wrap;
+      margin-inline: 0;
+      padding-inline: 0;
+      overflow: visible;
+    }
+  }
+  .rf-chip {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    height: 2.75rem;
+    padding: 0 1rem;
+    border: 1px solid rgb(21 24 27 / 0.2);
+    background: rgb(255 255 255 / 0.35);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+    white-space: nowrap;
+    transition:
+      background-color 150ms var(--ease-press),
+      border-color 150ms var(--ease-press),
+      color 150ms var(--ease-press);
+  }
+  .rf-chip:hover {
+    border-color: var(--color-tinta);
+  }
+  .rf-chip-n {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: rgb(21 24 27 / 0.7);
+    transition: color 150ms var(--ease-press);
+  }
+  .rf-chip[aria-pressed='true'] {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: #fff;
+  }
+  .rf-chip[aria-pressed='true'] .rf-chip-n {
+    color: var(--color-redline);
+  }
+  .rf-chip:focus-visible {
+    outline-color: var(--color-redline-dark);
+  }
+  .rf-count {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.72);
+  }
+
+  /* ── mreža ── */
+  .rf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem 1.25rem;
+  }
+  @media (width >= 30rem) {
+    .rf-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (width >= 64rem) {
+    .rf-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 4rem 1.5rem;
+    }
+  }
+  .rf-item {
+    min-width: 0;
+  }
+  .rf-item[hidden] {
+    display: none;
+  }
+
+  /* ── "Vaš krov je sljedeći." — popunjava nepun zadnji red nakon filtriranja ── */
+  .rf-cta {
+    display: none;
+    min-width: 0;
+  }
+  @media (width >= 30rem) and (width < 64rem) {
+    .rf-cta[data-rem2='1'] {
+      display: block;
+    }
+  }
+  @media (width >= 64rem) {
+    .rf-cta[data-rem3='1'] {
+      display: block;
+    }
+    .rf-cta[data-rem3='2'] {
+      display: block;
+      grid-column: span 2;
+    }
+  }
+  .rf-cta-in {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 22rem;
+    padding: 1.5rem;
+    background: var(--color-grafit);
+    color: var(--color-linija);
+  }
+  @media (width >= 64rem) {
+    .rf-cta-in {
+      padding: 2rem;
+    }
+  }
+  .rf-cta-t {
+    margin-top: auto;
+    padding-top: 2.5rem;
+    font-size: 2rem;
+    text-wrap: balance;
+  }
+  @media (width >= 64rem) {
+    .rf-cta-t {
+      font-size: clamp(2rem, 2.6vw, 2.75rem);
+    }
+  }
+  .rf-cta-d {
+    max-width: 30rem;
+    margin-top: 1rem;
+    font-size: 1rem;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+  .rf-cta-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
+  import { Flip } from 'gsap/Flip';
+
+  gsap.registerPlugin(Flip);
+
+  function plural(n: number) {
+    const m10 = n % 10;
+    const m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return `${n} rad`;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return `${n} rada`;
+    return `${n} radova`;
+  }
+
+  /* Fotografije koje filtar dovodi u mrežu odmah su otkrivene: bez naknadnog skeniranja
+     (inače bi se više scan linija micalo odjednom). reveal.ts skriva [data-scan] dok nema
+     data-revealed, pa okidač gasimo i sami postavljamo završno stanje. */
+  function finishScans(els: HTMLElement[]) {
+    const scans = els.flatMap((el) => Array.from(el.querySelectorAll<HTMLElement>('[data-scan]:not([data-revealed])')));
+    if (!scans.length) return;
+    ScrollTrigger.getAll().forEach((st) => {
+      if (scans.includes(st.trigger as HTMLElement)) st.kill();
+    });
+    scans.forEach((s) => {
+      const line = s.querySelector<HTMLElement>(':scope > .scanline');
+      gsap.killTweensOf(line ? [s, line] : s);
+      if (line) gsap.set(line, { opacity: 0 });
+      gsap.set(s, { clearProps: 'clipPath' });
+      s.setAttribute('data-revealed', '');
+    });
+  }
+
+  function initFilter(root: HTMLElement) {
+    const chips = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-rf-filter]'));
+    const items = Array.from(root.querySelectorAll<HTMLElement>('.rf-item'));
+    const grid = root.querySelector<HTMLElement>('[data-rf-grid]');
+    const count = root.querySelector<HTMLElement>('[data-rf-count]');
+    const cta = root.querySelector<HTMLElement>('[data-rf-cta]');
+    if (!chips.length || !items.length || !grid) return;
+    let current = 'sve';
+
+    const apply = (kind: string, animate: boolean) => {
+      if (kind === current && animate) return;
+      current = kind;
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.rfFilter === kind)));
+      const show = (el: HTMLElement) => kind === 'sve' || el.dataset.kind === kind;
+      const n = items.filter(show).length;
+      if (count) count.textContent = `Prikazano: ${plural(n)}`;
+      // pločica popunjava ostatak zadnjeg reda (2 stupca od 30rem, 3 od 64rem)
+      const fill = () => {
+        if (!cta) return;
+        cta.dataset.rem3 = String((3 - (n % 3)) % 3);
+        cta.dataset.rem2 = String(n % 2);
+      };
+
+      const url = new URL(location.href);
+      if (kind === 'sve') url.searchParams.delete('vrsta');
+      else url.searchParams.set('vrsta', kind);
+      history.replaceState(null, '', url);
+
+      if (!animate || !motionOn()) {
+        items.forEach((el) => (el.hidden = !show(el)));
+        fill();
+        ScrollTrigger.refresh();
+        return;
+      }
+
+      finishScans(items.filter(show));
+      gsap.killTweensOf(grid);
+      const h0 = grid.offsetHeight;
+      const targets = cta ? [...items, cta] : items;
+      const state = Flip.getState(targets);
+      items.forEach((el) => (el.hidden = !show(el)));
+      fill();
+      gsap.set(grid, { height: 'auto' });
+      const h1 = grid.offsetHeight;
+      // visina mreže se mijenja glatko (absolute: true bi je inače srušio na 0 tijekom animacije)
+      gsap.fromTo(grid, { height: h0 }, { height: h1, duration: 0.55, ease: 'draft', clearProps: 'height' });
+      Flip.from(state, {
+        duration: 0.55,
+        ease: 'draft',
+        absolute: true,
+        prune: true,
+        onEnter: (els) => gsap.fromTo(els, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'draft', delay: 0.2 }),
+        onLeave: (els) => gsap.to(els, { opacity: 0, duration: 0.18, ease: 'draft' }),
+        onComplete: () => ScrollTrigger.refresh(),
+      });
+    };
+
+    chips.forEach((c) => c.addEventListener('click', () => apply(c.dataset.rfFilter ?? 'sve', true)));
+
+    const pre = new URLSearchParams(location.search).get('vrsta');
+    if (pre && chips.some((c) => c.dataset.rfFilter === pre)) apply(pre, false);
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-rf]').forEach(initFilter);
+</script>

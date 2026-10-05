@@ -1,0 +1,408 @@
+---
+/**
+ * Česta pitanja — višekratna sekcija (naslovnica: sva pitanja iz site.ts; podstranice: 3–5).
+ * Ugovor: items?: {q,a}[]; tone?: 'dark' | 'dark2' | 'light' (default light); id? (default 'pitanja');
+ *         title?; index? (default '09'); compact?: boolean (default: items ≤ 4).
+ *  compact  jedan stupac (najviše ~52rem), h2 manji (text-4xl), kartica "Niste našli odgovor?" kao red
+ *           ispod popisa, py-16 — za kratke popise na podstranicama
+ *  dark2    grafit-2 s tankim rubom gore i dolje (kad je iza tamne sekcije tamna forma)
+ *
+ * Harmonika na <details>/<summary>: bez JS-a radi nativno. S pokretom JS animira
+ * visinu (≈220 ms, "draft", bez odskoka) i drži otvorenim jedno pitanje.
+ * FAQPage schema se dodaje na razini stranice (vidi index.astro).
+ */
+import SectionHead from '@/components/ui/SectionHead.astro';
+import Icon from '@/components/ui/Icon.astro';
+import Button from '@/components/ui/Button.astro';
+import { faq as defaultFaq, site, telHref, waHref } from '@/data/site';
+
+interface Props {
+  items?: { q: string; a: string }[];
+  tone?: 'dark' | 'dark2' | 'light';
+  id?: string;
+  title?: string;
+  index?: string;
+  compact?: boolean;
+}
+const {
+  items = defaultFaq,
+  tone = 'light',
+  id = 'pitanja',
+  title = 'Pitanja koja čujemo na svakom krovu.',
+  index = '09',
+} = Astro.props;
+const compact = Astro.props.compact ?? items.length <= 4;
+
+const dark = tone !== 'light';
+const headTone = dark ? 'dark' : 'light';
+const pad = (n: number) => String(n).padStart(2, '0');
+const waAsk = waHref('Pozdrav, imam pitanje o krovu: ');
+
+const sectionCls = [
+  'faq',
+  compact ? 'faq--compact py-16 sm:py-20' : 'py-20 sm:py-28 lg:py-32',
+  tone === 'dark' && 'faq--dark bg-grafit text-linija',
+  tone === 'dark2' && 'faq--dark bg-grafit-2 text-linija border-y border-linija/10',
+  tone === 'light' && 'faq--light bg-papir text-tinta',
+];
+const line = dark ? 'border-linija/15' : 'border-tinta/15';
+---
+
+<section id={id} class:list={sectionCls} data-faq>
+  {
+    compact ? (
+      <div class="wrap">
+        <div class="max-w-[52rem]">
+          <SectionHead class="faq-head" tone={headTone} index={index} eyebrow="Česta pitanja" title={title} />
+          <div class:list={['faq-list mt-10 border-t sm:mt-12', line]} data-faq-list data-reveal-group>
+            {items.map((item, i) => (
+              <details class:list={['faq-item border-b', line]} open={i === 0} data-reveal>
+                <summary class="faq-q">
+                  <span class="faq-line">
+                    <span class="faq-num" aria-hidden="true">{pad(i + 1)}</span>
+                    <span class="faq-qtext">{item.q}</span>
+                  </span>
+                  <span class="faq-pm" aria-hidden="true">
+                    <span />
+                    <span />
+                  </span>
+                </summary>
+                <div class="faq-panel">
+                  <p class="faq-a">{item.a}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+
+          <!-- pitajte majstora: jedan red ispod popisa -->
+          <aside
+            class:list={[
+              'faq-ask-row mt-8 flex flex-col gap-x-8 gap-y-4 border p-5 sm:flex-row sm:flex-wrap sm:items-center sm:p-6',
+              dark ? 'border-linija/12 bg-grafit-2' : 'border-tinta/12 bg-white/45',
+              tone === 'dark2' && 'bg-grafit',
+            ]}
+            aria-labelledby={`${id}-ask`}
+            data-reveal
+          >
+            <div class="min-w-0 sm:mr-auto">
+              <p class:list={['eyebrow', dark ? 'text-celik' : 'text-tinta/70']}>Niste našli odgovor?</p>
+              <h3
+                id={`${id}-ask`}
+                class:list={['mt-1.5 text-[1.1875rem] leading-tight font-bold [font-stretch:112%]', dark ? 'text-white' : 'text-tinta']}
+              >
+                Pitajte majstora.
+              </h3>
+            </div>
+            <a
+              href={telHref}
+              class:list={[
+                'faq-tel group inline-flex min-h-11 items-center gap-3 font-mono text-[1.25rem] tracking-[0.02em]',
+                dark ? 'text-white' : 'text-tinta',
+              ]}
+              aria-label={`Nazovite ${site.phoneDisplay}`}
+            >
+              <Icon name="phone" size={18} class={dark ? 'text-celik' : 'text-tinta/70'} />
+              <span class="underline decoration-transparent underline-offset-[0.3em] transition-colors duration-150 group-hover:decoration-current">
+                {site.phoneDisplay}
+              </span>
+            </a>
+            <Button href={waAsk} variant="whatsapp" icon="whatsapp" class="w-full sm:w-auto">
+              Pitajte preko WhatsAppa
+            </Button>
+          </aside>
+        </div>
+      </div>
+    ) : (
+      <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
+        <!-- mobitel: naslov → pitanja → kartica; desktop: naslov + kartica lijevo (sticky) -->
+        <div class="contents lg:col-span-5 lg:block">
+          <div class="contents lg:sticky lg:top-28 lg:block">
+            <SectionHead class="faq-head order-1" tone={headTone} index={index} eyebrow="Česta pitanja" title={title} />
+
+            <aside
+              class:list={[
+                'faq-ask order-3 max-w-md border p-6 sm:p-7 lg:mt-14',
+                dark ? 'border-linija/12 bg-grafit-2' : 'border-tinta/12 bg-white/45',
+                tone === 'dark2' && 'bg-grafit',
+              ]}
+              aria-labelledby={`${id}-ask`}
+              data-reveal
+            >
+              <p class:list={['eyebrow', dark ? 'text-celik' : 'text-tinta/70']}>Niste našli odgovor?</p>
+              <h3
+                id={`${id}-ask`}
+                class:list={['mt-3 text-[1.3125rem] leading-tight font-bold [font-stretch:112%]', dark ? 'text-white' : 'text-tinta']}
+              >
+                Pitajte majstora.
+              </h3>
+              <a
+                href={telHref}
+                class:list={[
+                  'faq-tel group mt-5 inline-flex min-h-11 items-center gap-3 font-mono text-[1.375rem] tracking-[0.02em] sm:text-2xl',
+                  dark ? 'text-white' : 'text-tinta',
+                ]}
+                aria-label={`Nazovite ${site.phoneDisplay}`}
+              >
+                <Icon name="phone" size={20} class={dark ? 'text-celik' : 'text-tinta/70'} />
+                <span class="underline decoration-transparent underline-offset-[0.3em] transition-colors duration-150 group-hover:decoration-current">
+                  {site.phoneDisplay}
+                </span>
+              </a>
+              <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <Button href={waAsk} variant="whatsapp" icon="whatsapp">
+                  Pitajte preko WhatsAppa
+                </Button>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <div class="order-2 lg:col-span-7">
+          <div class:list={['faq-list border-t', line]} data-faq-list data-reveal-group>
+            {items.map((item, i) => (
+              <details class:list={['faq-item border-b', line]} open={i === 0} data-reveal>
+                <summary class="faq-q">
+                  <span class="faq-line">
+                    <span class="faq-num" aria-hidden="true">{pad(i + 1)}</span>
+                    <span class="faq-qtext">{item.q}</span>
+                  </span>
+                  <span class="faq-pm" aria-hidden="true">
+                    <span />
+                    <span />
+                  </span>
+                </summary>
+                <div class="faq-panel">
+                  <p class="faq-a">{item.a}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+</section>
+
+<style>
+  /* ── tonovi ── */
+  .faq--light {
+    --q: var(--color-tinta);
+    --a: rgb(21 24 27 / 0.72);
+    --num: rgb(21 24 27 / 0.7);
+    --num-on: var(--color-redline-dark);
+    --box: rgb(21 24 27 / 0.22);
+    --box-hover: var(--color-tinta);
+  }
+  .faq--dark {
+    --q: #fff;
+    --a: rgb(213 219 223 / 0.78);
+    --num: var(--color-celik);
+    --num-on: var(--color-redline);
+    --box: rgb(213 219 223 / 0.25);
+    --box-hover: var(--color-linija);
+  }
+
+  /* kompaktno: manji naslov (text-4xl), da jedno-dva pitanja ne stoje ispod golemog naslova */
+  .faq--compact :global(.faq-head h2) {
+    font-size: 2.125rem;
+  }
+  @media (width >= 40rem) {
+    .faq--compact :global(.faq-head h2) {
+      font-size: 2.25rem;
+    }
+  }
+
+  .faq-q {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0 1rem;
+    min-height: 4.5rem;
+    padding-block: 1.25rem;
+    list-style: none;
+    cursor: pointer;
+    color: var(--q);
+  }
+  .faq-q::-webkit-details-marker {
+    display: none;
+  }
+  .faq-q:focus-visible {
+    outline-offset: -2px;
+  }
+  @media (hover: hover) {
+    .faq-q:hover .faq-pm {
+      border-color: var(--box-hover);
+    }
+    .faq-q:hover .faq-num {
+      color: var(--num-on);
+    }
+  }
+  @media (width >= 40rem) {
+    .faq-q {
+      gap: 0 1.25rem;
+      padding-block: 1.5rem;
+    }
+  }
+  /* broj i pitanje na istoj osnovnoj liniji */
+  .faq-line {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    align-items: baseline;
+    column-gap: 0.75rem;
+  }
+  @media (width >= 40rem) {
+    .faq-line {
+      grid-template-columns: 3rem 1fr;
+      column-gap: 1.25rem;
+    }
+  }
+
+  .faq-num {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--num);
+    transition: color 150ms var(--ease-press);
+  }
+  .faq-qtext {
+    font-size: 1.0625rem;
+    font-weight: 650;
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+    text-wrap: pretty;
+  }
+  @media (width >= 40rem) {
+    .faq-qtext {
+      font-size: 1.25rem;
+      font-stretch: 106%;
+    }
+  }
+
+  /* plus → minus: okomita crta se zakrene u vodoravnu */
+  .faq-pm {
+    position: relative;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--box);
+    transition: border-color 150ms var(--ease-press);
+  }
+  @media (width >= 40rem) {
+    .faq-pm {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+  }
+  .faq-pm span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.875rem;
+    height: 1.5px;
+    margin: -0.75px 0 0 -0.4375rem;
+    background: var(--q);
+    transition: transform 200ms var(--ease-press);
+  }
+  .faq-pm span:last-child {
+    transform: rotate(90deg);
+  }
+  .faq-item[open]:not([data-state='closing']) .faq-pm span:last-child {
+    transform: rotate(0deg);
+  }
+  .faq-item[open]:not([data-state='closing']) .faq-num {
+    color: var(--num-on);
+  }
+
+  .faq-panel {
+    overflow: hidden;
+  }
+  .faq-a {
+    max-width: 38rem;
+    padding: 0 0.5rem 1.75rem 2.75rem;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--a);
+    text-wrap: pretty;
+  }
+  @media (width >= 40rem) {
+    .faq-a {
+      padding: 0 3.75rem 2rem 4.25rem;
+      font-size: 1.0625rem;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, motionOn } from '@/lib/motion';
+
+  const DUR = 0.22;
+
+  function initFaq(root: HTMLElement) {
+    const items = Array.from(root.querySelectorAll<HTMLDetailsElement>('details.faq-item'));
+    if (!items.length) return;
+
+    const panelOf = (d: HTMLDetailsElement) => d.querySelector<HTMLElement>('.faq-panel');
+
+    const close = (d: HTMLDetailsElement, animate: boolean) => {
+      const panel = panelOf(d);
+      if (!d.open || !panel) return;
+      if (!animate) {
+        d.open = false;
+        return;
+      }
+      d.dataset.state = 'closing';
+      gsap.killTweensOf(panel);
+      gsap.fromTo(
+        panel,
+        { height: panel.offsetHeight },
+        {
+          height: 0,
+          duration: DUR,
+          ease: 'draft',
+          onComplete: () => {
+            d.open = false;
+            d.removeAttribute('data-state');
+            gsap.set(panel, { clearProps: 'height' });
+          },
+        },
+      );
+    };
+
+    const open = (d: HTMLDetailsElement, animate: boolean) => {
+      const panel = panelOf(d);
+      if (!panel) return;
+      const wasClosing = d.dataset.state === 'closing';
+      const from = d.open ? panel.offsetHeight : 0;
+      d.removeAttribute('data-state');
+      if (!animate) {
+        d.open = true;
+        return;
+      }
+      gsap.killTweensOf(panel);
+      d.open = true;
+      gsap.fromTo(
+        panel,
+        { height: from },
+        { height: 'auto', duration: wasClosing ? DUR * 0.75 : DUR, ease: 'draft', clearProps: 'height' },
+      );
+    };
+
+    items.forEach((d) => {
+      const summary = d.querySelector('summary');
+      summary?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const animate = motionOn();
+        const isOpen = d.open && d.dataset.state !== 'closing';
+        if (isOpen) {
+          close(d, animate);
+        } else {
+          items.forEach((o) => o !== d && close(o, animate));
+          open(d, animate);
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-faq]').forEach((root) => {
+    initFaq(root);
+  });
+</script>

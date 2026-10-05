@@ -1,0 +1,117 @@
+---
+/**
+ * "Što slijedi" — tri koraka nakon upita, spojena okomitom kotnom linijom.
+ * Koristi se na /hvala.
+ *  tone   dark (default) | light
+ *  title  mono oznaka iznad liste
+ */
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import { site } from '@/data/site';
+
+interface Props {
+  title?: string;
+  tone?: 'dark' | 'light';
+  class?: string;
+}
+const { title = 'Što slijedi', tone = 'dark', class: className = '' } = Astro.props;
+
+const items = [
+  // isti nazivi koraka kao u formi (FinalCta "Što se događa nakon slanja")
+  { t: 'Nazovemo vas', d: `${site.responseTime}, s broja ${site.phoneDisplay}.`, example: true },
+  { t: 'Dolazimo izmjeriti', d: 'Mjerimo i fotografiramo krov, besplatno i bez obveze.' },
+  { t: 'Pisana ponuda', d: 'Stavku po stavku: materijal, boja, debljina lima i rok.' },
+];
+const dark = tone === 'dark';
+---
+
+<div class:list={['ns', dark ? 'ns--dark' : 'ns--light', className]}>
+  {title && <p class:list={['eyebrow', dark ? 'text-celik' : 'text-tinta/70']}>{title}</p>}
+  <ol class="ns-list mt-6" data-reveal-group>
+    {
+      items.map((s, i) => (
+        <li class="ns-item" data-reveal>
+          <span class="ns-n" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <span class="min-w-0">
+            <span class="ns-t">{s.t}</span>
+            <span class="ns-d">
+              {s.d}
+              {s.example && <ExampleTag class="ml-1" />}
+            </span>
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .ns--dark {
+    --ns-t: #fff;
+    --ns-d: var(--color-celik);
+    --ns-line: rgb(213 219 223 / 0.18);
+    --ns-n: var(--color-linija);
+    --ns-ring: rgb(213 219 223 / 0.3);
+    --ns-bg: var(--color-grafit);
+  }
+  .ns--light {
+    --ns-t: var(--color-tinta);
+    --ns-d: rgb(21 24 27 / 0.7);
+    --ns-line: rgb(21 24 27 / 0.18);
+    --ns-n: var(--color-tinta);
+    --ns-ring: rgb(21 24 27 / 0.3);
+    --ns-bg: var(--color-papir);
+  }
+  .ns-list {
+    position: relative;
+    display: grid;
+    gap: 1.625rem;
+  }
+  /* okomita kotna linija koja spaja korake */
+  .ns-list::before {
+    content: '';
+    position: absolute;
+    left: 0.875rem;
+    top: 1.75rem;
+    bottom: 1.75rem;
+    width: 1px;
+    background: var(--ns-line);
+  }
+  .ns-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    column-gap: 1.125rem;
+  }
+  .ns-n {
+    position: relative;
+    display: grid;
+    place-items: center;
+    height: 1.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--ns-n);
+    background: var(--ns-bg);
+    outline: 1px solid var(--ns-ring);
+    outline-offset: -1px;
+  }
+  .ns-t {
+    display: block;
+    padding-top: 0.125rem;
+    font-size: 1.0625rem;
+    line-height: 1.5rem;
+    font-weight: 700;
+    font-stretch: 112%;
+    color: var(--ns-t);
+  }
+  .ns-d {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--ns-d);
+    text-wrap: pretty;
+  }
+</style>

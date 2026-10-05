@@ -1,0 +1,77 @@
+---
+/**
+ * Gumbi. Crvena (primary) je jedina "glasna" boja — koristiti 1× po ekranu.
+ *  variant: primary | outline | outline-dark | ghost | whatsapp | viber
+ *  size: md | lg
+ */
+import Icon, { type IconName } from './Icon.astro';
+
+interface Props {
+  href?: string;
+  variant?: 'primary' | 'outline' | 'outline-dark' | 'ghost' | 'whatsapp' | 'viber';
+  size?: 'md' | 'lg';
+  icon?: IconName;
+  iconRight?: IconName;
+  type?: 'button' | 'submit';
+  class?: string;
+  [key: string]: unknown;
+}
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  icon,
+  iconRight,
+  type = 'button',
+  class: className = '',
+  ...rest
+} = Astro.props;
+
+const base =
+  'group/btn relative inline-flex items-center justify-center gap-2.5 font-semibold whitespace-nowrap select-none transition-[background-color,color,border-color,transform] duration-150 ease-[var(--ease-press)] active:translate-y-px focus-visible:outline-offset-4';
+const sizes = {
+  md: 'h-11 px-5 text-[0.9375rem]',
+  lg: 'h-13 px-6 text-base sm:h-14 sm:px-7',
+};
+const variants = {
+  primary: 'bg-crvena text-white hover:bg-crvena-hover',
+  outline: 'border border-linija/35 text-linija hover:border-linija hover:bg-white/5',
+  'outline-dark': 'border border-tinta/30 text-tinta hover:border-tinta hover:bg-tinta/5',
+  ghost: 'text-linija hover:text-white underline-offset-4 hover:underline',
+  whatsapp: 'bg-whatsapp text-[#06290f] hover:brightness-95',
+  viber: 'bg-viber-btn text-white hover:brightness-110',
+};
+const cls = `${base} ${sizes[size]} ${variants[variant]} ${className}`;
+const external = href?.startsWith('http') || href?.startsWith('viber:');
+---
+
+{
+  href ? (
+    <a
+      href={href}
+      class={cls}
+      {...(external ? { target: '_blank', rel: 'noopener' } : {})}
+      {...rest}
+    >
+      {icon && <Icon name={icon} size={size === 'lg' ? 20 : 18} />}
+      <span>
+        <slot />
+      </span>
+      {iconRight && (
+        <Icon
+          name={iconRight}
+          size={18}
+          class="transition-transform duration-150 group-hover/btn:translate-x-0.5"
+        />
+      )}
+    </a>
+  ) : (
+    <button type={type} class={cls} {...rest}>
+      {icon && <Icon name={icon} size={size === 'lg' ? 20 : 18} />}
+      <span>
+        <slot />
+      </span>
+      {iconRight && <Icon name={iconRight} size={18} />}
+    </button>
+  )
+}

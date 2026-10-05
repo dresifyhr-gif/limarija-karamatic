@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /dev/
+Disallow: /hvala
+
+Sitemap: https://www.limarija-karamatic.hr/sitemap.xml

@@ -1,0 +1,266 @@
+---
+/**
+ * Galerija s gradilišta — urednički, asimetrični raspored (1–4 fotografije).
+ *  lg: 1 → zaglavlje lijevo, fotografija desno · 2 → 5 + 4 stupca, druga spuštena ·
+ *      3 → "stube" 5 / 4 / 3 stupca s pomacima · 4 → 4 / 4 / 4 + četvrta u drugom redu
+ *  mobitel: prva preko cijele širine, ostale u dva stupca (kod dvije: druga uvučena desno)
+ * Fotografije: Photo + data-scan (jedini stil otkrivanja). Potpis "Sl. 0n" u mono;
+ * slika koja pripada radu dobiva poveznicu na taj rad (href + hrefLabel).
+ */
+import type { ImageMetadata } from 'astro';
+import Photo from '@/components/ui/Photo.astro';
+import SectionHead from '@/components/ui/SectionHead.astro';
+import Icon from '@/components/ui/Icon.astro';
+
+interface Props {
+  images: { src: ImageMetadata; alt: string; href?: string; hrefLabel?: string }[];
+  tone?: 'dark' | 'light';
+  id?: string;
+  index?: string;
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+  /** broj prve slike u potpisu (npr. 2 ako je Sl. 1 u heru) */
+  startAt?: number;
+  class?: string;
+}
+const {
+  images,
+  tone = 'dark',
+  id = 'galerija',
+  index,
+  eyebrow = 'S gradilišta',
+  title,
+  lead,
+  startAt = 2,
+  class: className = '',
+} = Astro.props;
+
+const n = Math.min(images.length, 4);
+const list = images.slice(0, 4);
+const dark = tone === 'dark';
+const pad = (x: number) => String(x).padStart(2, '0');
+
+/* točni `sizes` po rasporedu (lg kolona ≈ 1/12 od min(100vw, 88rem)) */
+const sizesFor = (i: number) => {
+  const lgCols = n === 1 ? 6 : n === 2 ? [5, 4][i] : n === 3 ? [5, 4, 3][i] : 4;
+  const lg = `(min-width: 88rem) ${Math.round((lgCols / 12) * 82)}rem, (min-width: 64rem) ${Math.round((lgCols / 12) * 92)}vw`;
+  const mob = i === 0 || n === 1 ? '92vw' : n === 2 ? '62vw' : '46vw';
+  return `${lg}, ${mob}`;
+};
+---
+
+<section
+  id={id}
+  class:list={['gal-sec py-20 sm:py-28 lg:py-32', dark ? 'bg-grafit text-linija' : 'bg-papir text-tinta', className]}
+  data-count={n}
+>
+  <div class="wrap">
+    <div class:list={['gal', `gal--${n}`]}>
+      <div class="gal-head">
+        <SectionHead index={index} eyebrow={eyebrow} title={title} lead={lead} tone={tone} />
+      </div>
+      {
+        list.map((img, i) => (
+          <figure class:list={['gal-item', `gal-item--${i + 1}`]}>
+            <div class="gal-photo" data-scan>
+              <Photo
+                src={img.src}
+                alt={img.alt}
+                widths={[400, 640, 880, 1200]}
+                sizes={sizesFor(i)}
+                class="block h-full w-full"
+                imgClass="h-full w-full object-cover"
+              />
+            </div>
+            <figcaption class="gal-cap">
+              <span class:list={['gal-cap-n', dark ? 'text-redline' : 'text-redline-dark']}>Sl. {pad(i + startAt)}</span>
+              <span class:list={['gal-cap-t', dark ? 'text-celik' : 'text-tinta/70']}>
+                {img.alt}
+                {img.href && (
+                  <a href={img.href} class:list={['gal-cap-a', dark ? 'text-linija' : 'text-tinta']}>
+                    <span class="sr-only">Pogledajte rad: </span>
+                    <span>{img.hrefLabel ?? 'Pogledajte rad'}</span>
+                    <Icon name="arrow-right" size={14} />
+                  </a>
+                )}
+              </span>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .gal {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.75rem;
+    row-gap: 2rem;
+  }
+  .gal-head {
+    grid-column: 1 / -1;
+    margin-bottom: 1rem;
+  }
+  .gal-item {
+    margin: 0;
+    min-width: 0;
+  }
+  .gal-photo {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--color-antracit);
+  }
+  .gal-item--1 {
+    grid-column: 1 / -1;
+  }
+  /* dvije: druga uvučena desno (urednički pomak) */
+  .gal--2 .gal-item--2 {
+    grid-column: 1 / -1;
+    margin-left: 34%;
+  }
+  .gal--4 .gal-item--4 {
+    grid-column: 1 / -1;
+  }
+
+  .gal-cap {
+    display: flex;
+    gap: 0.625rem;
+    margin-top: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.5;
+    letter-spacing: 0.03em;
+    text-wrap: pretty;
+  }
+  .gal-cap-t {
+    min-width: 0;
+  }
+  /* poveznica na rad: vlastiti redak, dodirna površina 44 px */
+  .gal-cap-a {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    width: fit-content;
+    min-height: 2.75rem;
+    margin-bottom: -0.75rem;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+    text-underline-offset: 4px;
+    transition: text-decoration-color 150ms var(--ease-press);
+  }
+  .gal-cap-a:hover {
+    text-decoration-color: currentColor;
+  }
+  .gal-cap-n {
+    flex: none;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  /* mali potpisi u dva stupca: samo broj na najužim ekranima */
+  @media (width < 30rem) {
+    .gal--3 .gal-item:not(.gal-item--1) .gal-cap,
+    .gal--4 .gal-item--2 .gal-cap,
+    .gal--4 .gal-item--3 .gal-cap {
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+  }
+
+  @media (width >= 40rem) and (width < 64rem) {
+    .gal {
+      column-gap: 1.25rem;
+      row-gap: 2.5rem;
+    }
+    .gal-item--1 .gal-photo {
+      aspect-ratio: 1 / 1;
+    }
+    .gal--1 .gal-item--1 .gal-photo {
+      aspect-ratio: 4 / 5;
+    }
+    .gal--1 .gal-item--1 {
+      grid-column: 1 / -1;
+      width: 72%;
+      margin-left: auto;
+    }
+  }
+
+  /* ── desktop: 12 stupaca ── */
+  @media (width >= 64rem) {
+    .gal {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 1.5rem;
+      row-gap: 0;
+      align-items: start;
+    }
+    .gal-head {
+      grid-column: 1 / span 7;
+      margin-bottom: 4.5rem;
+    }
+    .gal-item {
+      grid-row: 2;
+    }
+
+    /* 1: zaglavlje lijevo (uz gornji rub slike), slika desno */
+    .gal--1 .gal-head {
+      grid-column: 1 / span 5;
+      grid-row: 1;
+      margin-bottom: 0;
+      align-self: start;
+      position: sticky;
+      top: 7rem;
+    }
+    .gal--1 .gal-item--1 {
+      grid-column: 7 / span 6;
+      grid-row: 1;
+    }
+
+    /* 2 */
+    .gal--2 .gal-item--1 {
+      grid-column: 1 / span 5;
+    }
+    .gal--2 .gal-item--2 {
+      grid-column: 7 / span 4;
+      margin-left: 0;
+      margin-top: 9rem;
+    }
+
+    /* 3: stube */
+    .gal--3 .gal-item--1 {
+      grid-column: 1 / span 5;
+    }
+    .gal--3 .gal-item--2 {
+      grid-column: 6 / span 4;
+      margin-top: 8rem;
+    }
+    .gal--3 .gal-item--3 {
+      grid-column: 10 / span 3;
+      margin-top: 3rem;
+    }
+
+    /* 4 */
+    .gal--4 .gal-item--1 {
+      grid-column: 1 / span 4;
+    }
+    .gal--4 .gal-item--2 {
+      grid-column: 5 / span 4;
+      margin-top: 6rem;
+    }
+    .gal--4 .gal-item--3 {
+      grid-column: 9 / span 4;
+      margin-top: 2rem;
+    }
+    .gal--4 .gal-item--4 {
+      grid-column: 3 / span 5;
+      grid-row: 3;
+      margin-top: 3rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .gal {
+      column-gap: 2rem;
+    }
+  }
+</style>

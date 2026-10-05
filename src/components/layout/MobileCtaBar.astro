@@ -1,0 +1,125 @@
+---
+/**
+ * Donja traka na mobitelu (< lg), vidljiva od prvog crtanja:
+ * Nazovite | WhatsApp | Viber | Procjena (crveno).
+ * 64 px + env(safe-area-inset-bottom). Spušta se (200 ms) dok je #procjena na ekranu
+ * i dok je otvoren mobilni izbornik. Footer na mobitelu ima donji padding za nju.
+ * Dodatne zone koje je skrivaju: atribut data-hide-mobile-cta.
+ * "Procjena" vodi na /procjena; skripta u Headeru je prebacuje na #procjena kad stranica ima obrazac.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { site, telHref, waHref, viberHref } from '@/data/site';
+---
+
+<nav class="kr-cta fixed inset-x-0 bottom-0 z-40 lg:hidden" aria-label="Brzi kontakt" data-mobile-cta>
+  <ul class="grid grid-cols-4">
+    <li>
+      <a href={telHref} class="kr-cta__btn" aria-label={`Nazovite ${site.phoneDisplay}`}>
+        <Icon name="phone" size={21} />
+        <span>Nazovite</span>
+      </a>
+    </li>
+    <li>
+      <a href={waHref()} class="kr-cta__btn" target="_blank" rel="noopener" aria-label="Pošaljite slike na WhatsApp">
+        <Icon name="whatsapp" size={21} class="text-whatsapp" />
+        <span>WhatsApp</span>
+      </a>
+    </li>
+    <li>
+      <a href={viberHref} class="kr-cta__btn" aria-label="Pošaljite slike na Viber">
+        <Icon name="viber" size={21} class="text-viber" />
+        <span>Viber</span>
+      </a>
+    </li>
+    <li>
+      <a href="/procjena" class="kr-cta__btn kr-cta__btn--red" aria-label="Besplatna procjena" data-quote-link>
+        <Icon name="ruler" size={21} />
+        <span>Procjena</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<style>
+  .kr-cta {
+    background: var(--color-grafit);
+    border-top: 1px solid rgb(213 219 223 / 0.12);
+    transition: transform 200ms var(--ease-press);
+    will-change: transform;
+  }
+  .kr-cta[data-hidden],
+  :global(html[data-menu-open]) .kr-cta {
+    transform: translateY(calc(100% + 1px));
+  }
+  :global(html.motion-off) .kr-cta {
+    transition: none;
+  }
+
+  .kr-cta__btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    border-left: 1px solid rgb(213 219 223 / 0.08);
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background-color 150ms var(--ease-press),
+      transform 150ms var(--ease-press);
+  }
+  li:first-child .kr-cta__btn {
+    border-left: 0;
+  }
+  .kr-cta__btn:active {
+    background: rgb(255 255 255 / 0.06);
+  }
+  .kr-cta__btn:active > :global(svg) {
+    transform: translateY(1px);
+  }
+  .kr-cta__btn:focus-visible {
+    outline-offset: -4px;
+  }
+  .kr-cta__btn--red {
+    background: var(--color-crvena);
+    border-left-color: transparent;
+  }
+  .kr-cta__btn--red:active {
+    background: var(--color-crvena-hover);
+  }
+  /* na crvenoj pozadini crveni fokus se ne vidi */
+  .kr-cta__btn--red:focus-visible {
+    outline-color: #fff;
+  }
+</style>
+
+<script>
+  const bars = document.querySelectorAll<HTMLElement>('[data-mobile-cta]');
+  const zones = document.querySelectorAll<HTMLElement>('#procjena, [data-hide-mobile-cta]');
+
+  if (bars.length && zones.length && 'IntersectionObserver' in window) {
+    const inView = new Set<Element>();
+    const apply = () => {
+      const hide = inView.size > 0;
+      bars.forEach((b) => {
+        b.toggleAttribute('data-hidden', hide);
+        b.inert = hide;
+      });
+    };
+    // skriva se kad zona zauzme donja ~3/4 ekrana (gornji rub iznad 75 % visine)
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? inView.add(e.target) : inView.delete(e.target)));
+        apply();
+      },
+      { rootMargin: '0px 0px -25% 0px', threshold: 0 },
+    );
+    zones.forEach((z) => io.observe(z));
+  }
+</script>

@@ -1,0 +1,381 @@
+---
+/**
+ * /privatnost · NACRT politike privatnosti (papir, dugi tekst).
+ * Struktura: voditelj obrade, podaci, svrha i osnova, rok čuvanja, prava ispitanika, kontakt.
+ * Sve što treba provjeriti označeno je vidljivim TODO markerom i HTML komentarom.
+ * Tipografija: Archivo 100 % širine, max-w-prose, 1,7 prored; lijevo sadržaj (sticky na desktopu).
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { site, telHref } from '@/data/site';
+
+const toc = [
+  { id: 'voditelj', t: 'Voditelj obrade' },
+  { id: 'podaci', t: 'Koje podatke prikupljamo' },
+  { id: 'svrha', t: 'Svrha i pravna osnova' },
+  { id: 'rok', t: 'Rok čuvanja' },
+  { id: 'prava', t: 'Prava ispitanika' },
+  { id: 'kontakt-privatnost', t: 'Kontakt' },
+];
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<section class="pv bg-papir py-16 text-tinta sm:py-24 lg:py-28">
+  <!-- TODO (pravnik): cijeli tekst je nacrt. Provjeriti s pravnikom prije objave (GDPR / ZPDZOP). -->
+  <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
+    <aside class="lg:col-span-4 xl:col-span-3">
+      <div class="lg:sticky lg:top-28">
+        <div class="pv-note" role="note">
+          <p class="flex items-center gap-2 font-mono text-[0.6875rem] font-medium tracking-[0.14em] uppercase">
+            <span class="pv-dot" aria-hidden="true"></span>
+            Nacrt
+          </p>
+          <p class="mt-2 text-[0.9375rem] leading-snug font-semibold">Pravni tekst treba pregledati.</p>
+          <p class="mt-1.5 text-[0.875rem] leading-snug text-tinta/70">
+            Mjesta označena s <span class="pv-todo">TODO</span> treba potvrditi prije objave.
+          </p>
+        </div>
+
+        <nav class="mt-10" aria-label="Sadržaj">
+          <p class="eyebrow text-tinta/70">Sadržaj</p>
+          <ol class="mt-4 border-t border-tinta/15">
+            {
+              toc.map((s, i) => (
+                <li>
+                  <a href={`#${s.id}`} class="pv-toc">
+                    <span class="font-mono text-[0.6875rem] tracking-[0.1em] text-redline-dark" aria-hidden="true">{pad(i + 1)}</span>
+                    <span>{s.t}</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+
+        <p class="mt-8 font-mono text-[0.6875rem] leading-relaxed tracking-[0.08em] text-tinta/70 uppercase">
+          Verzija 0.1 · Nacrt <span class="pv-todo">TODO datum</span>
+        </p>
+      </div>
+    </aside>
+
+    <article class="pv-prose lg:col-span-8 lg:col-start-5 xl:col-span-7 xl:col-start-5">
+      <p class="pv-lead">
+        Ovdje piše koje podatke prikupljamo kad nam pošaljete upit za procjenu, nazovete nas ili pošaljete poruku,
+        zašto ih trebamo, koliko ih čuvamo i kako možete tražiti njihovu izmjenu ili brisanje.
+      </p>
+
+      <h2 id="voditelj"><span aria-hidden="true">01</span>Voditelj obrade</h2>
+      <!-- TODO: puni naziv obrta / d.o.o., adresa sjedišta, OIB, eventualno službenik za zaštitu podataka -->
+      <p>Voditelj obrade osobnih podataka je:</p>
+      <dl class="pv-dl">
+        <div><dt>Naziv</dt><dd>{site.legalName} <span class="pv-todo">TODO puni naziv</span></dd></div>
+        <div><dt>OIB</dt><dd class="font-mono">{site.oib} <span class="pv-todo">TODO</span></dd></div>
+        <div><dt>Sjedište</dt><dd>{site.city} <span class="pv-todo">TODO adresa</span></dd></div>
+        <div><dt>E-pošta</dt><dd><a href={`mailto:${site.email}`}>{site.email}</a></dd></div>
+      </dl>
+
+      <h2 id="podaci"><span aria-hidden="true">02</span>Koje podatke prikupljamo</h2>
+      <p>Prikupljamo samo ono što nam sami pošaljete i što trebamo da bismo izmjerili krov i dali ponudu:</p>
+      <ul>
+        <li>
+          <strong>Upit za procjenu na webu:</strong> ime, broj mobitela, mjesto ili adresa objekta, vrsta posla,
+          okvirna veličina krova, najbolje vrijeme za poziv i fotografije krova koje priložite. Za stambene zgrade još
+          adresa zgrade, upravitelj ili tvrtka i broj ulaza.
+        </li>
+        <li>
+          <strong>Telefon, WhatsApp, Viber i e-pošta:</strong> vaš broj ili adresu i sadržaj poruke, uključujući
+          poslane fotografije.
+        </li>
+        <li>
+          <strong>Na terenu:</strong> fotografije i mjere krova koje snimimo tijekom procjene i radova.
+        </li>
+        <li>
+          <strong>Posjet stranici:</strong> anonimna statistika posjeta bez kolačića.
+          <span class="pv-todo">TODO alat za analitiku</span>
+        </li>
+      </ul>
+      <p>Ne prikupljamo podatke o plaćanju preko weba i ne koristimo kolačiće za oglašavanje.</p>
+
+      <h2 id="svrha"><span aria-hidden="true">03</span>Svrha i pravna osnova</h2>
+      <!-- TODO (pravnik): provjeriti pravne osnove za svaku svrhu -->
+      <ul>
+        <li>
+          <strong>Odgovor na upit, izlazak na teren i ponuda</strong> — radnje prije sklapanja ugovora na vaš zahtjev
+          (čl. 6. st. 1. t. b) GDPR-a). Za to ne tražimo posebnu privolu: slanjem upita tražite da vas kontaktiramo u
+          vezi s procjenom, i samo za to koristimo podatke iz upita.
+        </li>
+        <li>
+          <strong>Izvedba radova, račun i jamstvo</strong> — izvršenje ugovora i zakonske obveze (računovodstveni i
+          porezni propisi).
+        </li>
+        <li>
+          <strong>Fotodokumentacija radova</strong> — izvršenje ugovora; za objavu fotografija vašeg krova u
+          galeriji radova pitamo vas posebno. <span class="pv-todo">TODO privola za objavu</span>
+        </li>
+      </ul>
+      <p>Podatke ne prodajemo i ne dijelimo s trećima osim s izvršiteljima obrade koji nam pomažu u radu:</p>
+      <ul>
+        <li>
+          pružatelj web-hostinga, slanja e-pošte i pohrane fotografija iz forme
+          <span class="pv-todo">TODO popis i ugovori o obradi</span>
+        </li>
+        <li>knjigovodstveni servis, za račune <span class="pv-todo">TODO</span></li>
+      </ul>
+
+      <h2 id="rok"><span aria-hidden="true">04</span>Rok čuvanja</h2>
+      <!-- TODO (pravnik + klijent): potvrditi rokove -->
+      <dl class="pv-dl">
+        <div>
+          <dt>Upit bez ugovora</dt>
+          <dd>do <span class="pv-todo">TODO 12 mjeseci</span> od zadnjeg kontakta, zatim brisanje</dd>
+        </div>
+        <div>
+          <dt>Ugovor i račun</dt>
+          <dd>koliko propisuju računovodstveni i porezni propisi <span class="pv-todo">TODO rok</span></dd>
+        </div>
+        <div>
+          <dt>Fotodokumentacija</dt>
+          <dd>za vrijeme trajanja jamstva na izvedbu <span class="pv-todo">TODO</span></dd>
+        </div>
+      </dl>
+
+      <h2 id="prava"><span aria-hidden="true">05</span>Prava ispitanika</h2>
+      <p>U svakom trenutku možete zatražiti:</p>
+      <ul class="pv-cols">
+        <li>pristup svojim podacima</li>
+        <li>ispravak netočnih podataka</li>
+        <li>brisanje podataka</li>
+        <li>ograničenje obrade</li>
+        <li>prijenos podataka</li>
+        <li>prigovor na obradu</li>
+      </ul>
+      <p>
+        Zahtjev pošaljite e-poštom ili nas nazovite. Odgovaramo najkasnije u roku od mjesec dana. Ako smatrate da
+        podatke ne obrađujemo zakonito, možete podnijeti prigovor Agenciji za zaštitu osobnih podataka (AZOP).
+      </p>
+
+      <h2 id="kontakt-privatnost"><span aria-hidden="true">06</span>Kontakt</h2>
+      <p>Sva pitanja o vašim podacima:</p>
+      <div class="pv-contact">
+        <a href={`mailto:${site.email}`} class="pv-c">
+          <Icon name="mail" size={18} />
+          <span>{site.email}</span>
+        </a>
+        <a href={telHref} class="pv-c">
+          <Icon name="phone" size={18} />
+          <span class="font-mono">{site.phoneDisplay}</span>
+        </a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<style>
+  .pv-note {
+    position: relative;
+    padding: 1rem 1.125rem 1.125rem;
+    border: 1px dashed var(--color-redline-dark);
+    background: rgb(184 15 21 / 0.04);
+    color: var(--color-tinta);
+  }
+  .pv-note > p:first-child {
+    color: var(--color-redline-dark);
+  }
+  .pv-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-redline-dark);
+  }
+  .pv-todo {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.0625rem 0.375rem;
+    border: 1px dashed var(--color-redline-dark);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-redline-dark);
+    vertical-align: 0.15em;
+    white-space: nowrap;
+    margin-inline: 0.25rem;
+  }
+  .pv-toc {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0.375rem 0;
+    border-bottom: 1px solid rgb(21 24 27 / 0.12);
+    font-size: 0.9375rem;
+    color: rgb(21 24 27 / 0.8);
+    transition: color 150ms var(--ease-press);
+  }
+  .pv-toc:hover {
+    color: var(--color-tinta);
+  }
+  .pv-toc:hover span:last-child {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  /* ── dugi tekst ── */
+  .pv-prose {
+    max-width: 65ch;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: rgb(21 24 27 / 0.82);
+  }
+  @media (width >= 40rem) {
+    .pv-prose {
+      font-size: 1.125rem;
+    }
+  }
+  .pv-lead {
+    font-size: 1.25rem;
+    line-height: 1.55;
+    color: var(--color-tinta);
+    text-wrap: pretty;
+  }
+  @media (width >= 40rem) {
+    .pv-lead {
+      font-size: 1.375rem;
+    }
+  }
+  .pv-prose h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgb(21 24 27 / 0.15);
+    font-size: 1.5rem;
+    line-height: 1.15;
+    font-weight: 800;
+    font-stretch: 118%;
+    letter-spacing: -0.01em;
+    color: var(--color-tinta);
+    scroll-margin-top: 6rem;
+  }
+  @media (width >= 40rem) {
+    .pv-prose h2 {
+      font-size: 1.875rem;
+    }
+  }
+  .pv-prose h2 > span {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-stretch: 100%;
+    letter-spacing: 0.12em;
+    color: var(--color-redline-dark);
+    transform: translateY(-0.2em);
+  }
+  .pv-prose h2 + p,
+  .pv-prose h2 + ul,
+  .pv-prose h2 + dl {
+    margin-top: 1rem;
+  }
+  .pv-prose p,
+  .pv-prose ul,
+  .pv-prose dl,
+  .pv-prose .pv-contact {
+    margin-top: 1.125rem;
+    text-wrap: pretty;
+  }
+  .pv-prose strong {
+    font-weight: 650;
+    color: var(--color-tinta);
+  }
+  .pv-prose a {
+    color: var(--color-tinta);
+    text-decoration: underline;
+    text-decoration-color: rgb(21 24 27 / 0.3);
+    text-underline-offset: 0.25em;
+  }
+  .pv-prose a:hover {
+    text-decoration-color: currentColor;
+  }
+  .pv-prose ul > li {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  .pv-prose ul > li + li {
+    margin-top: 0.625rem;
+  }
+  .pv-prose ul > li::before {
+    content: '';
+    position: absolute;
+    left: 0.125rem;
+    top: 0.82em;
+    width: 0.75rem;
+    height: 1px;
+    background: rgb(21 24 27 / 0.45);
+  }
+  .pv-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem 2rem;
+  }
+  @media (width >= 40rem) {
+    .pv-cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .pv-prose .pv-cols > li + li {
+    margin-top: 0;
+  }
+  .pv-dl {
+    border-top: 1px solid rgb(21 24 27 / 0.12);
+  }
+  .pv-dl > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.125rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgb(21 24 27 / 0.12);
+  }
+  @media (width >= 40rem) {
+    .pv-dl > div {
+      grid-template-columns: 11rem minmax(0, 1fr);
+      gap: 1.5rem;
+    }
+  }
+  .pv-dl dt {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+  }
+  .pv-dl dd {
+    color: var(--color-tinta);
+  }
+  .pv-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .pv-prose .pv-c {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 3rem;
+    padding: 0 1.125rem;
+    border: 1px solid rgb(21 24 27 / 0.25);
+    font-size: 1rem;
+    text-decoration: none;
+    transition:
+      border-color 150ms var(--ease-press),
+      background-color 150ms var(--ease-press);
+  }
+  .pv-prose .pv-c:hover {
+    border-color: var(--color-tinta);
+    background: rgb(21 24 27 / 0.04);
+  }
+</style>

@@ -1,0 +1,42 @@
+---
+/**
+ * Zaglavlje sekcije: mono oznaka ("02 — Usluge"), naslov (type-display) i uvod.
+ * tone: "dark" (svijetli tekst na grafitu) | "light" (tamni tekst na papiru)
+ */
+interface Props {
+  index?: string;
+  eyebrow: string;
+  title: string;
+  lead?: string;
+  tone?: 'dark' | 'light';
+  align?: 'left' | 'center';
+  class?: string;
+  as?: 'h1' | 'h2';
+}
+const {
+  index,
+  eyebrow,
+  title,
+  lead,
+  tone = 'dark',
+  align = 'left',
+  class: className = '',
+  as: Tag = 'h2',
+} = Astro.props;
+const muted = tone === 'dark' ? 'text-celik' : 'text-tinta/70';
+const strong = tone === 'dark' ? 'text-white' : 'text-tinta';
+const red = tone === 'dark' ? 'text-redline' : 'text-redline-dark';
+---
+
+<header class:list={['max-w-3xl', align === 'center' && 'mx-auto text-center', className]}>
+  <p class:list={['eyebrow mb-4 flex items-center gap-3', muted, align === 'center' && 'justify-center']} data-reveal>
+    {index && <span class={red}>{index}</span>}
+    {index && <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>}
+    <span>{eyebrow}</span>
+  </p>
+  <Tag class:list={['type-display text-[2.125rem] sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)] text-balance', strong]} data-reveal>
+    {title}
+  </Tag>
+  {lead && <p class:list={['mt-5 text-lg leading-relaxed text-pretty', muted]} data-reveal>{lead}</p>}
+  <slot />
+</header>

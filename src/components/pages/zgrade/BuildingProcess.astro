@@ -1,0 +1,229 @@
+---
+/**
+ * /upravitelji-zgrada · četiri koraka za zgrade (papir-2: korak u vrijednosti nakon papira "Što dobivate"),
+ * složeni kao kotni lanac.
+ * Desktop: vodoravni lanac s kotnim zarezima; mobitel: okomiti.
+ * Pokret (samo pod .motion): crvena linija se jednom povuče preko lanca (draft) —
+ * jedina crvena stvar u pokretu na ekranu.
+ */
+import SectionHead from '@/components/ui/SectionHead.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+
+interface Props {
+  index?: string;
+}
+const { index = '02' } = Astro.props;
+
+const steps = [
+  {
+    t: 'Pregled krova',
+    d: 'Izlazimo na zgradu, mjerimo i fotografiramo krov. Upravitelj dobiva fotografije i opis stanja.',
+    k: 'Besplatno',
+  },
+  {
+    t: 'Ponuda za suvlasnike',
+    d: 'Pisana ponuda stavku po stavku, spremna za odluku suvlasnika i plaćanje iz pričuve.',
+    k: 'Na papiru',
+  },
+  {
+    t: 'Izvedba po dogovoru',
+    d: 'Termin usklađujemo s upraviteljem. Prolaz ispod osiguramo, a krov i dvorište čistimo svaki dan.',
+    k: 'Uredno',
+  },
+  {
+    t: 'Primopredaja',
+    d: 'Zajedno prolazimo krov. Dobivate fotografije prije i poslije, račun na zgradu i pisano jamstvo.',
+    k: 'Jamstvo',
+    example: true,
+  },
+];
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<section id="koraci" class="bg-papir-2 py-20 text-tinta sm:py-28 lg:py-32">
+  <div class="wrap">
+    <SectionHead
+      tone="light"
+      index={index}
+      eyebrow="Kako radimo sa zgradama"
+      title="Od pregleda do primopredaje."
+      lead="Četiri koraka, svaki s papirom koji upravitelj može pokazati suvlasnicima."
+    />
+
+    <div class="bp mt-14 lg:mt-20" data-bp>
+      <span class="bp-rail" aria-hidden="true"></span>
+      <span class="bp-red" aria-hidden="true" data-bp-red></span>
+      <span class="bp-tick bp-tick--end" aria-hidden="true"></span>
+      <ol class="bp-list" data-reveal-group>
+      {
+        steps.map((s, i) => (
+          <li class="bp-step" data-reveal>
+            <span class="bp-tick" aria-hidden="true" />
+            <p class="bp-k">
+              <span class="text-redline-dark" aria-hidden="true">{pad(i + 1)}</span>
+              <span class="text-tinta/70" aria-hidden="true">/</span>
+              <span>{s.k}</span>
+            </p>
+            <h3 class="mt-3 text-[1.3125rem] leading-tight font-bold text-tinta [font-stretch:112%] sm:text-[1.4375rem]">
+              {s.t}
+            </h3>
+            <p class="mt-3 max-w-[22rem] leading-relaxed text-pretty text-tinta/70">
+              {s.d}
+              {s.example && <ExampleTag class="ml-1" />}
+            </p>
+          </li>
+        ))
+      }
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Lanac: .bp nosi liniju i crvenu crtu, .bp-list je mreža koraka.
+     Mobitel: okomit lanac lijevo; desktop (≥64rem): vodoravan lanac iznad koraka. */
+  .bp {
+    position: relative;
+    padding-left: 2.25rem;
+  }
+  .bp-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2.5rem;
+  }
+  .bp-rail,
+  .bp-red {
+    position: absolute;
+    left: 0.4375rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 1px;
+    background: rgb(21 24 27 / 0.25);
+  }
+  /* završno stanje: puna crvena crta (bez JS-a / bez pokreta je vidljiva) */
+  .bp-red {
+    width: 2px;
+    left: calc(0.4375rem - 0.5px);
+    background: var(--color-redline-dark);
+    transform-origin: 50% 0;
+  }
+  :global(.motion) .bp-red {
+    transform: scaleY(0);
+  }
+  .bp-step {
+    position: relative;
+  }
+  /* kotni zarez: kosa crtica 45° preko linije */
+  .bp-tick {
+    position: absolute;
+    left: calc(-2.25rem + 0.4375rem - 0.4375rem);
+    top: 0.0625rem;
+    width: 0.875rem;
+    height: 0.875rem;
+    background: linear-gradient(
+      to top right,
+      transparent calc(50% - 0.75px),
+      var(--color-tinta) calc(50% - 0.75px),
+      var(--color-tinta) calc(50% + 0.75px),
+      transparent calc(50% + 0.75px)
+    );
+  }
+  .bp-tick--end {
+    display: none;
+  }
+  .bp-k {
+    display: flex;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+  }
+
+  @media (width >= 64rem) {
+    .bp {
+      padding-left: 0;
+      padding-top: 2.75rem;
+    }
+    .bp-list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      column-gap: 0;
+    }
+    .bp-rail,
+    .bp-red {
+      left: 0;
+      right: 0;
+      top: 0.4375rem;
+      bottom: auto;
+      width: auto;
+      height: 1px;
+    }
+    .bp-red {
+      height: 2px;
+      top: calc(0.4375rem - 0.5px);
+      transform-origin: 0 50%;
+    }
+    :global(.motion) .bp-red {
+      transform: scaleX(0);
+    }
+    .bp-step {
+      padding-right: 2.5rem;
+    }
+    .bp-tick {
+      left: -0.4375rem;
+      top: -2.75rem;
+    }
+    .bp-tick--end {
+      display: block;
+      left: auto;
+      right: -0.4375rem;
+      top: 0;
+    }
+    /* okomita pomoćna linija od lanca do teksta */
+    .bp-step::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: -2.75rem;
+      height: 2rem;
+      width: 1px;
+      background: rgb(21 24 27 / 0.25);
+    }
+  }
+</style>
+
+<script>
+  import { gsap, motionOn } from '@/lib/motion';
+
+  function initBp() {
+    if (!motionOn()) return;
+    document.querySelectorAll<HTMLElement>('[data-bp]:not([data-bp-ready])').forEach((root) => {
+      root.setAttribute('data-bp-ready', '');
+      const red = root.querySelector<HTMLElement>('[data-bp-red]');
+      if (!red) return;
+      const mm = gsap.matchMedia();
+      mm.add({ desk: '(min-width: 64rem)', mob: '(max-width: 63.999rem)' }, (ctx) => {
+        const desk = ctx.conditions?.desk;
+        const prop = desk ? 'scaleX' : 'scaleY';
+        gsap.fromTo(
+          red,
+          { [prop]: 0 },
+          {
+          [prop]: 1,
+          duration: desk ? 1.2 : 1.4,
+          ease: 'draft',
+          scrollTrigger: { trigger: root, start: 'top 80%', once: true },
+          },
+        );
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBp, { once: true });
+  } else {
+    initBp();
+  }
+</script>

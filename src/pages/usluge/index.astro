@@ -1,0 +1,436 @@
+---
+/**
+ * /usluge — SEO hub svih usluga (nav "Usluge").
+ * Ritam: hero (grafit+papir, kompaktan; desno "popis listova" = sidra na kartice) →
+ *        katalog 6 usluga (papir) → procjena: FinalCta (grafit+papir) → footer.
+ * Kartica: fotografija (data-scan) s presjekom profila u kutu, broj, naslov (h2 = link na uslugu,
+ * cijela kartica je klikabilna), kratki opis, 3 stavke, "Besplatna procjena" → označi uslugu u formi
+ * na dnu stranice i skrola do nje (bez JS-a: forma na stranici usluge, s predodabranom uslugom).
+ * Schema: BreadcrumbList + ItemList usluga.
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb, profileNames } from '@/components/layout/PageHero.astro';
+import Photo from '@/components/ui/Photo.astro';
+import ProfileIcon from '@/components/ui/ProfileIcon.astro';
+import Icon from '@/components/ui/Icon.astro';
+import FinalCta from '@/components/home/FinalCta.astro';
+import { services, waHref } from '@/data/site';
+import { pad } from './_parts/media';
+
+const crumbs = [homeCrumb, { href: '/usluge', label: 'Usluge' }];
+const total = pad(services.length);
+/* fokus kadra kod rezanja portretnih fotografija */
+const focus: Record<string, string> = { dimnjaci: 'object-[50%_30%]' };
+
+const listSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Usluge — Limarija Karamatić',
+  itemListElement: services.map((s, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url: new URL(`/usluge/${s.slug}`, Astro.site).toString(),
+    name: s.title,
+  })),
+};
+---
+
+<Base
+  title="Limarske usluge Zagreb | Limarija Karamatić"
+  description="Limeni i falcani krovovi, popravak krova, opšav atike, dimnjaci, oluci i snjegobrani u Zagrebu i okolici. Besplatna procjena na terenu, pisana ponuda."
+  schema={[breadcrumbSchema(crumbs, Astro.site), listSchema]}
+>
+  <PageHero
+    eyebrow="Usluge · Zagreb i okolica"
+    title="Limarske usluge u Zagrebu"
+    lead="Od cijelog novog krova do jednog opšava uz dimnjak. Lim krojimo i savijamo po mjeri vašeg krova, a ne po katalogu."
+    crumbs={crumbs}
+    compact
+  >
+    <nav slot="aside" class="hb-index" aria-label="Popis usluga">
+      <p class="hb-index-head" aria-hidden="true">
+        <span>Popis listova</span>
+        <span>{total}</span>
+      </p>
+      <ol>
+        {
+          services.map((s, i) => (
+            <li>
+              <a href={`#${s.slug}`}>
+                <span class="hb-index-n" aria-hidden="true">{pad(i + 1)}</span>
+                <span class="hb-index-t">{s.title}</span>
+                <Icon name="arrow-right" size={16} class="hb-index-a rotate-90" />
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+  </PageHero>
+
+  <section id="popis" class="bg-papir pt-14 pb-20 text-tinta sm:pt-20 sm:pb-28 lg:pb-32" aria-labelledby="popis-naslov">
+    <div class="wrap">
+      <div class="hb-bar">
+        <h2 id="popis-naslov" class="eyebrow flex items-center gap-3 text-tinta/70">
+          <span class="text-redline-dark">01</span>
+          <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+          <span>Popis usluga · {total}</span>
+        </h2>
+        <p class="hb-ask">
+          <span>Ne znate što vam treba?</span>
+          <a href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} class="hb-ask-a group/w" target="_blank" rel="noopener">
+            Pošaljite slike na WhatsApp
+            <Icon name="arrow-up-right" size={16} class="transition-transform duration-150 group-hover/w:-translate-y-0.5 group-hover/w:translate-x-0.5" />
+          </a>
+        </p>
+      </div>
+
+      <ol class="hb-grid" role="list">
+        {
+          services.map((s, i) => (
+            <li id={s.slug} class="hb-li">
+              <article class="hb-card group/c" data-profile-host aria-labelledby={`hb-${s.slug}`}>
+                <span class="hb-rule" aria-hidden="true" />
+                <div class="hb-media">
+                  <div class="hb-photo" data-scan>
+                    <Photo
+                      src={s.image}
+                      alt={s.imageAlt}
+                      widths={[400, 640, 880]}
+                      sizes="(min-width: 88rem) 26rem, (min-width: 64rem) 30vw, (min-width: 40rem) 46vw, 92vw"
+                      class="block h-full w-full"
+                      imgClass={`h-full w-full object-cover transition-transform duration-[400ms] ease-[var(--ease-draft)] group-hover/c:scale-[1.03] ${focus[s.slug] ?? ''}`}
+                    />
+                  </div>
+                  <div class="hb-detail" aria-hidden="true">
+                    <ProfileIcon profile={s.profile} size={48} animate class="hb-icon" />
+                  </div>
+                </div>
+
+                <p class="hb-num" aria-hidden="true">
+                  <span class="text-redline-dark">{pad(i + 1)}</span>
+                  <span>/{total}</span>
+                  <span class="hb-num-sep">·</span>
+                  <span>Presjek: {profileNames[s.profile]}</span>
+                </p>
+                <h2 id={`hb-${s.slug}`} class="hb-title type-display text-balance">
+                  <a href={`/usluge/${s.slug}`} class="hb-link">{s.title}</a>
+                </h2>
+                <p class="hb-short text-pretty">{s.short}</p>
+                <ul class="hb-inc" role="list">
+                  {s.includes.slice(0, 3).map((item) => <li>{item}</li>)}
+                </ul>
+                <div class="hb-foot">
+                  <span class="hb-more" aria-hidden="true">
+                    Detalji
+                    <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/c:translate-x-0.5" />
+                  </span>
+                  <a href={`/usluge/${s.slug}#procjena`} class="hb-quote group/q" data-hb-quote={s.slug}>
+                    Besplatna procjena<span class="sr-only">: {s.title}</span>
+                    <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/q:translate-x-0.5" />
+                  </a>
+                </div>
+              </article>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <FinalCta index="02" />
+</Base>
+
+<style>
+  /* ── hero: popis listova (sidra) ── */
+  .hb-index {
+    display: none;
+  }
+  @media (width >= 64rem) {
+    .hb-index {
+      display: block;
+      width: 100%;
+      max-width: 26rem;
+      margin-left: auto;
+      border: 1px solid rgb(213 219 223 / 0.22);
+      background: rgb(14 16 19 / 0.6);
+    }
+  }
+  .hb-index-head {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgb(213 219 223 / 0.22);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .hb-index li + li {
+    border-top: 1px solid rgb(213 219 223 / 0.1);
+  }
+  .hb-index a {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    color: var(--color-linija);
+    transition:
+      background-color 150ms var(--ease-press),
+      color 150ms var(--ease-press);
+  }
+  .hb-index a:hover {
+    background: rgb(213 219 223 / 0.05);
+    color: #fff;
+  }
+  .hb-index-n {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    color: var(--color-redline);
+  }
+  .hb-index-t {
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+  .hb-index :global(.hb-index-a) {
+    color: var(--color-celik);
+  }
+
+  /* ── traka iznad kataloga ── */
+  .hb-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--color-tinta);
+  }
+  @media (width >= 48rem) {
+    .hb-bar {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  .hb-ask {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 0.75rem;
+    font-size: 0.9375rem;
+    color: rgb(21 24 27 / 0.75);
+  }
+  .hb-ask-a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+    text-decoration: underline;
+    text-decoration-color: rgb(21 24 27 / 0.3);
+    text-underline-offset: 5px;
+    transition: text-decoration-color 150ms var(--ease-press);
+  }
+  .hb-ask-a:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* ── katalog ── */
+  .hb-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3.5rem 1.5rem;
+    margin-top: 2.5rem;
+  }
+  @media (width >= 40rem) {
+    .hb-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4rem 1.5rem;
+      margin-top: 3rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .hb-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5rem 2rem;
+    }
+  }
+  .hb-li {
+    min-width: 0;
+    scroll-margin-top: 6.5rem;
+  }
+  .hb-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  /* crvena kotna crta preko vrha kartice na hover */
+  .hb-rule {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -0.75rem;
+    height: 2px;
+    background: var(--color-redline-dark);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 380ms var(--ease-draft);
+  }
+  @media (hover: hover) {
+    .hb-card:hover .hb-rule {
+      transform: scaleX(1);
+    }
+  }
+  .hb-media {
+    position: relative;
+  }
+  .hb-photo {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--color-antracit);
+  }
+  @media (width >= 40rem) {
+    .hb-photo {
+      aspect-ratio: 4 / 5;
+    }
+  }
+  .hb-detail {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    background: var(--color-papir);
+    color: var(--color-tinta);
+  }
+  .hb-detail :global(.hb-icon) {
+    width: 3rem;
+    height: 3rem;
+  }
+  .hb-num {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.375rem;
+    margin-top: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.72);
+  }
+  .hb-num-sep {
+    margin-inline: 0.25rem;
+  }
+  .hb-title {
+    margin-top: 0.75rem;
+    font-size: 1.75rem;
+  }
+  @media (width >= 64rem) {
+    .hb-title {
+      font-size: clamp(1.625rem, 2.2vw, 2rem);
+    }
+  }
+  .hb-link {
+    color: inherit;
+  }
+  /* cijela kartica je link na uslugu; "Procjena" ostaje zaseban link iznad sloja */
+  .hb-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .hb-link:focus-visible {
+    outline: none;
+  }
+  .hb-link:focus-visible::after {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 6px;
+  }
+  .hb-short {
+    margin-top: 0.875rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgb(21 24 27 / 0.8);
+  }
+  .hb-inc {
+    margin-top: 1.25rem;
+    border-top: 1px solid rgb(21 24 27 / 0.14);
+  }
+  .hb-inc li {
+    position: relative;
+    padding: 0.625rem 0 0.625rem 1.25rem;
+    border-bottom: 1px solid rgb(21 24 27 / 0.14);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  .hb-inc li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1.15rem;
+    width: 0.5rem;
+    height: 1px;
+    background: currentColor;
+  }
+  .hb-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+  .hb-more,
+  .hb-quote {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+  }
+  .hb-quote {
+    position: relative;
+    z-index: 2;
+    padding-inline: 1rem;
+    border: 1px solid rgb(21 24 27 / 0.3);
+    transition:
+      border-color 150ms var(--ease-press),
+      background-color 150ms var(--ease-press),
+      color 150ms var(--ease-press);
+  }
+  .hb-quote:hover {
+    border-color: var(--color-tinta);
+    background: var(--color-tinta);
+    color: var(--color-papir);
+  }
+</style>
+
+<script>
+  import { preselectJob } from '@/lib/form';
+
+  /* "Besplatna procjena" na kartici: označi uslugu u formi na dnu ove stranice i skrolaj do nje
+     (bez ponovnog učitavanja). Bez JS-a link vodi na formu stranice usluge (predodabrana usluga). */
+  document.querySelectorAll<HTMLAnchorElement>('a[data-hb-quote]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const slug = link.dataset.hbQuote ?? '';
+      if (!slug || !preselectJob(slug)) return;
+      e.preventDefault();
+      try {
+        history.replaceState(null, '', '?usluga=' + encodeURIComponent(slug) + '#procjena');
+      } catch {}
+    });
+  });
+</script>

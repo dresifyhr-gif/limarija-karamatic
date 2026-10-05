@@ -1,0 +1,184 @@
+---
+/**
+ * Presjek profila lima — tehnički crtež u 64×64 viewBoxu.
+ *
+ *  profile  crijep | falc | uvala | atika | dimnjak | oluk | trapez
+ *  size     px (default 64) — debljina linije ostaje ~2 px na svakoj veličini
+ *  animate  kad je true i motionOn(): lim kreće kao RAVNA traka i savije se u profil
+ *           (MorphSVG, ease 'press' 0,3 s) + kratki DrawSVG porubova.
+ *           Okida jednom kad uđe u ekran; na desktopu (hover: hover) ponavlja se
+ *           na hover/focus roditelja s [data-profile-host] (ili najbližeg <a>/<li>).
+ *
+ * Slojevi: ctx = podloga (zid, daska, čelo) tanko i prigušeno · main = lim koji se savija ·
+ * hem = porubi, okapnice i kuke koji se docrtaju nakon savijanja.
+ * flat = y ravne trake prije savijanja, ili 'chord' (ravna kosina od prve do zadnje točke).
+ */
+import type { Profile } from '@/data/site';
+
+interface Props {
+  profile: Profile;
+  size?: number;
+  class?: string;
+  animate?: boolean;
+}
+const { profile, size = 64, class: className = '', animate = false } = Astro.props;
+
+type Def = { main: string[]; hem?: string[]; ctx?: string[]; flat: number | 'chord' };
+
+const PROFILES: Record<Profile, Def> = {
+  // crijep-lim, uzdužni presjek: valoviti "crijep" s prešanim korakom
+  crijep: {
+    main: ['M4 14C10 14 16 16 20 21V26C26 26 32 28 36 33V38C42 38 48 40 52 45V50H60'],
+    flat: 'chord',
+  },
+  // dvije trake, dvostruki stojeći falc; tanka linija = daščana podloga
+  falc: {
+    main: ['M4 46H27V18', 'M60 46H31V23H33'],
+    hem: ['M27 18H35V29'],
+    ctx: ['M4 50H60'],
+    flat: 46,
+  },
+  // uvala: V s rebrom u sredini i podvijenim rubovima
+  uvala: {
+    main: ['M6 22L28 39L32 33L36 39L58 22'],
+    hem: ['M6 22V15L9 13', 'M58 22V15L55 13'],
+    flat: 22,
+  },
+  // kapa atike s padom prema krovu i okapnicama preko zida
+  atika: {
+    main: ['M17 39V20L47 23V39'],
+    hem: ['M17 39L14 42', 'M47 39L50 42'],
+    ctx: ['M20 62V27H44V62', 'M20 37L30 27M20 49L42 27M24 59L44 39M36 59L44 51'],
+    flat: 21,
+  },
+  // stepenasti opšav dimnjaka: L uz zid, gornji rub uvučen u fugu
+  dimnjak: {
+    main: ['M6 46H40V16'],
+    hem: ['M40 16L44 12', 'M6 46V41'],
+    ctx: ['M42 4V60', 'M2 50H42', 'M42 14L52 4M42 26L60 8M42 38L60 20M42 50L60 32M48 56L60 44'],
+    flat: 46,
+  },
+  // polukružni oluk s valjkom (perlom), stražnjim rubom i kukom na čelu
+  oluk: {
+    main: ['M11 30A3 3 0 1 1 14 27A18 18 0 0 0 50 27'],
+    hem: ['M50 27V19L53 17', 'M11.8 34.4A21.5 21.5 0 0 0 53.5 27V14H60'],
+    ctx: ['M60 6V34'],
+    flat: 27,
+  },
+  // trapezni lim: dva rebra
+  trapez: {
+    main: ['M4 42H10L14 24H22L26 42H38L42 24H50L54 42H60'],
+    flat: 42,
+  },
+};
+
+const def = PROFILES[profile] ?? PROFILES.trapez;
+// ~2 px linija bez obzira na veličinu (2,5 px na velikim crtežima)
+const px = size >= 120 ? 2.5 : 2;
+const sw = +((px * 64) / size).toFixed(2);
+const swCtx = +((1 * 64) / size).toFixed(2);
+---
+
+<svg
+  viewBox="0 0 64 64"
+  width={size}
+  height={size}
+  class={`profile-icon ${className}`}
+  fill="none"
+  stroke="currentColor"
+  stroke-width={sw}
+  stroke-linecap="square"
+  stroke-linejoin="miter"
+  aria-hidden="true"
+  focusable="false"
+  data-profile={profile}
+  data-profile-anim={animate ? '' : undefined}
+  data-flat={String(def.flat)}
+>
+  {def.ctx && <g stroke-width={swCtx} stroke-linecap="butt" opacity=".42">{def.ctx.map((d) => <path d={d} />)}</g>}
+  {def.main.map((d) => <path d={d} data-pf-main />)}
+  {def.hem?.map((d) => <path d={d} data-pf-hem />)}
+</svg>
+
+<script>
+  import { gsap, ScrollTrigger, MorphSVGPlugin, motionOn } from '@/lib/motion';
+
+  type Shape = { p: SVGPathElement; bent: string; flat: string };
+
+  function flatten(d: string, flat: string): { bent: string; flat: string } {
+    const raw = MorphSVGPlugin.stringToRawPath(d);
+    const bent = MorphSVGPlugin.rawPathToString(raw);
+    const seg0 = raw[0];
+    const last = raw[raw.length - 1];
+    const x0 = seg0[0],
+      y0 = seg0[1];
+    const x1 = last[last.length - 2],
+      y1 = last[last.length - 1];
+    const k = flat === 'chord' && x1 !== x0 ? (y1 - y0) / (x1 - x0) : 0;
+    const fy = parseFloat(flat);
+    raw.forEach((seg) => {
+      for (let i = 1; i < seg.length; i += 2) {
+        seg[i] = flat === 'chord' ? y0 + (seg[i - 1] - x0) * k : fy;
+      }
+    });
+    return { bent, flat: MorphSVGPlugin.rawPathToString(raw) };
+  }
+
+  function init() {
+    if (!motionOn()) return;
+    const hoverMq = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+    document.querySelectorAll<SVGSVGElement>('svg[data-profile-anim]:not([data-pf-ready])').forEach((svg) => {
+      svg.setAttribute('data-pf-ready', '');
+      const flatMode = svg.dataset.flat ?? '32';
+      const shapes: Shape[] = Array.from(svg.querySelectorAll<SVGPathElement>('[data-pf-main]')).map((p) => ({
+        p,
+        ...flatten(p.getAttribute('d') ?? '', flatMode),
+      }));
+      const hems = svg.querySelectorAll<SVGPathElement>('[data-pf-hem]');
+      let tl: gsap.core.Timeline | null = null;
+
+      const toFlat = () => {
+        shapes.forEach((s) => gsap.set(s.p, { attr: { d: s.flat } }));
+        if (hems.length) gsap.set(hems, { drawSVG: '0% 0%' });
+      };
+
+      const bend = () => {
+        if (tl?.isActive()) return;
+        toFlat();
+        tl = gsap.timeline();
+        shapes.forEach((s) => tl!.to(s.p, { morphSVG: { shape: s.bent, type: 'linear' }, duration: 0.3, ease: 'press' }, 0));
+        if (hems.length) tl.to(hems, { drawSVG: '0% 100%', duration: 0.2, ease: 'press', stagger: 0.04 }, 0.24);
+      };
+
+      // ravna traka dok ne uđe u ekran
+      toFlat();
+      ScrollTrigger.create({
+        trigger: svg,
+        start: 'top 88%',
+        once: true,
+        onEnter: () => gsap.delayedCall(Number(svg.dataset.pfDelay ?? 0.15), bend),
+      });
+
+      // desktop: ponovno savijanje na hover/focus kartice
+      const host =
+        svg.closest<HTMLElement>('[data-profile-host]') ??
+        svg.closest<HTMLElement>('a, li, article') ??
+        svg.parentElement;
+      if (host) {
+        host.addEventListener('pointerenter', (e) => {
+          if (hoverMq.matches && (e as PointerEvent).pointerType === 'mouse') bend();
+        });
+        host.addEventListener('focusin', () => {
+          if (hoverMq.matches) bend();
+        });
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+</script>

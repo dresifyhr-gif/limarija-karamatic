@@ -1,0 +1,192 @@
+---
+/**
+ * /o-nama · tri vrijednosti kao "spec" ćelije sastavnice (grafit):
+ * Preciznost / Urednost / Jamstvo. Svaka ima zaglavlje pozicije, riječ, opis i
+ * mono specifikaciju (ključ — vrijednost). Nepotvrđeno nosi <ExampleTag/>.
+ */
+import SectionHead from '@/components/ui/SectionHead.astro';
+import Icon, { type IconName } from '@/components/ui/Icon.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import { standard } from '@/data/site';
+
+interface Props {
+  index?: string;
+}
+const { index = '02' } = Astro.props;
+
+const warranty = standard.find((s) => s.k === 'Jamstvo na izvedbu');
+
+const values: {
+  word: string;
+  icon: IconName;
+  text: string;
+  spec: { k: string; v: string; example?: boolean }[];
+}[] = [
+  {
+    word: 'Preciznost',
+    icon: 'ruler',
+    text: 'Mjera se uzima na krovu, ne s plana. Kutovi na geru, preklopi u smjeru vode i linije koje se vide s ulice.',
+    spec: [
+      { k: 'Mjerenje', v: 'Na licu mjesta' },
+      { k: 'Kroj', v: 'Po mjeri krova' },
+      { k: 'Kutovi', v: 'Na geru' },
+    ],
+  },
+  {
+    word: 'Urednost',
+    icon: 'check',
+    text: 'Gradilište čistimo svaki dan. Kad odemo, ostaju ravne linije na krovu, a ne otpaci lima u dvorištu.',
+    spec: [
+      { k: 'Gradilište', v: 'Čisto svaki dan' },
+      { k: 'Dogovor', v: 'Rok piše u ponudi' },
+      { k: 'Primopredaja', v: 'Zajedno, na krovu' },
+    ],
+  },
+  {
+    word: 'Jamstvo',
+    icon: 'shield',
+    text: 'Na izvedbu dajemo pisano jamstvo, a na materijal vrijedi jamstvo proizvođača. Sve piše u ponudi i na računu.',
+    spec: [
+      { k: 'Izvedba', v: 'Pisano jamstvo' },
+      { k: 'Trajanje', v: warranty ? warranty.v.split(',')[0] : '—', example: !warranty?.confirmed },
+      { k: 'Materijal', v: 'Jamstvo proizvođača' },
+    ],
+  },
+];
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<section id="vrijednosti" class="bg-grafit py-20 text-linija sm:py-28 lg:py-32">
+  <div class="wrap">
+    <SectionHead
+      index={index}
+      eyebrow="Kako radimo"
+      title="Tri pravila bez iznimke."
+      lead="Isto pravilo vrijedi za opšav dimnjaka i za krov zgrade. Napravljeno kako treba, i na papiru koji to potvrđuje."
+    />
+
+    <ul class="vl-grid mt-14 lg:mt-20" data-reveal-group>
+      {
+        values.map((v, i) => (
+          <li class="vl-cell" data-reveal>
+            <div class="vl-head" aria-hidden="true">
+              <span>
+                Poz. <span class="text-redline">{pad(i + 1)}</span>
+              </span>
+              <span>Vrijednost</span>
+            </div>
+            <div class="vl-main">
+              <div class="flex items-start justify-between gap-4">
+                <h3 class="vl-word type-display text-white">{v.word}</h3>
+                <span class="mt-1 grid size-11 flex-none place-items-center border border-linija/20 text-linija">
+                  <Icon name={v.icon} size={22} />
+                </span>
+              </div>
+              <p class="mt-5 leading-relaxed text-pretty text-celik">{v.text}</p>
+            </div>
+            <dl class="vl-spec">
+              {v.spec.map((s) => (
+                <div class="vl-row">
+                  <dt>{s.k}</dt>
+                  <dd>
+                    {s.v}
+                    {s.example && <ExampleTag class="ml-2" />}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .vl-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    background: rgb(213 219 223 / 0.14);
+    border: 1px solid rgb(213 219 223 / 0.14);
+  }
+  @media (width >= 64rem) {
+    .vl-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .vl-cell {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-grafit);
+  }
+  .vl-head {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.875rem 1.375rem;
+    border-bottom: 1px solid rgb(213 219 223 / 0.14);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .vl-main {
+    padding: 1.75rem 1.375rem 2rem;
+    flex: 1;
+  }
+  .vl-word {
+    font-size: 2.125rem;
+  }
+  @media (width >= 40rem) {
+    .vl-head {
+      padding-inline: 2rem;
+    }
+    .vl-main {
+      padding: 2.25rem 2rem 2.5rem;
+    }
+    .vl-word {
+      font-size: 2.75rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .vl-word {
+      font-size: clamp(1.875rem, 2.65vw, 2.625rem);
+    }
+  }
+  .vl-spec {
+    border-top: 1px solid rgb(213 219 223 / 0.14);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  .vl-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    min-height: 2.875rem;
+    padding: 0.625rem 1.375rem;
+  }
+  .vl-row + .vl-row {
+    border-top: 1px dashed rgb(213 219 223 / 0.12);
+  }
+  @media (width >= 40rem) {
+    .vl-row {
+      padding-inline: 2rem;
+    }
+  }
+  .vl-row dt {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .vl-row dd {
+    display: flex;
+    align-items: center;
+    text-align: right;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+</style>

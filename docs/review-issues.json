@@ -1,0 +1,1125 @@
+[
+  {
+    "severity": "blocker",
+    "page": "/ (whole page, after scrolling to #jamstvo)",
+    "viewport": "390×844 and 360×740 (mobile, touch)",
+    "files": [
+      "src/components/home/Warranty.astro"
+    ],
+    "problem": "The visually hidden <thead class=\"tb-thead\"> is meant to collapse to 1px below 40rem, but the rule `.tb-table thead { display:block; width:100% }` (specificity 0,1,1) beats `.tb-thead { width:1px }` (0,1,0). The absolutely positioned thead becomes full width and sticks out 21px past the right edge. clip-path hides it visually but it still counts as scrollable overflow. documentElement.scrollWidth goes from 390 to 411 (and 360 to 381) as soon as the user reaches the Warranty section. Mobile Chrome then widens the layout viewport, so the fixed bottom bar (Nazovi/WhatsApp/Viber/Procjena) drops 44–46px below the screen and only its top ~21px stays visible for the rest of the page. The page can also be panned sideways.",
+    "fix": "In Warranty.astro, take thead out of the shared block rule: `.tb-table, .tb-table tbody { display:block; width:100% }`. Make the sr-only rule win: `.tb-table .tb-thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }`, and in the ≥40rem block use `.tb-table .tb-thead { position:static; width:100%; height:auto; overflow:visible; clip-path:none }`. Add a safety net: `#jamstvo { overflow-x: clip; }`. I verified that injecting `.tb-table .tb-thead{width:1px}` keeps the bar at 675–740px at scrollY 12000.",
+    "evidence": "shots/rv-ad-m360-barcut.png (bar cut to 21px). Measured: scrollWidth 411 at 390 and 381 at 360; bar top 719 / bottom 784 against innerHeight 740. With the fix, the bar stays at 675–740.",
+    "by": "design-home"
+  },
+  {
+    "severity": "major",
+    "page": "/ hero (#vrh)",
+    "viewport": "1366×768, 1280×800, 1440×900 screens (real browser viewport ~1440×790)",
+    "files": [
+      "src/components/home/Hero.astro"
+    ],
+    "problem": "At ≥1280 the sheet stretches to the height of the text column (xl:items-stretch), and that column is ~700px tall: eyebrow, 4-line H1, subline, 2 rows of CTAs, trust row. The sheet's bottom edge sits at 863px (1366×768) and 876px (1280×800). The payoff caption \"Ovo nije crtež. Pravi krov · Zagreb →\" (y 804–848 / 817–861), the title block and the trust row are all below the fold on the most common laptop sizes, so the animation's final beat lands off-screen.",
+    "fix": "Size the hero to the viewport from lg up. (1) Reduce padding: `lg:py-14 xl:py-16` → `lg:py-10 xl:py-12`. (2) Cap the stage: `@media (min-width:64rem){ .hx-stage{ max-height: calc(100svh - 101px - 2.75rem - 4.5rem); } }` and at xl use `flex:0 0 auto; height: clamp(26rem, calc(100svh - 14rem), 42rem)` instead of stretching to the text column. The photo already uses object-fit:cover, and the drawing should use preserveAspectRatio xMidYMid meet. (3) Compress the text column on short screens: `@media (min-width:64rem) and (max-height:57rem){ .hx-display{font-size:clamp(2.75rem,4.3vw,4.75rem)} .hx-sub{margin-top:1rem} [data-hx-ctas]{margin-top:1.5rem} .hx-trust{margin-top:1.5rem} }`. Acceptance: the sheet's bottom edge (with caption) is ≤ innerHeight − 24px at 1280×720, 1366×768 and 1440×790.",
+    "evidence": "shots/rv-ad-h1366.png, shots/rv-ad-h1280.png. Measured: sheet bottom 863 at 1366×768 and 876 at 1280×800.",
+    "by": "design-home"
+  },
+  {
+    "severity": "major",
+    "page": "/ hero, animation 2.8–4.2 s and the finished frame",
+    "viewport": "all (1440×900 shown)",
+    "files": [
+      "src/components/home/hero/geometry.ts",
+      "src/lib/hero.ts",
+      "src/components/home/Hero.astro",
+      "src/components/home/hero/HeroSheet.astro"
+    ],
+    "problem": "The final beat doesn't read as intentional. (a) windowPoly (geometry.ts:235) is the whole house outline including the walls down to ground level (GY). The photo, a close-up of crijep-lim tiles, first appears inside the full house silhouette, so the walls turn into roof tiles (frame ~3.3 s) instead of the brief's \"the roof shape becomes a window\". (b) In the finished state the ghost drawing stays on top of the photo (INK_FINAL 0.34 and DIM_FINAL 0.5 in hero.ts:23-24; .hx-ink/.hx-dim at Hero.astro:598-605). Its side-elevation geometry doesn't line up with the photo's oblique view at all. The red 12 450 / 6 080 / 35° / RAL 7016 turn pink on blue-grey steel, and '6 080' and the RAL leader are cut off at the panel edges, so it looks like a compositing error. (c) The caption box (663–1112px) and the title block (1145–1360px) sit side by side on the bottom edge as two competing dark boxes.",
+    "fix": "(a) Set windowPoly to the roof polygon only: points EL, A, A2/J0/B/B2 (ridge), WE2, ER2 and back along the eave, using the same target-edge mapping so it still opens to the full frame. Walls then stay drawn while the steel becomes photo. (b) Set INK_FINAL = 0 and DIM_FINAL = 0, and the CSS final state `.hx-ink,.hx-ruler,.hx-dash,.hx-dim{opacity:0}`. If you want to keep the drawing language on the photo, add one crisp annotation that registers with it instead: a 1px white leader to a snow guard labelled 'SNJEGOBRAN · RAL 7016'. (c) In the final state hide `.hx-tb` (opacity 0, 0.2 s) so the caption is the only overlay, or move the caption text into the title block's first row.",
+    "evidence": "shots/rv-ad-cs-reveal.png (frames 3300–3900: tiles fill the walls), shots/rv-ad-zoom-final.png (pink ghost dimensions), shots/rv-ad-hf-4200.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "major",
+    "page": "/ (sticky header, all sections)",
+    "viewport": "1024×768 and 1024–1279 (iPad landscape, small laptops)",
+    "files": [
+      "src/components/layout/Header.astro",
+      "src/components/layout/MobileCtaBar.astro"
+    ],
+    "problem": "The header phone link is `hidden xl:inline-flex` (Header.astro:55) and the mobile CTA bar is `lg:hidden`. From 1024 to 1279px the sticky header shows only the nav and the red CTA. Once the utility bar scrolls away, no phone number is visible anywhere, on touch tablets too, even though the brief says to judge the site by calls.",
+    "fix": "Add a 44×44 icon-only tel button at lg: `<a href={telHref} class=\"kr-iconbtn hidden lg:inline-flex xl:hidden\" aria-label=\"Nazovi 091 000 0000\">` before the CTA, using the same style as the mobile phone button. Alternatively show the full number from lg by tightening the nav gap (gap-6 → gap-5) and the CTA padding (px-5 → px-4). Also consider showing MobileCtaBar under `@media (pointer:coarse) and (max-width:1366px)`.",
+    "evidence": "shots/rv-ad-d1024-03.png (sticky header without phone), shots/rv-ad-h1024.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "major",
+    "page": "/ #jamstvo, #detalj, #zgrade, #pitanja",
+    "viewport": "1024×768 (1024–1180)",
+    "files": [
+      "src/components/ui/SectionHead.astro",
+      "src/components/home/Warranty.astro",
+      "src/components/home/DetailSignature.astro",
+      "src/components/home/Managers.astro",
+      "src/components/home/Faq.astro"
+    ],
+    "problem": "Section titles use a fixed lg:text-6xl (60px) inside 4/12 columns that are only 288px wide at 1024. 'Standard' renders 365px wide inside a 320px box: it overflows by 45px and ends 4px from the Warranty table border (table left at 369px), then breaks into 4 lines with an orphaned 'i'. 'Detalj / je / potpis.' leaves 'je' alone on a line. Two sections override the size locally (Managers #zgrade h2 clamp(…3.9vw…) = 40px; Faq .faq-head h2 clamp(…3.7vw…) = 38px), so at 1024 the H2s jump between 38, 40 and 60px from section to section.",
+    "fix": "In SectionHead.astro replace `lg:text-6xl` with `lg:text-[clamp(2.625rem,4.1vw,3.75rem)]` (≈42px at 1024, 52px at 1280, 59px at 1440) and delete the local overrides (Managers.astro lines 123–127 and Faq.astro ~133–134). In Warranty.astro use `lg:col-span-5 xl:col-span-4` for the head and `lg:col-span-7 xl:col-span-8` for the table. Acceptance: no H2 scrollWidth > clientWidth, and no single-word lines at 1024/1100/1180.",
+    "evidence": "shots/rv-ad-cs-1024orph.png. Measured at 1024: Warranty h2 glyph right edge 365 vs box 320 vs table left 369; zgrade h2 40px and pitanja h2 38px vs 60px elsewhere.",
+    "by": "design-home"
+  },
+  {
+    "severity": "major",
+    "page": "/ #radovi (and every data-scan photo)",
+    "viewport": "1440×900, 1280×800, mobile on 4G",
+    "files": [
+      "src/lib/reveal.ts",
+      "src/components/home/Projects.astro",
+      "src/components/ui/ProjectCard.astro"
+    ],
+    "problem": "Every [data-scan] has its own trigger at 'top 85%', so the 3–4 visible rail cards scan in lockstep: four red scan lines move at once alongside the red progress bar. That breaks rule 5, \"only one red thing moves per screen\". The scan also starts without waiting for the image. Measured: at +1000 ms the clip is fully open but img.complete is false and currentSrc is empty for cards 2–3. Visitors watch a red line uncover an empty antracit box, then the photo pops in with no animation (cards 2–3 were still grey at +3 s). Only card 1 is eager (Projects.astro:55).",
+    "fix": "In reveal.ts: (1) before playing, await the image: `const img = el.querySelector('img'); const ready = img && !(img.complete && img.naturalWidth) ? Promise.race([img.decode().catch(()=>{}), new Promise(r=>setTimeout(r,1500))]) : Promise.resolve();` and play the timeline in onEnter after `ready`. (2) Sequence the scans: use `ScrollTrigger.batch('[data-scan]', { start:'top 85%', once:true, onEnter: els => els.forEach((el,i)=> gsap.delayedCall(i*0.22, ()=>play(el))) })` so lines cascade left to right, one at a time. In Projects.astro pass `eager={i < 3}` to ProjectCard, since the first three cards are in the first view of the section.",
+    "evidence": "shots/rv-ad-scan-350s.png (4 cards clipped identically), shots/rv-ad-s-radovi-3000.png (cards 2–3 still empty at +3 s)",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ hero (#vrh)",
+    "viewport": "1440×900, 1280×800, 1024×768",
+    "files": [
+      "src/components/home/Hero.astro"
+    ],
+    "problem": "The CTA cluster has no clear structure. The primary 'Besplatna procjena' (226px) sits alone and is narrower than the secondary row below it (Nazovi 232px + WhatsApp 149px = 393px), so the most important button looks smaller than the secondary group and the right edges step down unevenly. At 1024 all three stack with three different widths (226/232/149). Also at 1024 the sheet is vertically centred (`items-center`): its top at 289px doesn't line up with the eyebrow at 150px, so the panel floats in the middle of the column.",
+    "fix": "Make the CTAs one block: on the data-hx-ctas wrapper (line 44) use `md:grid md:grid-cols-2 md:gap-3 md:max-w-[25rem]` instead of flex-col. Primary: `md:col-span-2 md:w-full` (h-14). Nazovi and WhatsApp each take 1fr (h-12), giving one clean 400px-wide block at every desktop size. On the hero grid (line 25) change `items-center` to `lg:items-start` and add `lg:mt-[3.25rem]` on the sheet wrapper so its top edge lines up with the H1 cap height. Alternatively stretch at lg as at xl.",
+    "evidence": "shots/rv-ad-d1440-01.png, shots/rv-ad-h1024.png. Measured CTA boxes at 1440: [64,602,226×56], [64,670,232×44], [308,670,149×44]; at 1024 three rows.",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ (headline hierarchy)",
+    "viewport": "1440×900 and 390×844",
+    "files": [
+      "src/components/home/FinalCta.astro",
+      "src/components/home/WhatsAppBand.astro"
+    ],
+    "problem": "The page's display scale is inverted. At 1440 the H1 is 71.3px, while the FinalCta H2 is 72px (xl:text-[4.5rem]) and the WhatsApp band H2 is 68px. On mobile the H1 is 41.6px but the FinalCta H2 is 46px. The hero should carry the largest type on the page; at the moment the closing section shouts louder than the brand line.",
+    "fix": "Fix the scale at H1 > billboard H2 > section H2. FinalCta.astro:37 → `text-[2.375rem] xs:text-[2.5rem] sm:text-[3.25rem] lg:text-[3.5rem] xl:text-[4rem]` (64px at 1440, 38px at 390). WhatsAppBand.astro:30 → `xl:text-[4rem]`. Section H2s stay at ≤60px (see the SectionHead clamp).",
+    "evidence": "Measured via getComputedStyle: H1 71.28px; #procjena h2 72px; #slike h2 68px at 1440. At 390: H1 41.6px, #procjena h2 46px.",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ hero photo (finished frame) and repeat visits / reduced motion",
+    "viewport": "all",
+    "files": [
+      "src/components/home/hero/HeroSheet.astro",
+      "src/components/home/Hero.astro"
+    ],
+    "problem": "Photo 17 ('zalazak') is centre-cropped to 5:4 at build time (`position=\"center\"`, 1200×960). The crop removes the sunset sky and Zagreb roofline, which are the warm, human part of the shot. What's left is a flat field of tiles with a terracotta neighbour roof and a yellow façade wedged into the top-right corner. In the money shot of the hero this reads as a stock texture with a distraction in the corner, not 'Pravi krov · Zagreb'.",
+    "fix": "Crop from the top so the golden-hour sky and skyline frame the anthracite roof: `position=\"top\"` in the Picture (HeroSheet.astro) and `.hx-photo img { object-position: 50% 0% }` (Hero.astro). If the neighbour roof still dominates, try 'attention' cropping or `object-position: 35% 0%`. Lower the top stop of the .hx-photo::after scrim from 0.42 to 0.28 so the sky isn't muddied.",
+    "evidence": "shots/rv-ad-hf-4200.png (current crop), src/assets/projects/krov-crijep-lim-zalazak.jpg (full frame with sky)",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ hero animation (desktop full mode and mobile short mode)",
+    "viewport": "1440×900, 390×844",
+    "files": [
+      "src/lib/hero.ts"
+    ],
+    "problem": "Two beats are mistimed. (1) After the hit the beam sits on the ridge for 0.26 s, then lifts over 0.34 s with power2.in (slow start), while strip laying starts 0.02 s after the lift. The hatched beam and its red Λ tip hang over the roof while the first strips and seam flashes play, so two focal points and two red things move at once (frames 1.3–1.5 s, mobile 1.0–1.4 s). (2) revealAt = stampAt + 0.3 and the stamp fades at revealAt + 0.1, so 'IZVEDENO', the payoff word, is readable for only ~0.4 s before the photo washes it pink.",
+    "fix": "hero.ts:128 `liftAt = bendAt + 0.2`; line 136 `duration: 0.2, ease: 'power3.in'`; line 140 `layAt = Math.max(at(1.24), liftAt + 0.12)`; line 190 `revealAt = Math.max(at(2.84), stampAt + (short ? 0.5 : 0.7))`. Total length grows by ~0.35 s and stays inside the ~3.6–4 s budget.",
+    "evidence": "shots/rv-ad-cs-p1.png and shots/rv-ad-cs-p2.png (beam still on the ridge at 1.5 s while strips lay), shots/rv-ad-cs-m3.png, shots/rv-ad-cs-reveal.png (stamp ghosted at 3.3 s)",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ #detalj",
+    "viewport": "1440×900, 1280×800, 1024×768",
+    "files": [
+      "src/components/home/DetailSignature.astro"
+    ],
+    "problem": "The callout labels (the section's content) are hidden under .motion and appear one by one: ring 0.2 s, then leader 0.55 s, then label 0.28 s, three times, and only after the scan finishes (whenScanDone). The right third of the section stays empty for ~4–5 s after the section enters view: at +1.5 s one leader is visible, at +3 s two of three. A normal scroll speed passes it by with an empty column, and the motion feels slow.",
+    "fix": "Keep labels always visible: drop the `.motion .dsig-label` hide (~line 121) and animate leaders and rings only. Start at 'top 70%' and don't wait for the scan to finish: start when the scan is at ~60%, or use a fixed 0.5 s delay. Draw the three leaders with `stagger: 0.15, duration: 0.45`, so the whole set finishes in ≤1.2 s.",
+    "evidence": "shots/rv-ad-cs-det.png (frames at +0.5/1.5/3/5 s), shots/rv-ad-detalj.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ #procjena (FinalCta + Radni nalog)",
+    "viewport": "1440×900, 1280×800",
+    "files": [
+      "src/components/home/FinalCta.astro"
+    ],
+    "problem": "The left column (H2, phone, hours, WA/Viber, email and the 'Što se događa nakon slanja' list) ends ~310px below the form card at 1440 and ~400px below it at 1280: column bottoms 13853 vs form 13543. The bottom half of the right column is an empty grid-paper void next to the conversion form, and the form scrolls out of view while the visitor reads the steps.",
+    "fix": "Make the form column sticky: on the line-48 wrapper add `lg:sticky lg:top-24 lg:self-start` so the nalog stays in view while the left column scrolls. Alternatively move the 'Što se događa nakon slanja' block (line 53) under the form with `lg:col-start-6 lg:col-span-7 lg:row-start-2`.",
+    "evidence": "shots/rv-ad-s-procjena-sm.png, shots/rv-ad-d1440-17.png. Measured: form bottom 13543 vs left column bottom 13853 (1440).",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ #radovi, #usluge, #procjena",
+    "viewport": "all desktop and mobile",
+    "files": [
+      "src/components/home/Projects.astro",
+      "src/components/home/Services.astro",
+      "src/components/home/FinalCta.astro"
+    ],
+    "problem": "Red appears where the brief doesn't allow it (it reserves red for CTAs, the Λ, the eave stripe and drawing dimensions). (1) The Radovi rail progress is a solid 3px red bar ~400px long that moves (Projects.astro:70, bg-redline), the largest red element in the section and it competes with the CTA. (2) All six Services row numbers '01/06…06/06' are red (Services.astro:62), plus six red 'Procjena' links: 12 red marks in one section. (3) In FinalCta, the 'Što se događa nakon slanja' steps use red-outlined number boxes (line 96) next to the form's red active-step marker, red KORAK label and red phone icon.",
+    "fix": "(1) Projects.astro:70 → `bg-white/80`, with a track of `bg-white/12`. (2) Services.astro:62 `text-redline-dark` → `text-tinta`, keep '/06' at tinta/40; red stays only on 'Procjena'. (3) FinalCta.astro:96 `text-redline` → `text-linija`, box border `border-linija/30`. Keep red for the form's active step and the CTA buttons.",
+    "evidence": "shots/rv-ad-d1440-06.png, shots/rv-ad-d1440-03.png, shots/rv-ad-d1440-17.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ (photo use across sections)",
+    "viewport": "all",
+    "files": [
+      "src/components/home/Projects.astro",
+      "src/components/home/Managers.astro",
+      "src/components/home/WhatsAppBand.astro"
+    ],
+    "problem": "The homepage reuses the same few photos, which makes the portfolio look thin. The hero photo (krov-crijep-lim-zalazak) is also the first Radovi card, right after 'Ovo nije crtež' → 'Ovo nije render.'. ravni-krov-trapez-atika-gromobran appears 3× (Services row 4, Radovi, Managers), and krov-crijep-lim-uvala-radnik appears 3× (Services, WhatsApp thumbnails, Radovi). Meanwhile atika-opsav-susjedni-krov, atika-opsav-kut-ljestve, atika-opsav-alat(-siroko) and falcani-krov-zid sit unused in src/assets/projects.",
+    "fix": "Projects.astro:13 → `projects.filter(p => p.featured && p.slug !== 'krov-crijep-lim-zalazak')`, or move it to the end of the rail. In Managers.astro:12/19 use atika-opsav-susjedni-krov.jpg (a multi-unit building context) instead of the gromobran shot. In the WhatsAppBand thumbnails use snjegobrani-odozgo / atika-opsav-kut-ljestve / falcani-krov-zid, so the 'three photos' are new images.",
+    "evidence": "Measured image to section map: zalazak → vrh, radovi; gromobran → usluge, radovi, zgrade; uvala-radnik → usluge, slike, radovi.",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ #slike (WhatsApp band)",
+    "viewport": "1440×900, 1280×800",
+    "files": [
+      "src/components/home/WhatsAppBand.astro"
+    ],
+    "problem": "A glossy iPhone mockup with a Dynamic Island, status bar and chat UI is the one SaaS-template element on the page. It breaks the drawing language every other section uses (hairlines, crop marks, mono annotations). On flat antracit, with equal-weight WhatsApp green and Viber purple blocks beside it, the band reads as a generic template block, and the thumbnails inside the phone are too small (78×100px) to show anything.",
+    "fix": "Replace the device with a 'Prilog' sheet in the house style: three portrait frames (01 Cijeli krov / 02 Mjesto koje vas brine / 03 Detalj izbliza), each ~180×240px, with 1px white/20 hairline frames, crop ticks and mono captions. Optionally add one small chat bubble as an annotation ('Vidimo uvalu — dolazimo izmjeriti u četvrtak.'). Keep WhatsApp as the primary filled button and make Viber an outline button (border-viber text-white) so the two don't compete.",
+    "evidence": "shots/rv-ad-s-slike-3000.png, shots/rv-ad-d1440-05.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ #kako-radimo",
+    "viewport": "all",
+    "files": [
+      "src/components/home/Process.astro"
+    ],
+    "problem": "The process photo carries a bar reading 'TIMELAPSE · TRI DANA U 15 SEKUNDI · USKORO' (lines 84–92). A 'coming soon' label on a premium homepage signals unfinished work, and unlike the other placeholders it isn't marked as a prototype example. The same photo also shows a worker kneeling at the roof edge with no visible fall protection, which is a poor trust signal next to 'pisano jamstvo'.",
+    "fix": "Remove the overlay bar until the video exists: gate it with `const hasTimelapse = false` and render only the figcaption. Crop the worker out with `imgClass=\"object-[50%_70%]\"` on the 4:5 frame, or swap in a harness shot from the shot list.",
+    "evidence": "shots/rv-ad-d1440-09.png, shots/rv-ad-d1440-08.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "minor",
+    "page": "/ #procjena (Radni nalog, step 1)",
+    "viewport": "390×844, 360×740",
+    "files": [
+      "src/components/form/RadniNalog.astro"
+    ],
+    "problem": "On narrow screens the decorative aside (the house drawing plus the POSAO/MJESTO/KROV/FOTO list, ~150px) comes before 'Korak 01 · Što treba?' and the job chips. The first thing a mobile visitor sees in the form is a summary of empty fields, and the first tap target moves down by about a fifth of the screen.",
+    "fix": "Below the 40rem container query, put the aside after the step content: `.rn-aside { order: 2 }` with `@container rn (min-width: 40rem) { .rn-aside { order: 0 } }`. Or collapse it on mobile into a single 24px mono progress row ('Posao — · Mjesto — · Krov — · Foto —') under the step tabs.",
+    "evidence": "shots/rv-ad-cs-mform.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "polish",
+    "page": "/ #usluge",
+    "viewport": "1440×900 and 1024×768",
+    "files": [
+      "src/components/home/Services.astro"
+    ],
+    "problem": "Each service row uses `margin-inline:-1.25rem; padding-inline:1.25rem` (line 244) for the hover fill, so the row hairlines run from 44 to 1396px at 1440 (12 to 1012px at 1024). Every other section's rules (header lead, Managers list, FAQ, Warranty table) stop at the 64/1376px wrap edge, so this is the one section where the grid edge visibly breaks.",
+    "fix": "Keep the bleed for the hover fill only. Set `.svc { margin-inline:0; padding-inline:0 }` and draw the hover background with `.svc::before { content:''; position:absolute; inset:0 -1.25rem; background:transparent; transition:background-color 200ms; z-index:-1 }`, with `.svc:hover::before { background: rgb(226 223 216 / .6) }`. Keep border-top and .svc-rule at the wrap width (`left:0; right:0`).",
+    "evidence": "shots/rv-ad-d1440-03.png, shots/rv-ad-d1024-03.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "polish",
+    "page": "/ #radovi and #recenzije",
+    "viewport": "1440×900",
+    "files": [
+      "src/components/home/Projects.astro",
+      "src/components/home/Reviews.astro"
+    ],
+    "problem": "The page has two horizontal rails with two different control layouts. Radovi has the counter '01 / 09' on the left, a red 3px progress bar and arrows on the right. Reviews has a black 2px progress bar on the left, the counter '01–03 / 04' between bar and arrows, and a different counter format. On one page this reads as two templates stitched together.",
+    "fix": "Use one pattern for both rails: [counter 'NN–NN / NN', mono 11px, left] [1px track, 2px thumb in white/80 on dark or tinta on light, flex-1] [prev][next 44×44]. Extract it into a shared RailControls partial, or copy the identical markup and classes into both files.",
+    "evidence": "shots/rv-ad-d1440-06.png, shots/rv-ad-d1440-13.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "polish",
+    "page": "/ hero (#vrh)",
+    "viewport": "768×1024",
+    "files": [
+      "src/components/home/Hero.astro"
+    ],
+    "problem": "At tablet portrait the sheet stage is 16/10 (485px including the top bar, 47% of the screen; the brief says 42%). The primary 'Besplatna procjena' button starts at y=952 and the fixed bar at 959, so a 7px red sliver of the button peeks above the bar on first paint. It looks like a rendering glitch.",
+    "fix": "`@media (min-width:48rem) and (max-width:63.99rem){ .hx-stage{ aspect-ratio:auto; height: calc(42svh - 2.75rem); } }`. This brings the stage to ~385px and the CTA to ~y 850, fully above the bar at 959.",
+    "evidence": "shots/rv-ad-h768.png. Measured: CTA top 952, bar top 959.",
+    "by": "design-home"
+  },
+  {
+    "severity": "polish",
+    "page": "/ hero (#vrh)",
+    "viewport": "1366×768, 1280×800, 1024×768, 390×844, 360×740",
+    "files": [
+      "src/components/home/Hero.astro"
+    ],
+    "problem": "The mono keyword line wraps inside a phrase ('LIMENI / KROVOVI, OPŠAVI I OLUCI') instead of at the red · separators. At 1366 the subline's second line starts with an em dash ('— krojeno i savijeno…').",
+    "fix": "Wrap each eyebrow segment in `<span class=\"whitespace-nowrap\">` (Limarija Karamatić / limeni krovovi, opšavi i oluci / Zagreb) so lines break only at the separators. In the subline use `oluci&nbsp;— krojeno` so the dash stays on the first line.",
+    "evidence": "shots/rv-ad-h1366.png, shots/rv-ad-h1280.png, shots/rv-ad-cs-mhero.png",
+    "by": "design-home"
+  },
+  {
+    "severity": "major",
+    "page": "/usluge/* (all 6), worst on falcani-krovovi, opsav-atike, dimnjaci",
+    "viewport": "all (1440×900, 1024×768, 390×844)",
+    "files": [
+      "src/pages/usluge/[slug].astro",
+      "src/pages/usluge/_parts/media.ts",
+      "src/data/site.ts"
+    ],
+    "problem": "The same photos repeat on one page. The hero image, the 'Ovako izgleda gotovo.' gallery and the 'Već izvedeno.' project cards draw from overlapping sources, and galleryOf() only removes the hero image. Falcani krovovi has 2 photos and shows them 4 times: FalcIzlaz is both the hero and card 1, FalcZid is both Sl. 02 and card 2. On Opšav atike, 4 of the 5 project cards reuse the hero or gallery photos (Gromobran = hero; Medvednica, KutDetalj and Šljunak = Sl. 02–04). Dimnjaci has one photo, used as both the hero and the only card. Limeni krovovi (Zalazak = Sl. 02 + card), Popravak (UvalaRadnik = hero + card) and Oluci (SnjegobraniOdozgo = hero + card; SnjegobranCijev = gallery + card) do the same. When only one project is related, the 'Svi radovi' tile then spans 2 columns as a mostly empty bordered box.",
+    "fix": "In [slug].astro, track a used set: `const used = new Set([service.image])`. Render related project cards first and add each p.image to used. Build the gallery as `[...service.gallery, ...related.flatMap(p => p.gallery)].filter(img => !used.has(img))`, deduplicated and limited to 4. If a related project's cover equals the hero, give it its next unused gallery image through a new optional `image` prop on ProjectCard. If that is not possible, fold that project into the 'Svi radovi' tile's legend instead of drawing a card. A cleaner option is to merge the two sections into one 'S gradilišta' section, where every photo tile is a project link with a mono caption. Add a rule that no ImageMetadata is rendered twice on one page. On dimnjaci (1 photo in total), hide the related grid and show only the 'Svi radovi' tile at full width.",
+    "evidence": "shots/rv-ad-uf-dsheet-a.png, shots/rv-ad-uf-dsheet-b.png, shots/rv-ad-ua-dsheet-a.png, shots/rv-ad-ua-dsheet-b.png, shots/rv-ad-ul-d-04.png, shots/rv-ad-ud-dsheet-a.png",
+    "by": "design-pages"
+  },
+  {
+    "severity": "major",
+    "page": "/usluge/falcani-krovovi, popravak-krova, opsav-atike, dimnjaci, oluci-snjegobrani (limeni-krovovi has 2)",
+    "viewport": "all; worst at 1440 and 1024",
+    "files": [
+      "src/pages/usluge/[slug].astro",
+      "src/data/site.ts",
+      "src/components/home/Faq.astro"
+    ],
+    "problem": "The FAQ section on 5 of 6 service pages holds one question. Above it sits a 3-line display H2, 'Pitanja koja čujemo na svakom krovu.' (the Faq default title), next to a sticky 'Pitajte majstora' card. At 1440 that leaves about 300 px of empty papir under the single answer, and the section measures 747 px tall for one Q&A. The headline also promises questions 'on every roof' and then delivers one.",
+    "fix": "Show at least 4 items, padding the service's own FAQ with relevant global items using the same pick() pattern as upravitelji-zgrada.astro: price per m², jamstvo, trajanje radova, je li procjena besplatna. For example: `const items = [...service.faq, ...pickGlobal(service.slug)].slice(0, 5)`. Pass a service-specific title such as `Pitanja o: ${service.title.toLowerCase()}.` (or a new per-service `faqTitle` field in site.ts). If fewer than 3 items remain, render a compact variant: one column, H2 at text-4xl, the ask card inline below, no sticky column, py-16.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "major",
+    "page": "every subpage (worst on /usluge/*, /radovi/*, /procjena, /kontakt, /upravitelji-zgrada, which have their own #procjena form)",
+    "viewport": "all; mobile bar on 390",
+    "files": [
+      "src/components/layout/Header.astro",
+      "src/components/layout/MobileCtaBar.astro",
+      "src/pages/radovi/index.astro"
+    ],
+    "problem": "The primary CTAs are hard-coded to the homepage: Header.astro:61 `href=\"/#procjena\"` and MobileCtaBar.astro:34 `href=\"/#procjena\"`. On a service page that already has its own form, preselected with that service, tapping 'Besplatna procjena' in the header or 'Procjena' in the mobile bar leaves the page, loads the homepage and drops the preselection. On /procjena itself, the header CTA navigates away from the form. /radovi has no form, yet its hero CTA (ctaHref '/#procjena', line 48) and its bottom band button (line 132) also send visitors to the homepage form, even though a dedicated /procjena page exists. On /hvala, right after the visitor submits, the header still shows a red 'Besplatna procjena' button.",
+    "fix": "Add a `formOnPage` boolean to Base (true wherever NalogSection or ProcjenaCta is rendered) and pass it to Header and MobileCtaBar. Use `href={formOnPage ? '#procjena' : '/procjena'}`, or detect it on the client: `if (document.getElementById('procjena')) a.href = '#procjena'`. On /radovi, change both CTAs to '/procjena'. On /hvala (hideMobileBar is already set), swap the header CTA for a WhatsApp 'Pošalji slike' button with the order number prefilled.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "major",
+    "page": "/radovi",
+    "viewport": "1440×900, 1024×768, 390×844",
+    "files": [
+      "src/pages/radovi/index.astro",
+      "src/components/layout/PageHero.astro"
+    ],
+    "problem": "The portfolio page titled 'Ovo nije render.' shows no photos in the first screen. The hero is 678 px tall at 1440 (896 px on mobile). Its right column is a 4-row 'Sastavnica' table (12 / 06 / RAL 7016 / Zagreb) that repeats the filter chip counts, with about 250 px of empty grid paper under it. The left column carries a CTA row that the antracit band at the bottom of the page repeats. At 1440×900 only the filter chips peek in at y≈860, and the first card photo starts at about y≈1000.",
+    "fix": "Use `cta={false}` on the /radovi PageHero (the bottom 'Izmjerimo i vaš krov' band already converts). Replace the Sastavnica aside with a single mono line under the lead: '12 radova · 6 vrsta · RAL 7016 · Zagreb i okolica'. Add a `compact` variant to PageHero with pb-10 lg:pb-12 and `--ph-size: clamp(3rem,4.5vw,4.25rem)`, and set #arhiva to `pt-8 lg:pt-10`. Target: the first row of cards starts at y ≤ 560 at 1440×900, and the top of the first card is visible at 390×844. Optionally make the first card a 2-column featured card (grid-column: span 2, aspect 4/3) for an editorial opening.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "major",
+    "page": "/radovi/<slug> (all 12; checked krov-crijep-lim-zalazak, dimnjak-oblaganje, atika-uz-susjedni-krov)",
+    "viewport": "all",
+    "files": [
+      "src/pages/radovi/[slug].astro",
+      "src/data/site.ts",
+      "src/pages/usluge/_parts/Gallery.astro"
+    ],
+    "problem": "The case studies are filled templates. No project in site.ts has a `note`, so all 12 pages show the same lead: 'Fotografije s gradilišta, onakve kakve jesu. Ništa nije renderirano.' (line 85). No page says what the problem was, what was done or what the result was. The case studies the creative direction asks for ('studije po kvartovima') reduce to a hero, an optional single 'Još jedan pogled.' photo, 3 similar cards and the form. dimnjak-oblaganje has no gallery at all, and its similar section shows no chimneys. The one-photo Gallery layout leaves about 350 px of empty papir above the heading at 1440.",
+    "fix": "Add `note` (1–2 sentences), `scope: string[]` and optional `m2` / `trajanje` (all unconfirmed, wrapped in ExampleTag) to every Project in site.ts. Until the client supplies the note, fall back to `service.short` rather than the one generic sentence. After the hero, render an 'Opis rada' block on papir: three rows (Zatečeno / Izvedeno / Detalj) in the style of the service 'Što je uključeno' table. For Gallery with n=1 at lg, align .gal-head to the top (align-self:start) next to the photo instead of the bottom. When `similar` has no project of the same kind, retitle the section 'Ostali radovi' instead of 'Isti lim, drugi krovovi.'",
+    "evidence": "shots/rv-adsub-r1-d.png, shots/rv-adsub-r2-d.png, shots/rv-adsub-r3-d.png",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "/upravitelji-zgrada; /radovi/atika-sljunak, /radovi/krov-uvala, /radovi/ravni-krov-trapez-medvednica; /usluge/dimnjaci; /kontakt",
+    "viewport": "1440, 1024, 390",
+    "files": [
+      "src/pages/upravitelji-zgrada.astro",
+      "src/data/site.ts",
+      "src/components/layout/PageHero.astro"
+    ],
+    "problem": "Some H1s wrap to 4 lines. Measured: 'Krovovi i opšavi za stambene zgrade.' is 4 lines at 1440 (78 px), 1024 and 390, which pushes the CTA to y=774 at 1440. 'Opšav atike na šljunčanom krovu' is 4 lines at 1024 and 390. 'Uvala i sljeme na složenom krovu' is 4 lines at 390. 'Opšav i oblaganje dimnjaka' is 3 lines everywhere. 'Javite se. Dolazimo izmjeriti.' is 3 lines at 1440. The .ph-title formula only guards the longest word against overflow; it does not scale by total length.",
+    "fix": "Shorten the copy: the zgrade H1 becomes 'Krovovi za stambene zgrade.' or 'Limarija za zgrade.', and long project titles get a short `heroTitle` (e.g. 'Atika na šljunku', 'Uvala i sljeme'). In PageHero, add a length tier: when `title.length > 24`, set `--ph-size: clamp(3rem, 4.4vw, 4.25rem)` at ≥64rem and `2.25rem` below 40rem. Rule: a PageHero H1 runs at most 3 lines at 390 and at most 2 at ≥1024 (3 only for media='large').",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "/usluge/*, /radovi/<slug>",
+    "viewport": "1024×768 up to 1279 px wide",
+    "files": [
+      "src/components/layout/PageHero.astro"
+    ],
+    "problem": "The 'Detalj A' card overhangs the photo by left:-3.5rem while the grid column-gap is 4rem below 80rem. That leaves 8 px between the card and the left column content (measured: oluci lead text right edge 555 / card left 563 at 1024; Sastavnica table right edge 480 / card left 488 on the project page). The card visually collides with the lead paragraph and with the Sastavnica table.",
+    "fix": "In `.ph-detail--over`, scope the overhang. At 64–80rem use `left: -1.5rem; bottom: 1.5rem; width: 12rem`, and keep `left: -3.5rem; width: 14rem` only from 80rem up. Alternatively raise `.ph--media .ph-grid` column-gap to 5.5rem between 64 and 80rem. Target: at least 32 px clearance at every width.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "/radovi/<slug> (Slični radovi), /usluge/* (Već izvedeno)",
+    "viewport": "390×844",
+    "files": [
+      "src/pages/radovi/[slug].astro",
+      "src/pages/usluge/[slug].astro"
+    ],
+    "problem": "On mobile the 3 similar or related project cards stack as full-width 3:4 portraits. The 'slicni' section is 2115 px tall (2.5 screens), and the service 'radovi' block is 1315 px. The homepage Radovi section already solves this with a native swipe rail, so subpages scroll noticeably longer than the homepage pattern.",
+    "fix": "Below 30rem, turn `.sl-grid` and `.rad-grid` into a rail: `grid-auto-flow: column; grid-auto-columns: 78%; grid-template-columns: none; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: -1.25rem; padding-inline: 1.25rem`, with `scroll-snap-align: start` on the li. Reuse the homepage Projects rail classes if possible. Keep the 'Svi radovi' tile as the last snap item.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "/procjena (QR landing on the vans)",
+    "viewport": "390×844 (also 1440×900)",
+    "files": [
+      "src/pages/procjena.astro",
+      "src/components/form/RadniNalog.astro",
+      "src/components/pages/NalogSection.astro"
+    ],
+    "problem": "On a phone, the first screen shows the 3-line H1, the lead and the top of the Radni nalog: the header, the step ruler, and the house drawing with the POSAO/MJESTO/KROV/FOTO summary. The 'Što treba?' chips only start on the second screen, because .rn-aside comes before .rn-steps in the DOM and stacks above them. At 1440 there is about 180 px of dead grid between the lead and the form.",
+    "fix": "In RadniNalog, when the @rn container is narrower than 40rem, set `.rn-aside { order: 2 }` (after .rn-steps), or collapse it to a single summary line plus a small drawing. On /procjena, shorten the H1 to 'Besplatna procjena' (2 lines on mobile) and reduce PageHero bottom padding (pb-8 lg:pb-12). Target: the first job chip is visible at 390×844 without scrolling.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "/kontakt",
+    "viewport": "1440×900, 390×844",
+    "files": [
+      "src/pages/kontakt.astro",
+      "src/components/pages/kontakt/HoursCard.astro",
+      "src/components/pages/kontakt/ContactRows.astro"
+    ],
+    "problem": "The contact page's first screen has no contact action. The hero uses cta={false}, and its aside is an hours table (hours are already in the utility bar). At 1440 the bottom 180 px of the fold is an empty papir band, because ContactRows' heading has not been revealed yet at y≈785. The big phone row only appears after scrolling. ContactRows also stacks '01 Kako do nas' directly above '01 Telefon' (two '01's) and pairs the text 'Kontakti su primjer' with a PRIMJER tag that says the same thing.",
+    "fix": "Give the kontakt hero `cta` with `phoneFirst`, or a custom row: [phone, red] [WhatsApp 'Pošalji slike', green]. Alternatively move the ContactRows phone row into the hero aside in place of HoursCard, and move the hours into a meta line. Cut the ContactRows top padding to py-12 at lg. Drop the section index (or start the rows at 01 with no section number), and keep only the ExampleTag.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "/usluge/*, /radovi/<slug> vs /kontakt, /procjena, /upravitelji-zgrada",
+    "viewport": "all",
+    "files": [
+      "src/pages/usluge/_parts/ProcjenaCta.astro",
+      "src/components/pages/NalogSection.astro",
+      "src/components/home/FinalCta.astro"
+    ],
+    "problem": "The closing 'form + direct contact' section is implemented twice and looks different depending on the page. ProcjenaCta has the label 'Radije zovete?', a 2.75rem phone, and filled WhatsApp and Viber buttons. NalogSection has 'Nazovite izravno', a 3.25rem phone, a clock with the response time, and WhatsApp/Viber/e-mail as list rows with small icons, plus a note or steps slot. The same brand moment changes typography and button style as the visitor moves between pages.",
+    "fix": "Merge them into one component, extending NalogSection with `kicker` and `preselect` props from ProcjenaCta, and delete ProcjenaCta. Settle on one phone size (`text-[2.375rem] sm:text-5xl xl:text-[3.25rem]`) and one WhatsApp/Viber treatment (filled 2-up buttons on mobile, as on the homepage FinalCta). Keep the aside variants (contact / steps / both) as the only difference.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "/upravitelji-zgrada",
+    "viewport": "all",
+    "files": [
+      "src/pages/upravitelji-zgrada.astro",
+      "src/components/home/Faq.astro"
+    ],
+    "problem": "The page ends with three dark blocks in a row: FAQ (tone dark, bg-grafit), then NalogSection (grafit + grid), then the footer (grafit + grid). There is no tone break between the FAQ and the form, so the 'Pitanja upravitelja' list runs straight into 'Pošaljite adresu zgrade.' at the same #0E1013. Everywhere else, including the homepage, a papir FAQ comes before the dark form.",
+    "fix": "Give the dark FAQ a step in value, as the spec does for Managers. Add a `tone=\"dark2\"` option to Faq that renders bg-grafit-2 (#171A1E) with `border-y border-linija/10`, and use it here. Alternatively use tone='light' and move the FAQ up between Benefits and Works (D-P-P is not acceptable, so keep BuildingProcess after Works).",
+    "by": "design-pages"
+  },
+  {
+    "severity": "minor",
+    "page": "all subpages (footer)",
+    "viewport": "390×844",
+    "files": [
+      "src/components/layout/Footer.astro"
+    ],
+    "problem": "On mobile the footer is 2340 px tall (2.8 screens). Even after the known phone strip (351 px) is removed, the title-block part alone is 1776 px (2.1 screens). It holds a 6-link Usluge list at 44 px rows (341 px), Stranice (342 px), Kontakt (253 px), a 17-town Područje list (225 px), Radno vrijeme in a half-width cell stretched to 342 px, and Podaci o tvrtki (230 px). On /procjena the footer is longer than the content.",
+    "fix": "Below 40rem: lay out the Usluge and Stranice lists in two columns with 36 px rows (touch target kept through padding), or put them in <details> accordions. Show 'Zagreb i okolica' plus a 'Područje rada →' link instead of the full town list. Merge Radno vrijeme into the Kontakt cell, and turn Podaci o tvrtki into one mono line (Naziv · OIB · Sjedište). Target height ≤ 1000 px.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "polish",
+    "page": "/usluge/* (all 6)",
+    "viewport": "all",
+    "files": [
+      "src/pages/usluge/[slug].astro",
+      "src/data/site.ts"
+    ],
+    "problem": "Every service page uses the same hard-coded section headings: 'Što je uključeno.', 'Ovako izgleda gotovo.' with the same lead 'Fotografije s naših krovova. Antracit RAL 7016, bez rendera.', 'Već izvedeno.', the FAQ default and the same 3-item promise strip. Only the H1, the lead and the list items change. On the Google Ads landing /usluge/popravak-krova, 'Ovako izgleda gotovo.' does not fit a repair.",
+    "fix": "Add optional per-service copy fields to Service in site.ts: `galleryTitle`, `galleryLead`, `faqTitle`, `relatedTitle`. Examples: popravak gets 'Ovako izgleda sanirano.'; falc gets 'Trake bez poprečnih spojeva.'; dimnjaci gets 'Najčešće mjesto curenja, riješeno.' Keep the current strings as fallbacks.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "polish",
+    "page": "/usluge/*, /radovi/<slug>, /o-nama",
+    "viewport": "all",
+    "files": [
+      "src/components/layout/PageHero.astro",
+      "src/pages/usluge/_parts/Gallery.astro",
+      "src/components/form/RadniNalog.astro",
+      "src/components/pages/onama/Story.astro",
+      "src/components/pages/onama/Collage.astro"
+    ],
+    "problem": "Figure numbering breaks the technical-drawing language. The PageHero caption reads 'Sl. 1' (unpadded) while the Gallery continues with 'Sl. 02–04' (padded). The form drawing on the same page is captioned 'Sl. 1 · krov se slaže sa svakim korakom' again. On /o-nama the hero is 'Sl. 1' and the Story is 'Sl. 2', then the Collage restarts at 'Sl. 01'.",
+    "fix": "Use one format, 'Sl. 01', numbered continuously per page. In PageHero, use `Sl. 01`. Collage takes `startAt={3}` (the Gallery already supports startAt). In RadniNalog, rename the drawing caption to 'Nalog · crtež se slaže sa svakim korakom' so it doesn't compete with the page's figure numbers.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "polish",
+    "page": "breadcrumbs on all subpages",
+    "viewport": "all",
+    "files": [
+      "src/pages/usluge/[slug].astro",
+      "src/pages/radovi/index.astro",
+      "src/pages/radovi/[slug].astro",
+      "src/pages/kontakt.astro",
+      "src/pages/o-nama.astro",
+      "src/pages/procjena.astro",
+      "src/pages/privatnost.astro",
+      "src/pages/upravitelji-zgrada.astro"
+    ],
+    "problem": "The breadcrumb root label is inconsistent. Usluge and Radovi pages say 'Početna'; kontakt, o-nama, procjena, privatnost and upravitelji-zgrada say 'Naslovnica'. The 404 and /hvala also use 'naslovnica'. The breadcrumb JSON-LD names differ in the same way.",
+    "fix": "Use 'Naslovnica' everywhere. Better, export a single `homeCrumb = { href: '/', label: 'Naslovnica' }` from PageHero.astro and import it on every page.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "polish",
+    "page": "/o-nama",
+    "viewport": "1440×900, 1024×768",
+    "files": [
+      "src/pages/o-nama.astro"
+    ],
+    "problem": "On /o-nama the hero has no default-slot strip. The left column ends at about y=630 (CTA plus response time) while the 4:5 photo runs to about y=850, leaving roughly 220 px of empty grid in the bottom-left. Service, zgrade and project heroes fill the same spot with the promise, facts or Sastavnica strip, so this hero looks unfinished next to them.",
+    "fix": "Add a 3-item strip in the PageHero default slot, reusing the .ph-promise / .zg-facts pattern. Suggested items: 'Mjera · na licu mjesta', 'Kroj · po mjeri krova', 'Jamstvo · pisano'. All three are already stated on the page.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "polish",
+    "page": "/radovi (filtered)",
+    "viewport": "1440×900, 1024×768",
+    "files": [
+      "src/pages/radovi/index.astro"
+    ],
+    "problem": "Filtering to Dimnjak (1 result) or Falcani krov (2) leaves the rest of the 3-column row empty. That is about 2/3 of a 623 px row of blank papir directly under the chips.",
+    "fix": "Append a non-filterable CTA tile `li.rf-cta` that stays visible whenever the visible count % 3 != 0. Make it span the remaining columns, with a dark tile reading 'Vaš krov je sljedeći.' plus a WhatsApp 'Pošalji 3 slike' button, and include it in the Flip targets so it animates with the cards.",
+    "by": "design-pages"
+  },
+  {
+    "severity": "major",
+    "page": "All subpages (worst on /procjena, /usluge/*, /upravitelji-zgrada, /radovi)",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/components/layout/Header.astro",
+      "src/components/layout/MobileCtaBar.astro",
+      "src/pages/radovi/index.astro"
+    ],
+    "problem": "Two buttons are hard-coded to the homepage form. The header \"Besplatna procjena\" (Header.astro:61) and the mobile sticky \"Procjena\" (MobileCtaBar.astro:34) both link to \"/#procjena\" on every page. On /procjena, which has its own form, they navigate away to the homepage. On a service page they drop the user's pre-selected job type and context, and on /upravitelji-zgrada they send a building manager to the homeowner form. /radovi also uses \"/#procjena\" for both of its CTAs (lines 48 and 132), even though /procjena exists. Destinations are inconsistent too: the footer and /o-nama use \"/procjena\".",
+    "fix": "Make \"/procjena\" the default href, and switch to the in-page form whenever the page has one. Add one tiny script in Header (or pass a `formOnPage` prop from each page): `const f=document.getElementById('procjena'); document.querySelectorAll('[data-cta-procjena]').forEach(a=>a.setAttribute('href', f ? '#procjena' : '/procjena'));` and add data-cta-procjena to the header button, the mobile-bar link and the mobile-menu CTA. In radovi/index.astro, change ctaHref and the bottom Button to \"/procjena\".",
+    "evidence": "Link audit on /usluge/dimnjaci lists '/#procjena' (header and sticky bar) alongside '#procjena' (the page's own pre-selected form). Source: Header.astro:61, MobileCtaBar.astro:34",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "major",
+    "page": "Radni nalog step 3 (/, /procjena, /kontakt, /usluge/*, /radovi/*, /upravitelji-zgrada)",
+    "viewport": "390×844",
+    "files": [
+      "src/components/form/RadniNalog.astro",
+      "src/lib/form.ts",
+      "src/components/pages/Privacy.astro"
+    ],
+    "problem": "The last step has a required checkbox, \"Pristajem da me Limarija Karamatić kontaktira u vezi upita.\" If it's left unticked, submit fails with \"Potrebna je vaša privola…\". This is the most common last-step stumble for older users. It also contradicts /privatnost, which gives the legal basis as \"radnje prije sklapanja ugovora na vaš zahtjev (čl. 6. st. 1. t. b) GDPR-a)\", where consent is not required. A mandatory consent box suggests consent is the basis. The wording is also ungrammatical: it should be \"u vezi s\", not \"u vezi\".",
+    "fix": "Remove the privola checkbox (RadniNalog.astro around lines 300–320) and its check in form.ts (lines 202–206). Under the submit button, add a passive line of 0.8125rem text-tinta/60: \"Slanjem naloga pristajete da vas nazovemo u vezi s ovim upitom. Kako čuvamo podatke: <a href=/privatnost>Privatnost</a>.\"",
+    "evidence": "shots/rv-conv-f-08-step3-err.png (three errors on the last step, including privola); Privacy.astro section 03",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "major",
+    "page": "Homepage hero, WhatsApp band, mobile sticky bar, service-area checker, /radovi, /hvala, /upravitelji-zgrada, form",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/components/home/Hero.astro",
+      "src/components/home/WhatsAppBand.astro",
+      "src/components/layout/MobileCtaBar.astro",
+      "src/components/home/ServiceArea.astro",
+      "src/pages/radovi/index.astro",
+      "src/components/pages/hvala/Received.astro",
+      "src/components/pages/zgrade/Benefits.astro",
+      "src/components/form/RadniNalog.astro"
+    ],
+    "problem": "The site switches between formal and informal address (Vi/ti) in its most visible buttons. Informal ones: Hero.astro:56 \"Nazovi 091 000 0000\", Hero.astro:59 \"Pošalji slike\", WhatsAppBand.astro:51/54 \"Pošalji na WhatsApp\" / \"Pošalji na Viber\", MobileCtaBar.astro:16/18 \"Nazovi\" (and its aria-label), ServiceArea.astro:263 \"Provjeri\", radovi/index.astro:134 and Received.astro:114 \"Pošalji slike\", Benefits.astro:100 \"Pošalji upit\", and RadniNalog.astro:346 \"Pošalji nalog\". Directly next to them, other text is formal: \"Nazovite za besplatnu procjenu\", \"Pošaljite 3 slike krova.\", \"Radije zovete?\" On one homeowner screen the hero says \"Nazovi\" and the band below says \"Pošaljite\".",
+    "fix": "Use formal imperatives everywhere: \"Nazovite 091 000 0000\", \"Pošaljite slike\", \"Pošaljite na WhatsApp\" / \"Pošaljite na Viber\", sticky bar \"Nazovite\" (8 characters, fits the 97 px column like \"Procjena\"), \"Provjerite\", \"Pošaljite upit\". The submit label is covered in the separate issue. Change the busy text in form.ts:352/354 from \"Šaljem…\" / \"Šaljem nalog…\" to \"Šaljemo…\" / \"Šaljemo nalog…\".",
+    "evidence": "shots/rv-conv-home-d-01.png (\"Nazovi\" and \"Pošalji slike\" in the hero); shots/rv-conv-sheet-hm-1.png (\"Pošalji na WhatsApp\" under \"Pošaljite 3 slike krova.\")",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "major",
+    "page": "/usluge/* (Google Ads landing pages, especially /usluge/popravak-krova)",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/pages/usluge/[slug].astro",
+      "src/data/site.ts"
+    ],
+    "problem": "No H1 matches the search query. /popravak-krova has the H1 \"Krov više neće puštati.\", with no \"popravak krova\" and no city, and its lead opens with \"Krov pušta?\", which repeats the same idea. The other five H1s are bare service names with no location (\"Limeni krovovi\", \"Opšav i oblaganje dimnjaka\"). Someone who searched \"popravak krova Zagreb\" lands on an H1 without those words. That hurts Ads message match, Quality Score and organic relevance. The location appears only in a small mono eyebrow, which also reads like internal numbering: \"USLUGA 01 / 06 · ZAGREB I OKOLICA\".",
+    "fix": "In site.ts, add `h1` to Service or compute `${service.title} u Zagrebu`. The H1s: \"Popravak krova u Zagrebu\" (keep \"Krov više neće puštati.\" as the first sentence of the lead: \"Krov više neće puštati. Nađemo uzrok, a ne samo mrlju — uvale, sljeme, spojevi i dimnjaci.\"), \"Limeni krovovi u Zagrebu\", \"Falcani krovovi u Zagrebu\", \"Opšav atike i ravni krovovi u Zagrebu\", \"Opšav dimnjaka u Zagrebu\", \"Oluci i snjegobrani u Zagrebu\". Change the eyebrow to \"Zagreb i okolica · besplatna procjena\" and drop \"Usluga 01 / 06\".",
+    "evidence": "shots/rv-conv-popravak-d-01.png; shots/rv-conv-sheet-m1-0.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "major",
+    "page": "/usluge/* (all six)",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/pages/usluge/[slug].astro",
+      "src/components/home/Faq.astro",
+      "src/data/site.ts"
+    ],
+    "problem": "Service pages have no social proof near the form: no Google rating, no review, no years or warranty figure. They also have almost no objection handling. The FAQ shows only service.faq: one question on popravak, falcani, opšav atike, dimnjaci and oluci, and two on limeni krovovi. It sits under the generic heading \"Pitanja koja čujemo na svakom krovu.\", which looks broken with a single item. On an Ads click this is where people decide, and the homepage proof (ProofStrip, Reviews, Warranty) never reaches them.",
+    "fix": "(1) Merge in general questions: `const items=[...service.faq, ...faq.filter(f=>/^(Koliko košta|Je li procjena|Dajete li|Koliko traje)/.test(f.q))]`, using the same pattern as upravitelji-zgrada.astro, and pass title=\"Što nas najčešće pitaju.\" (2) Between \"Već izvedeno\" and the FAQ, add a compact proof block: Google 4,9/5 with stars, one review card from `reviews`, and \"10 god. pisano jamstvo\" (all with ExampleTag until confirmed). Alternatively reuse <ProofStrip/> plus one Reviews card.",
+    "evidence": "shots/rv-conv-sheet-pd-2.png (one-question FAQ under \"Pitanja koja čujemo na svakom krovu.\"); page text of /usluge/popravak-krova",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "major",
+    "page": "/upravitelji-zgrada",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/pages/upravitelji-zgrada.astro",
+      "src/components/form/RadniNalog.astro",
+      "src/lib/form.ts",
+      "src/components/pages/zgrade/Benefits.astro"
+    ],
+    "problem": "The form doesn't deliver what the page promises. The section is titled \"Pošaljite adresu zgrade.\", the lead says \"upišite adresu i kontakt\", and the note says \"Za ponudu trebamo: Adresu zgrade i ime upravitelja … OIB zgrade za R1 račun\" and \"Ponudu i fotografije šaljemo e-poštom\". But it embeds the homeowner form: \"Mjesto ili kvart\" (placeholder \"npr. Sesvete\"), \"Ime\", \"Mobitel\", roof-size chips, and no e-mail, firm or address field. A building manager can't give what is asked, and the company can't e-mail the offer it promises. Separately, \"R1 račun na zgradu\" is the wrong term for a stambena zgrada. A building isn't a VAT payer, so what matters is a račun with the building's OIB. R1 matters to the izvođači and investitori the page also targets.",
+    "fix": "Add a `variant=\"zgrada\"` prop to RadniNalog. Step 2: label \"Adresa zgrade\", placeholder \"npr. Ilica 120, Zagreb\", autocomplete=\"street-address\", roof size optional. Step 3: add \"Tvrtka upravitelja (nije obavezno)\" and \"E-pošta\" (type=email, required in this variant), and optionally \"OIB zgrade (ako ga imate)\". Pass variant=\"zgrada\" from upravitelji-zgrada.astro:82. Rename the hero CTA to \"Zatražite ponudu za zgradu\". In the copy, replace \"R1 račun na zgradu\" with \"Račun na zgradu (OIB zgrade) · R1 za tvrtke\".",
+    "evidence": "shots/rv-conv-sheet-zm-2.png (\"Za ponudu trebamo\" list beside the homeowner form); upravitelji-zgrada.astro:82–102",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Radni nalog (all instances)",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/components/form/RadniNalog.astro"
+    ],
+    "problem": "The final button reads \"Pošalji nalog\". It is informal, and \"nalog\" (work order) sounds like committing to the job. A wary 55-year-old hesitates exactly at that click. The free, no-obligation promise only appears in the small sheet header (\"Besplatno · bez obveze\").",
+    "fix": "Change the label at RadniNalog.astro:346 to \"Zatražite besplatnu procjenu\". Under it, add the mono line \"Bez obveze · javljamo se isti radni dan\" (with ExampleTag). Keep \"Radni nalog\" only as the decorative sheet title.",
+    "evidence": "shots/rv-conv-f-09-step3-filled.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "/procjena (QR landing for the vans) and the homepage or service form when a job is pre-selected",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/pages/procjena.astro",
+      "src/components/layout/PageHero.astro",
+      "src/components/form/RadniNalog.astro",
+      "src/lib/form.ts",
+      "src/components/home/Services.astro"
+    ],
+    "problem": "On /procjena the first job chip starts at y=991 px on a 390×844 screen and \"Dalje\" at y=1476 px. Someone who scanned the van QR code sees no choice to tap until they scroll. Desktop at 1440×900 also puts the chips below the fold. On mobile, the drawing and summary block above step 1 takes about 210 px. Also, when a job arrives pre-selected (service page, ?usluga=…), the user still lands on step 1 and must tap \"Dalje\". Service-card \"Procjena →\" links reload the whole homepage (/?usluga=slug#procjena) just to pre-select.",
+    "fix": "On /procjena use a compact hero: no eyebrow, H1 at 2.25rem on mobile, padding-bottom 1.5rem. In RadniNalog, hide .rn-aside on step 1 below 40rem (`.rn[data-step='1'] .rn-aside{display:none}` inside the container query) and show it from step 2. In form.ts, if a job is pre-selected via prop or URL, call go(2) on init. On step 1, auto-advance 250 ms after a chip is tapped. In Services.astro, intercept the click on the homepage: check the radio, then scroll to #procjena, with no reload.",
+    "evidence": "Measured chipTop=991, nextTop=1476, innerHeight=844; shots/rv-conv-m1-procjena.png, shots/rv-conv-d1-procjena.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Radni nalog with \"Hitno — curi sada\" selected",
+    "viewport": "390×844",
+    "files": [
+      "src/components/form/RadniNalog.astro",
+      "src/lib/form.ts"
+    ],
+    "problem": "For a roof leaking right now, the only call action is an inline, underlined phone number inside the note (\"Curi sada? Najbrže je nazvati: 091 000 0000.\"). The sticky call bar is hidden because the form is on screen. Choosing the urgent option still requires the roof size in step 2.",
+    "fix": "Inside .rn-urgent-note, render a full-width red button: `<a href={telHref} class=\"rn-btn\">Nazovite odmah · 091 000 0000</a>` (min-height 48px). In validateStep(2), skip the required velicina when vrsta==='hitno'.",
+    "evidence": "shots/rv-conv-hitno.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "/hvala",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/lib/form.ts",
+      "src/components/pages/hvala/Received.astro",
+      "src/components/pages/NextSteps.astro"
+    ],
+    "problem": "After a JS submit the redirect passes only ?nalog. So \"Posao\" always reads \"Besplatna procjena krova\" instead of the chosen job, and the \"Niste priložili slike?\" box still appears after 2 photos were uploaded (tested). The lead \"Vi ne trebate ništa, samo držite mobitel blizu.\" is unidiomatic, and it is repeated by step 01 (\"Pregledamo nalog i slike prije poziva.\").",
+    "fix": "In form.ts, redirect with `location.assign(`/hvala?nalog=${nalog}&vrsta=${job}&foto=${photos.length}`)`. In Received.astro, hide .hv-wa when foto>0, or retitle it \"Želite poslati još slika?\". If vrsta=hitno, show \"Curi sada? Nazovite odmah: 091 000 0000\" first. Change the lead to: \"Prije poziva pregledamo nalog i slike. Ne trebate ništa poduzimati — samo držite mobitel pri ruci.\" In NextSteps step 01, drop the duplicate sentence: \"Javljamo se isti radni dan.\"",
+    "evidence": "shots/rv-conv-f-11-hvala.png, shots/rv-conv-f-12-hvala-full.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Radni nalog no-JS fallback",
+    "viewport": "all",
+    "files": [
+      "src/components/form/RadniNalog.astro"
+    ],
+    "problem": "The form tag is `action=\"/hvala\" method=\"get\"` (lines 85–86). Without JS, the name, mobile number and location end up in the URL, browser history, server logs and analytics referrers. Photos are silently dropped, because GET can't upload files.",
+    "fix": "Use `method=\"post\" action=\"/api/nalog\" enctype=\"multipart/form-data\"` (the planned Pages Function), which answers with a 303 redirect to /hvala?nalog=…&vrsta=…. Never put personal data in a query string.",
+    "evidence": "RadniNalog.astro:85–86",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage, \"Dolazimo li do vas?\" checker; WhatsApp prefills site-wide",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/components/home/ServiceArea.astro",
+      "src/data/site.ts",
+      "src/pages/usluge/[slug].astro",
+      "src/components/home/Faq.astro"
+    ],
+    "problem": "Typing \"Sv. Nedelja\" returns the fallback \"Javite se — dogovorit ćemo izlazak.\", because norm() expands \"sv.\" only to \"sveti\", so \"Sveta Nedelja\" never matches. The match prefill builds \"Pozdrav, trebam procjenu za krov u mjestu Trešnjevka.\", but a kvart is not a mjesto, and \"u mjestu Zagreb\" is clumsy. Other prefills: the default \"…za krov u \" makes the user decline the place name, the service pages send \"trebam procjenu (opšav i oblaganje dimnjaka) u \", and the FAQ sends \"imam pitanje za krov:\".",
+    "fix": "In norm(), map `/\\bsv(?:et[iao])?\\.?\\s+/g` to 'sv ' on both the query and the list. Make all prefills one pattern with no declension. ServiceArea.astro:865: `Pozdrav, trebam procjenu krova. Lokacija: ${hit.place}.` site.ts waHref default: 'Pozdrav, trebam procjenu krova. Lokacija: '. usluge/[slug].astro:289: `Pozdrav, trebam procjenu: ${service.title.toLowerCase()}. Lokacija: `. Faq.astro:74: 'Pozdrav, imam pitanje o krovu: '.",
+    "evidence": "Checker test: 'Sv. Nedelja' gives the fallback; 'Trešnjevka' gives wa text '…u mjestu Trešnjevka.'",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Mobile menu (all pages)",
+    "viewport": "390×844",
+    "files": [
+      "src/components/layout/Header.astro"
+    ],
+    "problem": "While the menu is open the sticky CTA bar is hidden (html[data-menu-open]), and the menu has no \"Besplatna procjena\" link anywhere. Its phone number sits about 900 px down, below the fold. Opening the menu removes every one-tap conversion path.",
+    "fix": "Add a sticky footer inside .kr-menu (position:sticky; bottom:0; background grafit; padding plus safe-area) with two 48 px buttons: red \"Besplatna procjena\" (data-cta-procjena) and outline \"Nazovite\" (telHref). Keep the large number section below.",
+    "evidence": "shots/rv-conv-sheet-menu.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "/kontakt",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/pages/kontakt.astro",
+      "src/components/pages/kontakt/ContactRows.astro"
+    ],
+    "problem": "The contact page hero says \"Najbrže je telefonom ili porukom.\" but has no phone, WhatsApp or Viber action in the first viewport. The phone first appears in the next section, after the hours card. ContactRows.astro:60 also shows a redundant visible sentence, \"Kontakti su primjer\", next to the PRIMJER tag.",
+    "fix": "In the PageHero slot on kontakt.astro, add the large mono tel link plus WhatsApp and Viber buttons, and move the hours card below them on mobile. Delete the text \"Kontakti su primjer\" and keep only <ExampleTag/>.",
+    "evidence": "shots/rv-conv-m1-kontakt.png, shots/rv-conv-d1-kontakt.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage WhatsApp band, FinalCta, footer, /kontakt",
+    "viewport": "1440",
+    "files": [
+      "src/components/home/WhatsAppBand.astro",
+      "src/components/home/FinalCta.astro",
+      "src/components/layout/Footer.astro",
+      "src/components/pages/kontakt/ContactRows.astro"
+    ],
+    "problem": "Desktop shows a large \"Pošalji na Viber\" button linking to viber://chat?number=…. On a PC without Viber Desktop the click does nothing. Viber chat links also can't carry the prefilled \"Pozdrav, trebam procjenu…\" text the brief asks for.",
+    "fix": "Under `@media (pointer:fine)`, replace the Viber button with a mono line \"Viber: 091 000 0000\" plus a copy-to-clipboard button, or hide it from lg up and keep WhatsApp, which opens WhatsApp Web.",
+    "evidence": "shots/rv-conv-sheet-hd-2.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage \"Kako radimo\" step 03; service intros",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/data/site.ts"
+    ],
+    "problem": "Straight ASCII quotes reach the page: site.ts:456 'Bez \"to ćemo vidjeti\".' renders on the homepage Process step 03 as Bez \"to ćemo vidjeti\". Lines 96 and 155 also use straight quotes and are only fixed by the hr() helper on service pages. Line 96 has an agreement error as well: \"ne ostane nijedan \\\"to ćemo poslije\\\"\". A quoted phrase used as a noun is neuter, so it should be nijedno.",
+    "fix": "Use Croatian quotes in the source. Line 456: 'Ponuda stavku po stavku: materijal, boja, debljina lima, rok. Bez „to ćemo vidjeti“.' Line 96: '…tako da na kraju ne ostane nijedno „to ćemo poslije“.' Line 155: 'Većina krovova ne curi „posred krova“, nego na spojevima: u uvalama, na sljemenu, oko dimnjaka i uz zidove.' (the original list mixed nouns and prepositional phrases).",
+    "evidence": "shots/rv-conv-sheet-hm-3.png (panel 1: Bez \"to ćemo vidjeti\")",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Various pages",
+    "viewport": "all",
+    "files": [
+      "src/components/home/Hero.astro",
+      "src/data/site.ts",
+      "src/pages/usluge/[slug].astro",
+      "src/components/pages/zgrade/Works.astro",
+      "src/components/pages/onama/Values.astro",
+      "src/components/home/Faq.astro",
+      "src/components/home/FinalCta.astro",
+      "src/components/pages/onama/Story.astro",
+      "src/components/pages/Privacy.astro"
+    ],
+    "problem": "Grammar and idiom errors, quoted exactly: (a) Hero.astro:39 \"…dimnjaci i oluci — krojeno i savijeno po mjeri vašeg krova.\": the neuter participles don't agree with the masculine plural list, and they don't build chimneys. (b) site.ts:96 \"Radimo cijeli sloj krova\" makes no sense. (c) usluge/[slug].astro:185 \"Sve stavke pišu u ponudi: materijal, boja…\" is colloquial; the items don't write. (d) Works.astro:47 \"prvo osiguramo krov, a onda popravak, uz fotografije za upravitelja\" has no verb for popravak. (e) Values.astro:64 \"Tri stvari koje se ne pregovaraju.\" is a calque of English \"non-negotiable\". (f) Faq.astro:75 \"Pitajte na WhatsApp\" needs the locative. (g) FinalCta.astro:19 \"Pregledamo nalog i slike, pa dogovaramo dolazak.\" mixes verb aspects. (h) site.ts:243 alt \"…i olukom gledano odozgo\" should agree with krov. (i) Story.astro:71 \"Snimamo s prvim sljedećim krovom.\" (j) Privacy.astro:135 \"za trajanja jamstva\".",
+    "fix": "(a) \"Limeni i falcani krovovi, popravci, opšavi atika i dimnjaka, oluci i snjegobrani — sve krojeno i savijeno po mjeri vašeg krova. Zagreb i okolica.\" (b) \"Radimo cijeli krov, sloj po sloj — od provjere konstrukcije…\" (c) \"Sve stavke navodimo u ponudi: materijal, boju, debljinu lima i rok.\" (d) \"Kad vjetar podigne lim ili opšav, prvo osiguramo krov, a zatim ga popravimo i fotografiramo za upravitelja.\" (e) \"Tri pravila bez iznimke.\" (f) \"Pitajte preko WhatsAppa\" (g) \"Pregledamo nalog i slike, pa dogovorimo dolazak.\" (h) \"Limeni krov sa snjegobranima, gledan odozgo\" (drop \"i olukom\", since no gutter is visible). (i) \"Snimit ćemo je na prvom sljedećem krovu.\" (j) \"za vrijeme trajanja jamstva na izvedbu\".",
+    "evidence": "Page text extraction of /, /usluge/*, /upravitelji-zgrada, /o-nama, /privatnost",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage, /upravitelji-zgrada, /kontakt, /usluge/popravak-krova, /privatnost",
+    "viewport": "all",
+    "files": [
+      "src/data/site.ts",
+      "src/components/home/Managers.astro",
+      "src/components/pages/zgrade/Benefits.astro",
+      "src/components/pages/kontakt/ContactRows.astro",
+      "src/components/pages/Privacy.astro",
+      "src/pages/upravitelji-zgrada.astro"
+    ],
+    "problem": "\"foto dokumentacija\" is written as two words throughout. Standard Croatian writes the foto- prefix together (fotodokumentacija, like fotokopija). Occurrences: site.ts:157 \"foto dokumentacija uzroka\", site.ts:466 \"dobivate foto dokumentaciju\", site.ts:565, Managers.astro:38 \"Foto dokumentacija\", Benefits.astro:41, ContactRows.astro:139, Privacy.astro:109/134, and the upravitelji-zgrada.astro:49 meta description.",
+    "fix": "Replace every occurrence with \"fotodokumentacija\" / \"fotodokumentaciju\" (titles: \"Fotodokumentacija\"). Mono labels like \"Foto prije · poslije\" can stay.",
+    "evidence": "grep 'foto dokumentacij' across src",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage \"Detalj je potpis\"",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/components/home/DetailSignature.astro"
+    ],
+    "problem": "Callout 02 says \"Brtva zatvara rupu oko vijka, a glava se ne vidi na krovu.\", but its red marker points at a clearly visible screw head in the photo. That contradicts the precision story. The EPDM-screw fact is also marked PRIMJER in the Standard table but unmarked here.",
+    "fix": "Change the text at DetailSignature.astro:34 to \"Brtva zatvara rupu oko vijka, a glava je u boji lima pa se s ulice ne primjećuje.\" and add <ExampleTag/> to the callout until the client confirms.",
+    "evidence": "shots/rv-conv-sheet-hm-2.png (panel 3, marker 2 on a visible screw)",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage Radovi, /radovi, /radovi/*, /usluge/*, /o-nama",
+    "viewport": "all",
+    "files": [
+      "src/pages/radovi/[slug].astro",
+      "src/pages/radovi/index.astro",
+      "src/pages/usluge/[slug].astro",
+      "src/components/pages/onama/Collage.astro"
+    ],
+    "problem": "The \"not a render\" defence repeats until it sounds like agency copy: \"Ovo nije render.\" (homepage H2 and the /radovi H1), \"bez rendera\" (service gallery lead, project meta description), \"Ništa nije renderirano.\" (identical lead on all 12 project pages, radovi/[slug].astro:80), and \"Bez rendera i bez posuđenih slika\" (o-nama). Homeowners don't suspect renders, and 12 project pages sharing one generic lead is thin content for SEO and weak as case studies.",
+    "fix": "Keep \"Ovo nije render.\" only on the homepage Radovi section. /radovi H1: \"Naši radovi u Zagrebu i okolici.\" Project lead: build it from data plus a new `note` field in site.ts, e.g. `${projectKinds[kind]} · ${location} · ${year}.` followed by one sentence of problem and solution (\"Curilo je uz uvalu; zamijenili smo uvalu i sljeme…\"). Service gallery lead: \"Fotografije s naših gradilišta. Antracit RAL 7016.\" Drop the duplicated material from the project meta description.",
+    "evidence": "Page text of /radovi/krov-crijep-lim-zalazak and /radovi/krov-uvala (identical lead)",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage FAQ",
+    "viewport": "all",
+    "files": [
+      "src/data/site.ts"
+    ],
+    "problem": "The 8 FAQs leave out three questions an older homeowner asks before calling: how payment works (advance payment, instalments), whether the company helps with insurance claims after storms (very relevant in Zagreb), and whether they need to be home during the measurement. The price answer gives no turnaround for the written offer, so it reads as a dodge.",
+    "fix": "Add to `faq` (marked PRIMJER until the client confirms): \"Tražite li predujam?\", \"Pomažete li kod prijave štete osiguranju nakon nevremena?\" (answer: fotodokumentacija and a written finding for the insurer), and \"Moram li biti kod kuće dok mjerite?\". Extend the price answer with \"Pisanu ponudu šaljemo u roku od 2–3 radna dana.\"",
+    "evidence": "site.ts faq array (8 items)",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "minor",
+    "page": "Homepage Warranty and Managers; B2B hero",
+    "viewport": "all",
+    "files": [
+      "src/components/home/Warranty.astro",
+      "src/components/home/Managers.astro",
+      "src/components/layout/PageHero.astro"
+    ],
+    "problem": "Secondary CTAs drift in wording and destination. Warranty.astro:112 says \"Zatražite pisanu ponudu\" and opens the same form as \"Besplatna procjena\". Managers.astro:104 \"Ponuda za zgradu\" promises an offer but opens the /upravitelji-zgrada info page. The B2B hero uses the homeowner label \"Besplatna procjena\".",
+    "fix": "Warranty button: \"Besplatna procjena\" (same label, same form). Managers button: \"Sve za upravitelje zgrada\" to /upravitelji-zgrada, or keep \"Ponuda za zgradu\" and link to /upravitelji-zgrada#procjena. B2B PageHero CTA label: \"Zatražite ponudu za zgradu\", with a new ctaLabel prop on PageHero.",
+    "evidence": "Page text of / (sections 08 and 07)",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "polish",
+    "page": "Homepage ProofStrip, hero trust row",
+    "viewport": "390×844 and 1440",
+    "files": [
+      "src/components/home/ProofStrip.astro"
+    ],
+    "problem": "Every figure counts up from 0, including the Google rating and the warranty. Screenshots caught \"4,1 / 5\", \"4,5 / 5\" and \"7 GOD.\" mid-animation. A rating that visibly passes through 4,1 plants the wrong number.",
+    "fix": "In count(), skip the animation when decimals>0 or the label is 'Google ocjena' or the suffix is ' god.'. Render those figures static and let only the dimension line draw. Count only \"godina\" and \"krovova\".",
+    "evidence": "shots/rv-conv-sheet-hd-0.png (569+, 4,1 / 5, 7 GOD.); shots/rv-conv-sheet-hm-0.png (598+, 4,5, 7 GOD.)",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "polish",
+    "page": "Homepage \"Kako radimo\", /o-nama",
+    "viewport": "all",
+    "files": [
+      "src/components/home/Process.astro",
+      "src/components/pages/onama/Story.astro",
+      "src/components/pages/onama/StatsCta.astro"
+    ],
+    "problem": "Visible \"Uskoro\" placeholders, \"TIMELAPSE · TRI DANA U 15 SEKUNDI · USKORO\" (Process.astro:91) and \"FOTOGRAFIJA EKIPE · USKORO\" (Story.astro:63), look unfinished. Creative direction §10 says sections stay hidden until the material exists. StatsCta.astro:24 shows the eyebrow \"Kotna linija\", drafting jargon that means nothing to a homeowner.",
+    "fix": "Render the timelapse label and the crew-photo frame only when their asset exists; until then, show photo 6/20 with a plain caption. Change the StatsCta eyebrow to \"U brojkama\".",
+    "evidence": "shots/rv-conv-sheet-hd-4.png, shots/rv-conv-sheet-od-0.png, shots/rv-conv-sheet-od-2.png",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "polish",
+    "page": "Breadcrumbs and data formatting across pages",
+    "viewport": "all",
+    "files": [
+      "src/pages/usluge/[slug].astro",
+      "src/pages/radovi/index.astro",
+      "src/pages/radovi/[slug].astro",
+      "src/components/layout/Header.astro",
+      "src/data/site.ts",
+      "src/components/home/Process.astro",
+      "src/pages/kontakt.astro"
+    ],
+    "problem": "Small inconsistencies. The breadcrumb root is \"Početna\" on usluge/[slug].astro:40 and radovi pages (17, 33) but \"Naslovnica\" on /procjena, /kontakt, /o-nama, /upravitelji-zgrada, /privatnost and 404; the header aria-label says \"— početna\". The range \"0,5 – 0,6 mm\" (site.ts:473) is spaced, unlike \"7–17 h\" and \"50–120 m²\". Running text mixes \"3 slike\" and \"tri slike\" (kontakt.astro hero). Process.astro:95 \"Spoj dvaju krovova\" and media.ts:9 \"Spoj dviju ploha\" are correct but bookish.",
+    "fix": "Use \"Naslovnica\" everywhere, including the aria-label \"Limarija Karamatić — naslovnica\". Change to '0,5–0,6 mm' (unspaced en dash). Use \"tri slike\" in running text and keep the numeral only in the headline \"Pošaljite 3 slike krova.\". Change to \"Spoj dva krova\" and \"Spoj dvije plohe krova od crijep-lima\".",
+    "evidence": "Page text extraction (breadcrumbs: POČETNA vs NASLOVNICA)",
+    "by": "conversion-copy"
+  },
+  {
+    "severity": "major",
+    "page": "/ (homepage, Warranty section #jamstvo affects the whole page)",
+    "viewport": "every width below 640 px (measured at 360 and 390, both real-mobile emulation and reduced motion)",
+    "files": [
+      "src/components/home/Warranty.astro"
+    ],
+    "problem": "The page is 21 px wider than the screen: scrollWidth 381 vs clientWidth 360, and 411 vs 390. The cause is the visually hidden table header `.tb-thead`. It is meant to be 1×1 px with position:absolute, but the rule `.tb-table, .tb-table tbody, .tb-table thead { display:block; width:100% }` has higher specificity (0,1,1 vs 0,1,0), so it gets width:100% of the viewport. With no positioned ancestor it sits at left:21 px, so its right edge lands at 381. On real phones the layout viewport stretches to 381 px: the page can be panned sideways and the fixed mobile CTA bar becomes 381 px wide, so the red 'Procjena' cell is cut by 21 px. Before the table's reveal finishes, the reveal transform on `.tb` hides the bug. After the reveal, and always with no JS or reduced motion, the page overflows. The spec says no horizontal scroll anywhere.",
+    "fix": "In the Warranty.astro <style>, add `position: relative;` to `.tb` and give the hidden header higher specificity: `.tb-table .tb-thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }`. Keep the `@media (width >= 40rem)` reset as `.tb-table .tb-thead { position:static; width:auto; height:auto; … }`. Alternatively, drop `thead` from the shared `display:block; width:100%` selector. Then check that document.documentElement.scrollWidth === clientWidth at 360 and 390.",
+    "evidence": "Overflow script: `/` at 360 → sw 381 / iw 381 / ih 784 instead of 740 (viewport stretched). Offenders: thead.tb-thead right=381, MobileCtaBar ul right=381. Every other route at 360–1440 has 0 overflow. Screenshots: shots/rv-qa-360-home-reduce.png, shots/rv-qa-360-bar-crop.png.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "major",
+    "page": "/ (Hero)",
+    "viewport": "≥1024 px for the late LCP; all viewports for reduced motion, Save-Data, low-memory phones and repeat visits in the same session",
+    "files": [
+      "src/components/home/hero/HeroSheet.astro",
+      "src/lib/hero.ts",
+      "src/components/home/Hero.astro",
+      "src/layouts/Base.astro"
+    ],
+    "problem": "The hero photo is the largest element on screen, but it is marked `loading=\"lazy\" fetchpriority=\"low\"` (HeroSheet.astro lines 48–50). On top of that, hero.ts hides it with `gsap.set(photo, { autoAlpha: 0 })` (line 97) and only reveals it at about 2.8 s (lines 192–211). In real Chrome the H1 paints at about 0.12 s, then the photo becomes the new LCP when it appears: 3104 ms at 1440, 3052 ms at 1280, 3076 ms at 1024, all unthrottled. With 4× CPU and slow 4G it is 5932 ms. So every first desktop visit has a field LCP over 2.5 s ('needs improvement'), and no network speedup can fix it. Lighthouse desktop shows 99 and LCP 0.9 s only because its trace ends before the reveal, so the lab score hides the problem. A second case: when motion is off (reduced motion, Save-Data, deviceMemory ≤ 2, or a repeat visit with hx-played), the photo is visible from the first frame but is still fetched lazily at low priority. LCP is then the photo at 4208 ms (390 px, throttled) and 3276 ms (1440, throttled), against 0.8 s for the text.",
+    "fix": "(1) Paint the photo from the first frame and hide it with a cover instead of opacity. Chrome's LCP ignores elements with opacity 0 but does not account for one element covering another. Keep `.hx-photo` at opacity 1, add an opaque `.hx-cover` div above it (background grafit-2 plus the grid, under the drawing) and animate the cover away. For the 'window' effect, put the clip on the cover with a hole: `clip-path: path(evenodd, 'M0 0H{w}V{h}H0Z M{house polygon}')`, built from windowPolys(), then tween it to empty. Do not use `autoAlpha` on the photo. (2) In HeroSheet.astro set `loading=\"eager\"`, `fetchpriority=\"high\"` and `decoding=\"async\"`. (3) In Base.astro add an optional `preloadImage` prop and, on / only, emit `<link rel=\"preload\" as=\"image\" type=\"image/avif\" imagesrcset=\"…480w,…720w,…960w,…1200w\" imagesizes=\"(min-width: 1440px) 760px, (min-width: 1024px) 52vw, calc(100vw - 2.5rem)\" fetchpriority=\"high\">`, using getImage() with the same widths. Expected result: LCP at about the image paint time (under 1.5 s on 4G) in every motion mode. Add a RUM or web-vitals check, because lab Lighthouse cannot catch this.",
+    "evidence": "PerformanceObserver(LCP) on the production build, scratchpad/qa/lcp.mjs and lcp2.mjs: 1440 → '72ms SPAN → 116ms SPAN(133k) → 3104ms IMG(185k)'. Reduced motion at 390 → IMG at 4208 ms (load 4182 ms). Lighthouse desktop: perf 99, LCP 0.9 s on the H1 (trace too short).",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "major",
+    "page": "/ and every page (critical path)",
+    "viewport": "mobile (Lighthouse Moto G Power, slow 4G)",
+    "files": [
+      "astro.config.mjs",
+      "src/layouts/Base.astro",
+      "src/components/home/Projects.astro"
+    ],
+    "problem": "Lighthouse mobile on the production build: / scores 74 (FCP 3.3 s, LCP 5.1 s on the H1 with about 900 ms render delay, SI 3.5 s, TBT 0, CLS 0); /usluge/popravak-krova scores 80 (FCP 2.9 s, LCP 4.4 s). The causes: (a) 7 render-blocking stylesheets on / and 5 on service pages (ExampleTag.css 13 KB gzipped plus 2–3.5 KB component chunks), which Lighthouse estimates cost 1,650 ms and 1,510 ms. (b) No font preload. Archivo latin (88 KB) and latin-ext (85 KB) are both needed for Croatian characters, yet they are discovered only after the CSS loads. The H1 repaints wider when Archivo swaps in, which pushes LCP later and causes desktop font-swap CLS of 0.011–0.034 in the page heroes. Plex Mono adds 4 more files (56 KB). (c) The only eager image on the homepage is the first project card in the section-5 rail (`eager={i === 0}`, Projects.astro line 55). It is far below the fold, yet it is fetched at Medium priority at 45 ms (103 KB), alongside the fonts. The homepage's initial transfer is 1,049 KiB (images 664, fonts 229, JS 80, CSS 28, HTML 47), against the creative direction's first-load budget of 700 KB.",
+    "fix": "(1) astro.config.mjs: `build: { inlineStylesheets: 'always' }`. That is about 28 KB gzipped inlined per page and removes every render-blocking request. (2) Base.astro: preload the two Archivo woff2 files: `import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url'` (and the latin-ext file) → `<link rel=\"preload\" as=\"font\" type=\"font/woff2\" href={archivoLatin} crossorigin>`. Better still, self-host one subset file (Basic Latin + ČĆĐŠŽčćđšž + „“–—·²° with the wght and wdth axes kept, via pyftsubset) at about 50 KB instead of 173 KB, and preload only that. Drop the Plex Mono 500 weight (use 400 with font-weight synthesis off) or subset it the same way. Add a metric-matched fallback (`@font-face { font-family:'Archivo Fallback'; src:local('Arial'); size-adjust:…; ascent-override:… }`, or Astro's Fonts API, which generates one) to remove the swap reflow. (3) Projects.astro line 55: remove `eager={i === 0}` so the rail cards are all lazy. Target: mobile FCP under 2 s, LCP under 2.5 s, initial transfer under 700 KB.",
+    "evidence": "scratchpad/qa/lh_.json and lh_usluge_popravak-krova.json (Lighthouse 13.5, mobile). Render-blocking list: RadniNalog.css, ServiceArea.css, Warranty.css, MobileCtaBar.css, Hero.css, ExampleTag.css, WhatsAppBand.css. Request log: krov-crijep-lim-zalazak…_Z1h8FTo.avif (rail card) Medium priority at 45 ms.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "major",
+    "page": "all pages with photos (/radovi worst)",
+    "viewport": "mobile and desktop",
+    "files": [
+      "src/lib/reveal.ts",
+      "src/styles/global.css"
+    ],
+    "problem": "The red scan line on photos is moved by tweening the CSS `top` property, from 0% to 100% (reveal.ts lines 64–67). Every frame moves a laid-out, absolutely positioned element, so each photo reveal logs layout shifts. Chrome attributes them to SPAN.scanline. CLS (session window) measured while scrolling the production build: /radovi 0.157 at 390 (above the 0.1 'good' limit, and 3× the creative-direction target of ≤0.05); / 0.069 at 390; /usluge/popravak-krova 0.032; /o-nama 0.028. Lighthouse also flags it above the fold on /usluge/popravak-krova (CLS 0.019, PageHero `.ph-photo > span.scanline`).",
+    "fix": "In reveal.ts, animate a transform instead of `top`: `gsap.set(line, { top: 0, opacity: 1, y: 0 }); tl.to(line, { y: () => el.offsetHeight, duration: 0.9, ease: 'draft' }, 0)`, keeping the clip-path tween on `el` (clip-path does not shift layout). In global.css add `will-change: transform;` to `[data-scan] > .scanline`. Remove the `top:'100%'` tween. The local `:has(> .scanline[style*='top: 100%'])` workarounds key on that inline style, so they need updating or (since they are slated for removal anyway) deleting. Expected CLS from scans: 0.",
+    "evidence": "scratchpad/qa/cls.mjs on the production build: '/radovi 390 CLS=0.1566 (0.1221 SPAN.scanline, 0.0854 SPAN.scanline×2)', '/ 390 CLS=0.0690'. Lighthouse layout-shifts on popravak-krova: scanline score 0.012 + 0.0048 + 0.0007.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "major",
+    "page": "22 pages with their own form: /usluge/* (6), /radovi/<slug> (12), /kontakt, /procjena, /upravitelji-zgrada, and /",
+    "viewport": "all; the bottom bar is mobile and tablet (<1024)",
+    "files": [
+      "src/components/layout/Header.astro",
+      "src/components/layout/MobileCtaBar.astro",
+      "src/layouts/Base.astro"
+    ],
+    "problem": "The header CTA 'Besplatna procjena' (Header.astro line 61) and the mobile bar's 'Procjena' (MobileCtaBar.astro line 34) always link to `/#procjena`. Of the 27 production pages, 22 already contain `id=\"procjena\"`, a form preselected for that service or project. Tapping the most prominent CTA therefore loads the homepage (the heaviest page, about 1 MB) and drops the preselected service. On /procjena itself, the header CTA navigates away to the homepage.",
+    "fix": "Add a Base.astro prop `quoteHref` (default `'/procjena'`, the light dedicated page) and pass it to Header and MobileCtaBar. Pages that render NalogSection, FinalCta or ProcjenaCta pass `quoteHref=\"#procjena\"`. Alternative without touching every page: give both links `data-quote-link` and run a 2-line inline script, `if (document.getElementById('procjena')) document.querySelectorAll('[data-quote-link]').forEach(a => a.setAttribute('href', '#procjena'))`. Pages with no form (/radovi, /o-nama, /privatnost, /hvala, 404) should then link to `/procjena`, not `/#procjena`.",
+    "evidence": "grep on dist: e.g. usluge/popravak-krova/index.html has procjena-id:1 and 2× href=\"/#procjena\"; procjena/index.html has procjena-id:1 and 2× href=\"/#procjena\".",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "major",
+    "page": "all pages (axe: 95 nodes on /, 51 on /usluge/limeni-krovovi, 58 on /upravitelji-zgrada, 51 on /kontakt)",
+    "viewport": "1440 and 390",
+    "files": [
+      "src/components/ui/SectionHead.astro",
+      "src/components/ui/ExampleTag.astro",
+      "src/components/layout/Footer.astro",
+      "src/components/layout/UtilityBar.astro",
+      "src/components/form/RadniNalog.astro",
+      "src/components/home/Services.astro",
+      "src/components/home/Process.astro",
+      "src/components/home/Faq.astro",
+      "src/components/home/Warranty.astro",
+      "src/components/home/WhatsAppBand.astro",
+      "src/components/pages/zgrade/Benefits.astro",
+      "src/pages/usluge/[slug].astro",
+      "src/styles/global.css"
+    ],
+    "problem": "Serious axe color-contrast failures, against the AA requirement in the spec. Systemic: SectionHead `muted = 'text-tinta/60'` gives #6c6d6d on papir at 4.39:1, used for every light-section eyebrow and lead and prescribed by BUILD-SPEC. Other measured pairs:\n- **Indices:** `text-tinta/40` '/06' and '/ 05' at 2.47:1; FAQ numbers `--num: rgb(21 24 27/.55)` at 3.79; Warranty `.tb-poz` 3.84 and `.tb-cap` 4.49.\n- **Footer:** `.kr-dl dt` celik/0.8 (Naziv/OIB/Sjedište) at 4.30, and the grid indices A1–B3 `.kr-label > span:last-child` celik/0.55 at 2.64 (154 nodes site-wide).\n- **UtilityBar:** 'Tel.' `text-celik/80` on grafit-2 at 4.06.\n- **ExampleTag:** 'primjer' uses `opacity-60` and lands at 2.2–3.7:1 on every background, so the label that tells the client a value is a placeholder is barely legible.\n- **RadniNalog:** inactive step labels `.rn-dim-n/.rn-dim-t` (2.60), chip numbers `.rn-chip-n` (3.33), `.rn-figcap` (3.25), aside labels tinta/55 (3.79).\n- **Process:** '/ 05' `opacity-50` redline at 2.12.\n- **WhatsAppBand:** `text-linija/60` on antracit at 3.9.\n- **Viber buttons:** white on #7360F2 at 4.48.\nPlain celik (#8A939B) on grafit passes at 6.06:1. Only the opacity variants of it fail.",
+    "fix": "SectionHead.astro: `text-tinta/60` → `text-tinta/70` (#565858, ≈6.1:1), and update BUILD-SPEC's 'mutni tekst' rule to /70 (minimum /65 ≈5.3:1). Use tinta/70 for indices too, or mark purely decorative indices aria-hidden. Faq.astro `--num: rgb(21 24 27 / 0.7)`. Footer.astro `.kr-dl dt { color: var(--color-celik) }`; the A1–B3 indices are decoration, so add aria-hidden=\"true\" or use celik. UtilityBar 'Tel.' → `text-celik`. ExampleTag.astro: remove `opacity-60` (the dashed border already marks it). RadniNalog: `.rn-dim-n/.rn-dim-t/.rn-chip-n/.rn-figcap` at tinta/70 or higher. Process.astro: replace `opacity-50` with `text-celik`. WhatsAppBand: `text-linija/60` → `text-linija/80`. global.css: add `--color-viber-btn: #6B57EF` (≈4.8:1 with white) for button backgrounds, keeping #7360F2 for icons. Re-run axe until color-contrast reports 0.",
+    "evidence": "scratchpad/qa/axecc.out, aggregated by color pair: '154x #52585e on #0e1013 (2.64)', '48x #6c6d6d on #eeece7 (4.39) 12px', '12x … (4.39) 18px lead', '24x #ffffff on #7360f2 (4.48)', '36x #939391 on #eeece7 (2.6) .rn-dim', '10x #872629 on #0e1013 (2.12) Process'.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "all pages",
+    "viewport": "<1024 px (bottom bar) and all light sections",
+    "files": [
+      "src/styles/global.css"
+    ],
+    "problem": "(1) Focus can end up hidden under the sticky bottom bar (WCAG 2.4.11 Focus Not Obscured, AA). Tabbing through the homepage at 390 px, 7 of 80 focus stops landed under the fixed MobileCtaBar ('Svi radovi', footer links Radovi, Za upravitelje zgrada, O nama, Kontakt…), because only `scroll-padding-top: 5.5rem` is set. (2) The global focus ring `outline: 2px solid var(--color-redline)` (#FF3B3F) is 2.99:1 against papir #EEECE7, under the 3:1 non-text contrast minimum (WCAG 1.4.11), on every light section.",
+    "fix": "global.css `@layer base`: add `@media (width < 64rem) { html { scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom) + 0.5rem); } }`. For light sections, add `.bg-papir :focus-visible, .bg-white :focus-visible { outline-color: var(--color-redline-dark); }` (#B80F15 is about 5.9:1 on papir). Or use a two-tone ring that works on any background: `outline: 2px solid var(--color-redline); box-shadow: 0 0 0 4px var(--color-grafit);`.",
+    "evidence": "scratchpad/qa/obscured.mjs: 'focus stops 80 obscured 8' (7 under the bar; the skip link is a false positive). Computed contrast: L(#FF3B3F)=0.2475, L(#EEECE7)=0.8388 → 2.99:1.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "/ (Radovi rail and Recenzije rail)",
+    "viewport": "≥768 px (arrows hidden below md)",
+    "files": [
+      "src/components/home/Projects.astro",
+      "src/components/home/Reviews.astro"
+    ],
+    "problem": "When the rail reaches the end, the script sets `next.disabled = true` (Projects.astro lines 182–183; Reviews.astro lines 257–258) while that button still has focus. A disabled button drops focus, so focus falls to <body> and a keyboard user loses their place. Measured: after 6 presses of 'Sljedeći radovi' activeElement is BODY. On Recenzije at 1440 a single press of 'Sljedeće recenzije' does the same, since 4 cards with 3 visible means one step reaches the end. The next Tab then jumps to an unrelated card further down.",
+    "fix": "Keep the buttons focusable. Replace `btn.disabled = x` with `btn.setAttribute('aria-disabled', String(x))`, return early in the click handler when `aria-disabled==='true'`, and move the existing `disabled:` Tailwind styles to `aria-disabled:opacity-30 aria-disabled:cursor-default`. Or, before disabling, `if (document.activeElement === next && atEnd) prev?.focus()`. Apply the same to the prev button at the start.",
+    "evidence": "scratchpad/qa/kbd.mjs: rail step 5 {sl:2624, nextDis:true} → focus 'BODY'; reviews step 0 {dis:true} → 'BODY'.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "/procjena",
+    "viewport": "all",
+    "files": [
+      "src/components/form/RadniNalog.astro",
+      "src/pages/procjena.astro"
+    ],
+    "problem": "The heading outline skips from h1 'Besplatna procjena krova' straight to h3 'Što treba?'. axe reports heading-order (moderate). RadniNalog hard-codes h3 for its step headings (lines 117, 160, 248), which is right under the h2 of FinalCta and NalogSection but wrong on /procjena, where no h2 comes in between. All other routes have a correct outline with one h1.",
+    "fix": "Add a `headingLevel?: 2 | 3` prop to RadniNalog (default 3), render `const H = `h${headingLevel}``, and pass `headingLevel={2}` from procjena.astro. Or wrap the form on /procjena in a section with an `<h2 class=\"sr-only\">Radni nalog</h2>`.",
+    "evidence": "axe on /procjena at 1440 and 390: heading-order → #radni-nalog-h1 <h3>. Crawl heading check: 'SKIPS: h1->h3 \"Što treba?\"' on /procjena only.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "every route (production build)",
+    "viewport": "n/a (SEO)",
+    "files": [
+      "src/layouts/Base.astro",
+      "astro.config.mjs"
+    ],
+    "problem": "In the production build, canonical and og:url carry a trailing slash (`https://www.limarija-karamatic.hr/usluge/popravak-krova/`), because `new URL(Astro.url.pathname, Astro.site)` gets the directory-format pathname. Every internal link, the Service.url, BreadcrumbList and ItemList URLs and the nav all use the no-slash form (`/usluge/popravak-krova`). Both /radovi and /radovi/ return 200. Canonical, links and structured data therefore point at different URLs. The dev server shows no slash, so this is only visible in the build. 404.html gets `canonical https://…/404/`.",
+    "fix": "astro.config.mjs: `trailingSlash: 'never'` (optionally `build: { format: 'file' }`) so URLs match how links are written. Base.astro line 29: `const path = Astro.url.pathname.replace(/\\/+$/, '') || '/'; const canonical = new URL(path, Astro.site);`. Skip the canonical tag when `noindex` is true (404, /hvala). Configure the host (Cloudflare Pages) to 301 the slash variant to the no-slash one.",
+    "evidence": "Production dist: usluge/popravak-krova/index.html canonical '…/usluge/popravak-krova/' vs Service.url '…/usluge/popravak-krova' and BreadcrumbList item '…/usluge/popravak-krova'. 404.html canonical '…/404/'. curl 127.0.0.1:4400/radovi/ → 200.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "site-wide SEO (robots, sitemap, /usluge, titles)",
+    "viewport": "n/a",
+    "files": [
+      "public/",
+      "astro.config.mjs",
+      "src/pages/usluge/",
+      "src/pages/upravitelji-zgrada.astro",
+      "src/pages/radovi/index.astro",
+      "src/pages/index.astro",
+      "src/pages/dev/"
+    ],
+    "problem": "/robots.txt, /sitemap.xml, /apple-touch-icon.png and /favicon.ico all return 404. /usluge and /usluge/ return 404 even though 6 pages live under /usluge/; the hub URL people try is missing, and the nav 'Usluge' only goes to /#usluge. Eight /dev/* test pages ship in dist (they are noindex but publicly reachable). Some titles are too long and will be cut in search results: /upravitelji-zgrada is 84 characters, /radovi 71; the homepage description is 168 characters.",
+    "fix": "Add public/robots.txt (`User-agent: *` / `Disallow: /dev/` / `Sitemap: https://www.limarija-karamatic.hr/sitemap-index.xml`). Add @astrojs/sitemap (build-time only) with `filter: (p) => !/\\/(dev|hvala|404)/.test(p)`, or a static src/pages/sitemap.xml.ts endpoint. Create src/pages/usluge/index.astro (an SEO hub listing the 6 services, with BreadcrumbList), or redirect `/usluge` to `/#usluge` via the `redirects` config. Before launch, move src/pages/dev to src/pages/_dev or delete it. Shorten the upravitelji title to 'Limarija za zgrade Zagreb — atike, ravni krovovi | Karamatić' (≤60 characters) and the radovi title to 'Radovi — krovovi, atike, dimnjaci | Limarija Karamatić'. Keep descriptions at 155 characters or fewer. Add a 180×180 apple-touch-icon from the Λ mark.",
+    "evidence": "curl: robots.txt 404, sitemap.xml 404, /usluge 404 (dev and prod). dist/dev/{form,hero,pages-a,pages-b,projects,services,shell,trust}.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "/, /radovi, /radovi/<slug>, /usluge/*",
+    "viewport": "mobile at high DPR (390 @3x)",
+    "files": [
+      "src/components/ui/Photo.astro",
+      "src/components/home/hero/HeroSheet.astro"
+    ],
+    "problem": "The AVIF encodes are heavy for photo cards. Photo.astro uses `quality={72}` and widths [480, 800, 1200], so a 350 CSS-px card on a 3× phone gets the 1200w file. Because the sources are noisy WhatsApp JPEGs, AVIF at q72 barely beats the source: atika-opsav-sljunak is 353 KB (source JPEG 508 KB), ravni-krov-trapez-atika-gromobran 288 KB. Full-scroll image transfer at 390@3x is 2.25 MB on / and 2.53 MB on /radovi (978 KB and 638 KB at 1440@1x). The hero photo on mobile is 103–126 KB against the creative-direction target of ≤80 KB.",
+    "fix": "Photo.astro: `quality={52}`. Measured with the project's sharp at 1200w: atika-opsav-sljunak 353→228 KB at q55 and 161 KB at q45; zalazak 187→113 KB at q55. Add intermediate widths: `widths = [480, 640, 800, 960, 1200]`. HeroSheet: `quality={55}`. Re-check visually once the client's original photos replace the WhatsApp copies (originals encode much smaller at equal quality).",
+    "evidence": "scratchpad/qa/imgs.mjs: '/ @390x3 totalKB=2249, biggest 288KB ravni-krov-trapez-atika-gromobran…avif'. '/radovi @390x3 totalKB=2532, biggest 353KB atika-opsav-sljunak…avif'. Sharp q-comparison output above.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "/ (Recenzije)",
+    "viewport": "all",
+    "files": [
+      "src/components/home/Reviews.astro",
+      "src/data/site.ts"
+    ],
+    "problem": "'Sve recenzije na Googleu' renders as `<a href=\"#\">` because `site.googleReviewsUrl: '#'` (site.ts line 44). Clicking it jumps to the top of the page. It is the only dead link on the site, and unlike the other placeholders it carries no 'primjer' marker, so in a client demo it looks broken.",
+    "fix": "In Reviews.astro, render the link only when `reviewsExternal` is true. Otherwise render a `<span class=\"rv-link …\" aria-disabled=\"true\">Sve recenzije na Googleu <ExampleTag /></span>`, or hide the row until a real Google Business Profile URL is in site.ts.",
+    "evidence": "Crawl link report: {href:'#', kind:'EMPTY-HASH', from:['/']}. Source: Reviews.astro lines 55–58.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "/ (Usluge cards)",
+    "viewport": "all",
+    "files": [
+      "src/components/home/Services.astro",
+      "src/lib/form.ts"
+    ],
+    "problem": "Each homepage service card's quote link is `/?usluga=${slug}#procjena` (Services.astro line 85). The query string differs from the current URL, so clicking it on the homepage triggers a full reload of the homepage (about 1 MB plus a re-render) just to preselect step 1 of a form that is already on the page. On mobile that means a white flash and a delayed jump, on the spec's 'service cards open the form preselected' path.",
+    "fix": "Keep the href for no-JS, and add an enhancement in Services.astro: on click, `e.preventDefault()`, check `#procjena input[name=vrsta][value=<jobId for slug>]` and dispatch `change` so form.ts refreshes the summary, run `history.replaceState(null, '', `?usluga=${slug}#procjena`)`, then `document.getElementById('procjena').scrollIntoView({ behavior: motionOn() ? 'smooth' : 'auto' })` and focus the step-1 heading (`[data-rn-heading]`). A small exported helper in src/lib/form.ts (`preselectJob(slug)`) avoids duplicating the resolveJob logic.",
+    "evidence": "Source: Services.astro line 85 `href={`/?usluga=${s.slug}#procjena`}`. The page is already at `/`, so navigating to a different search string is a document navigation.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "minor",
+    "page": "/, /procjena, /usluge/*, /radovi/<slug>, /kontakt, /upravitelji-zgrada (Radni nalog)",
+    "viewport": "no-JS",
+    "files": [
+      "src/components/form/RadniNalog.astro"
+    ],
+    "problem": "The form is `action=\"/hvala\" method=\"get\"` (lines 85–86). Without JS, submitting puts the visitor's name, mobile number, location and notes into the URL query (/hvala?ime=…&mobitel=…). That ends up in browser history, server and CDN logs, analytics and Referer headers, which is a privacy and GDPR problem for a site that 'could ship'. A GET request also cannot carry the up to 6 photos the step-2 file input collects.",
+    "fix": "Point the form at the planned Cloudflare Pages Function: `action=\"/api/nalog\" method=\"post\" enctype=\"multipart/form-data\"`, and have the function answer with `303 See Other` to `/hvala?nalog=KR-1234`. The JS path in form.ts already has the fetch('/api/nalog', POST) stub. Until the backend exists, leave a TODO and note in the prototype handover that no-JS submission is demo-only.",
+    "evidence": "No-JS run (scratchpad/qa/nojs.mjs): all 3 steps visible, submit enabled, so submission would GET /hvala with the field values. Source: RadniNalog.astro lines 85–86, form.ts line 4.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "polish",
+    "page": "all pages (social and WhatsApp share preview)",
+    "viewport": "n/a",
+    "files": [
+      "src/layouts/Base.astro"
+    ],
+    "problem": "og:image comes from `getImage({ src: image, width: 1200, format: 'jpg', quality: 78 })` with no height, so the share image is portrait 1200×1600 at 237 KB. WhatsApp, Facebook and Viber previews crop it to a centre landscape strip, and WhatsApp drops thumbnails as files approach about 300 KB. The tags og:image:width, og:image:height, og:image:alt and twitter:image are missing. For a business where links are forwarded on WhatsApp, the preview matters.",
+    "fix": "Base.astro line 30: `getImage({ src: image, width: 1200, height: 630, fit: 'cover', position: 'center', format: 'jpg', quality: 72 })` (about 90–120 KB). Add `<meta property=\"og:image:width\" content=\"1200\">`, `<meta property=\"og:image:height\" content=\"630\">`, `<meta property=\"og:image:alt\" content={…}>` and `<meta name=\"twitter:image\" content={…}>`. Optionally add an `imageAlt` prop.",
+    "evidence": "dist/_astro/krov-crijep-lim-zalazak.fMJgVXSa_1hddqT.jpg is 1200×1600, 236,659 B. The <head> has og:image only.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "polish",
+    "page": "all pages",
+    "viewport": "all",
+    "files": [
+      "src/lib/motion.ts",
+      "astro.config.mjs"
+    ],
+    "problem": "(1) SplitText is imported and registered in motion.ts but used nowhere outside src/pages/dev. motion.js is 148 KB raw / 59 KB gzipped, and Lighthouse reports 22–28 KiB of it unused. (2) `prefetch: true` loads Astro's prefetch script on every page, but no link has `data-astro-prefetch` and prefetchAll is off, so the script does nothing. Instant navigation to service and project pages would suit the 'premium' feel.",
+    "fix": "motion.ts: remove `import { SplitText } from 'gsap/SplitText'`, drop it from registerPlugin and the export, and update BUILD-SPEC's plugin list. astro.config.mjs: `prefetch: { prefetchAll: true, defaultStrategy: 'hover' }`. Astro already skips prefetch on Save-Data and 2G.",
+    "evidence": "grep: SplitText appears only in src/lib/motion.ts. Lighthouse unused-javascript: motion.yvjtZyGO.js 59,059 B, est. savings 22,532 B (/) and 28,370 B (popravak). dist/index.html has 0 data-astro-prefetch attributes.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "polish",
+    "page": "all pages",
+    "viewport": "no-JS (mobile header; md+ rail)",
+    "files": [
+      "src/components/layout/Header.astro",
+      "src/components/home/Projects.astro"
+    ],
+    "problem": "Without JS, the mobile hamburger ('Otvori izbornik') is a visible button that does nothing, because the dialog keeps `hidden`. The homepage rail's prev/next arrows (md+) are also visible but inert, with prev disabled. Reviews.astro handles the same case correctly with `data-rv-controls hidden`, unhidden by its script.",
+    "fix": "Projects.astro: add `hidden` to the arrow wrapper and set `hidden = false` in the rail script, as Reviews does. Header.astro: render the trigger with `hidden` and unhide it in the menu script, adding an `<a href=\"#kr-f-stranice\" class=\"kr-iconbtn\" data-menu-fallback>` that jumps to the footer page list for no-JS (hidden by the script). The mobile CTA bar and footer navigation already cover no-JS users.",
+    "evidence": "scratchpad/qa/nojs.mjs: menuBtn present, menu dialog `hidden`. Projects.astro lines 72–90 have no `hidden` attribute.",
+    "by": "tech-qa"
+  },
+  {
+    "severity": "polish",
+    "page": "all pages (structured data and landmarks)",
+    "viewport": "n/a",
+    "files": [
+      "src/layouts/Base.astro",
+      "src/pages/usluge/[slug].astro",
+      "src/pages/kontakt.astro",
+      "src/pages/upravitelji-zgrada.astro",
+      "src/components/layout/UtilityBar.astro"
+    ],
+    "problem": "(1) The RoofingContractor JSON-LD has no `@id`, so each Service.provider describes a second, separate business entity. It also lacks `logo`, `openingHoursSpecification` (the data exists in site.hours) and `sameAs` (the Google Business Profile). (2) The breadcrumb root is labelled 'Početna' on some pages and 'Naslovnica' on others (kontakt, upravitelji-zgrada). (3) axe 'region': the desktop UtilityBar (.kr-util) sits outside any landmark.",
+    "fix": "Base.astro: add `'@id': new URL('/#business', Astro.site).toString()`, `logo`, `openingHoursSpecification` and `sameAs: [site.googleReviewsUrl]` once real. In service pages use `provider: { '@id': '…/#business' }`. Standardize the breadcrumb root as 'Početna'. Move <UtilityBar /> inside the <header> element, or wrap it in `<aside aria-label=\"Kontakt\">`.",
+    "evidence": "Production JSON-LD dump (usluge/popravak-krova: Service.provider is a full RoofingContractor object with no @id). The crawl shows 'Naslovnica' on /kontakt and /upravitelji-zgrada and 'Početna' elsewhere. axe region: .kr-util on all desktop pages.",
+    "by": "tech-qa"
+  }
+]

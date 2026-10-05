@@ -1,0 +1,347 @@
+---
+/**
+ * "Pošaljite 3 slike krova" (id="slike") — antracit traka, bez sekcijskog broja.
+ * Lijevo: jedna jaka rečenica, što slikati, WhatsApp (glavni) / Viber (sporedni).
+ * Desno: "list" u jeziku crteža (kutne oznake, mono zaglavlje, tanke linije) — tri slike
+ *   odlaze u poruci i stiže odgovor. Bez okvira uređaja.
+ * Pokret (jednom): slike se otkrivaju scanom (reveal.ts, jedna za drugom), zatim odgovor ('press').
+ * Viber: na uređajima s mišem (pointer: fine) viber:// link često ne radi, pa umjesto gumba
+ *   piše broj za poziv / Viber s gumbom za kopiranje.
+ */
+import { site, waHref, viberHref, telHref } from '@/data/site';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import Photo from '@/components/ui/Photo.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import imgCijeli from '@/assets/projects/atika-opsav-alat-siroko.jpg';
+import imgMjesto from '@/assets/projects/atika-opsav-kut-ljestve.jpg';
+import imgDetalj from '@/assets/projects/atika-opsav-alat.jpg';
+
+const wa = waHref('Pozdrav, šaljem slike krova. Lokacija: ');
+const tips = ['Cijeli krov', 'Mjesto koje vas brine', 'Detalj izbliza'];
+const thumbs = [imgCijeli, imgMjesto, imgDetalj];
+---
+
+<section id="slike" class="relative isolate overflow-hidden bg-antracit py-20 text-linija sm:py-28 lg:py-32">
+  <div class="wrap grid gap-14 sm:gap-16 lg:grid-cols-12 lg:items-center lg:gap-x-12">
+    <div class="lg:col-span-6">
+      <p class="eyebrow flex items-center gap-3 text-linija/80" data-reveal>
+        <Icon name="camera" size={16} />
+        <span>Procjena iz slika</span>
+      </p>
+      <h2
+        class="type-display mt-5 text-[2.125rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]"
+        data-reveal
+      >
+        Pošaljite 3&nbsp;slike krova.
+      </h2>
+      <p class="mt-5 max-w-[42ch] text-lg leading-relaxed text-pretty text-linija/85" data-reveal>
+        Iz slika često odmah znamo o čemu se radi. {site.responseTime}.
+        <ExampleTag class="ml-1 -translate-y-px" />
+      </p>
+
+      <ol class="tips mt-8 grid max-w-[34rem] grid-cols-3 border-y border-white/15" data-reveal>
+        {
+          tips.map((t, i) => (
+            <li class="flex flex-col gap-1.5 py-3.5 pr-3">
+              <span class="type-mono text-[0.6875rem] tracking-[0.12em] text-linija/80">0{i + 1}</span>
+              <span class="text-[0.875rem] leading-snug font-medium text-linija">{t}</span>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row" data-reveal>
+        <Button href={wa} variant="whatsapp" size="lg" icon="whatsapp" class="w-full sm:w-auto">
+          Pošaljite na WhatsApp
+        </Button>
+        <Button href={viberHref} variant="outline" size="lg" icon="viber" class="wa-touch w-full sm:w-auto">
+          Pošaljite na Viber
+        </Button>
+      </div>
+
+      <!-- dodir: poziv; miš: poziv ili Viber na isti broj, s kopiranjem -->
+      <p class="wa-touch mt-4 text-[0.9375rem] text-linija/80" data-reveal>
+        Radije zovete?
+        <a
+          href={telHref}
+          class="type-mono ml-1.5 inline-flex min-h-11 items-center font-medium text-white underline decoration-white/30 underline-offset-4 hover:decoration-white"
+          >{site.phoneDisplay}</a
+        >
+      </p>
+      <p class="wa-fine mt-4 flex-wrap items-center gap-x-3 text-[0.9375rem] text-linija/80" data-reveal>
+        <span>Poziv ili Viber:</span>
+        <a
+          href={telHref}
+          class="type-mono inline-flex min-h-11 items-center font-medium text-white underline decoration-white/30 underline-offset-4 hover:decoration-white"
+          >{site.phoneDisplay}</a
+        >
+        <button
+          type="button"
+          class="wa-copy type-mono inline-flex min-h-11 items-center gap-2 px-1 text-[0.75rem] tracking-[0.1em] text-linija uppercase transition-colors duration-150 hover:text-white"
+          data-wa-copy={site.phoneDisplay}
+          hidden
+        >
+          <Icon name="file" size={14} />
+          <span data-wa-copy-label>Kopiraj broj</span>
+        </button>
+        <span class="sr-only" aria-live="polite" data-wa-copy-status></span>
+      </p>
+    </div>
+
+    <!-- primjer poruke: ilustracija, za čitače zaslona skrivena -->
+    <div class="relative lg:col-span-6 xl:col-span-5 xl:col-start-8" aria-hidden="true" data-wa>
+      <div class="sheet">
+        <span class="crop crop-tl"></span>
+        <span class="crop crop-tr"></span>
+        <span class="crop crop-bl"></span>
+        <span class="crop crop-br"></span>
+
+        <p class="sheet-head type-mono">
+          <span>WhatsApp · 3 slike · 08:14</span>
+        </p>
+
+        <div class="out" data-wa-out>
+          <div class="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+            {
+              thumbs.map((src, i) => (
+                <div class="thumb">
+                  <div class="relative aspect-[3/4] overflow-hidden bg-grafit-3" data-scan>
+                    <Photo
+                      src={src}
+                      alt=""
+                      widths={[200, 320, 480]}
+                      sizes="(min-width: 1280px) 160px, (min-width: 1024px) 140px, 30vw"
+                      class="block h-full w-full"
+                    />
+                  </div>
+                  <span class="thumb-n type-mono">0{i + 1}</span>
+                </div>
+              ))
+            }
+          </div>
+          <div class="bubble bubble-out">
+            <p class="text-[0.875rem] leading-snug text-white">Pozdrav, šaljem slike krova. Lokacija: Sesvete</p>
+            <p class="meta type-mono text-linija/80">
+              08:14
+              <svg viewBox="0 0 18 12" width="16" height="11" fill="none" stroke="currentColor" stroke-width="1.6" class="ticks" data-wa-ticks>
+                <path d="m1 6.5 3.2 3.2L10.5 2.5M7.5 9.2l.5.5 6.3-7.2" />
+              </svg>
+            </p>
+          </div>
+        </div>
+
+        <div class="bubble bubble-in" data-wa-reply>
+          <p class="text-[0.875rem] leading-snug text-tinta">Vidimo kut atike. Dolazimo izmjeriti u četvrtak.</p>
+          <p class="meta type-mono text-tinta/70">10:32</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tips li + li {
+    border-left: 1px solid rgb(255 255 255 / 0.15);
+    padding-left: 0.875rem;
+  }
+
+  /* dodir vs. miš (Viber); :global jer je .wa-touch i na <Button> (druga komponenta) */
+  #slike :global(.wa-fine) {
+    display: none;
+  }
+  @media (pointer: fine) {
+    #slike :global(.wa-touch) {
+      display: none;
+    }
+    #slike :global(.wa-fine) {
+      display: flex;
+    }
+  }
+
+  /* ── list s porukom ── */
+  .sheet {
+    position: relative;
+    max-width: 34rem;
+    margin-inline: auto;
+    padding: 1rem 1rem 1.25rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    background: rgb(14 16 19 / 0.38);
+  }
+  @media (width >= 40rem) {
+    .sheet {
+      padding: 1.25rem 1.5rem 1.75rem;
+    }
+  }
+  .crop {
+    position: absolute;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 0 solid rgb(213 219 223 / 0.6);
+    pointer-events: none;
+  }
+  .crop-tl {
+    top: -0.5rem;
+    left: -0.5rem;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+  .crop-tr {
+    top: -0.5rem;
+    right: -0.5rem;
+    border-top-width: 1px;
+    border-right-width: 1px;
+  }
+  .crop-bl {
+    bottom: -0.5rem;
+    left: -0.5rem;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
+  .crop-br {
+    bottom: -0.5rem;
+    right: -0.5rem;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+  }
+  .sheet-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.14);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(213 219 223 / 0.85);
+  }
+  .out {
+    margin-top: 1.25rem;
+  }
+  @media (width >= 40rem) {
+    .out {
+      margin-left: 8%;
+    }
+  }
+  /* svaka slika u tankom okviru s odmakom — kao prilog na listu */
+  .thumb {
+    position: relative;
+    padding: 3px;
+    border: 1px solid rgb(255 255 255 / 0.2);
+  }
+  .thumb-n {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 3;
+    padding: 0 0.3rem;
+    background: var(--color-grafit, #0e1013);
+    font-size: 0.625rem;
+    line-height: 1rem;
+    letter-spacing: 0.06em;
+    color: #fff;
+  }
+  .bubble {
+    padding: 0.625rem 0.75rem 0.5rem;
+  }
+  .bubble .meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    padding-top: 0.25rem;
+    font-size: 0.625rem;
+    line-height: 1rem;
+  }
+  .bubble-out {
+    margin-top: 0.625rem;
+    background: #1f3a31;
+    border-radius: 2px 0 2px 2px;
+  }
+  .bubble-in {
+    margin-top: 1rem;
+    width: 86%;
+    background: var(--color-papir, #eeece7);
+    border-radius: 0 2px 2px 2px;
+  }
+  @media (width >= 40rem) {
+    .bubble-in {
+      width: 72%;
+    }
+  }
+  .ticks {
+    color: #53bdeb;
+  }
+
+  :global(.motion) [data-wa]:not([data-wa-ready]) [data-wa-reply] {
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
+
+  /* kopiranje broja (samo s mišem, gdje viber:// link često ne radi) */
+  document.querySelectorAll<HTMLButtonElement>('[data-wa-copy]').forEach((btn) => {
+    if (!navigator.clipboard) return;
+    btn.hidden = false;
+    const label = btn.querySelector<HTMLElement>('[data-wa-copy-label]');
+    const status = btn.parentElement?.querySelector<HTMLElement>('[data-wa-copy-status]');
+    let t = 0;
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.waCopy ?? '');
+        if (label) label.textContent = 'Kopirano';
+        if (status) status.textContent = 'Broj je kopiran.';
+        clearTimeout(t);
+        t = window.setTimeout(() => {
+          if (label) label.textContent = 'Kopiraj broj';
+          if (status) status.textContent = '';
+        }, 2200);
+      } catch {}
+    });
+  });
+
+  /** Odgovor stiže tek kad su sve tri slike otkrivene (scan iz reveal.ts); 8 s je samo sigurnosna mreža. */
+  function whenScansDone(root: HTMLElement, cb: () => void) {
+    const scans = Array.from(root.querySelectorAll<HTMLElement>('[data-scan]'));
+    const t0 = performance.now();
+    const check = () => {
+      const done = scans.every((s) => s.hasAttribute('data-revealed'));
+      if (done || performance.now() - t0 > 8000) cb();
+      else gsap.delayedCall(0.1, check);
+    };
+    check();
+  }
+
+  function init() {
+    if (!motionOn()) return;
+    document.querySelectorAll<HTMLElement>('[data-wa]:not([data-wa-ready])').forEach((root) => {
+      const ticks = root.querySelector<SVGElement>('[data-wa-ticks]');
+      const reply = root.querySelector<HTMLElement>('[data-wa-reply]');
+      if (!reply) return;
+
+      gsap.set(reply, { opacity: 0, y: 12 });
+      if (ticks) gsap.set(ticks, { color: 'rgb(213 219 223 / 0.8)' });
+      root.setAttribute('data-wa-ready', '');
+
+      const tl = gsap.timeline({ paused: true });
+      tl.to(reply, { opacity: 1, y: 0, duration: 0.26, ease: 'press', clearProps: 'transform' }, 0.45);
+      if (ticks) tl.to(ticks, { color: '#53bdeb', duration: 0.18, ease: 'none' }, 0.45);
+
+      ScrollTrigger.create({
+        trigger: root,
+        start: 'top 75%',
+        once: true,
+        onEnter: () => whenScansDone(root, () => tl.play()),
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+</script>

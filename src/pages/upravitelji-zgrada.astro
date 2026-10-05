@@ -1,0 +1,84 @@
+---
+/**
+ * /upravitelji-zgrada — B2B stranica za upravitelje stambenih zgrada i izvođače.
+ * Ritam: hero (grafit) → Što dobivate (papir) → Koraci (papir-2, korak u vrijednosti)
+ *        → Tipični radovi (grafit) → Pitanja (papir, kompaktno) → Upit za zgradu #procjena (grafit + mreža) → footer.
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
+import Faq from '@/components/home/Faq.astro';
+import FinalCta from '@/components/home/FinalCta.astro';
+import Benefits from '@/components/pages/zgrade/Benefits.astro';
+import Works from '@/components/pages/zgrade/Works.astro';
+import BuildingProcess from '@/components/pages/zgrade/BuildingProcess.astro';
+import HeroFacts from '@/components/pages/HeroFacts.astro';
+import { faq } from '@/data/site';
+import heroImg from '@/assets/projects/atika-opsav-susjedni-krov.jpg';
+
+const crumbs = [homeCrumb, { href: '/upravitelji-zgrada', label: 'Za upravitelje zgrada' }];
+
+// 4 pitanja (kompaktni FAQ): 2 lokalna (za upravitelje i izvođače) + 2 iz site.ts
+const pick = (start: string) => faq.find((f) => f.q.startsWith(start));
+const items = [
+  {
+    q: 'Kako ide plaćanje iz pričuve?',
+    a: 'Upravitelj ponudu stavlja na odluku suvlasnika. Nakon izvedbe izdajemo račun na zgradu, s OIB-om zgrade, a plaćanje ide s računa pričuve prema dogovoru iz ponude.',
+  },
+  pick('Je li procjena stvarno besplatna'),
+  {
+    q: 'Radite li za izvođače i investitore?',
+    a: 'Da. Na novogradnji i nadogradnji radimo limarski dio posla: opšave atika, ravne krovove, oluke i dimnjake. Rokove usklađujemo s gradilištem, a tvrtkama izdajemo R1 račun.',
+  },
+  pick('Dajete li jamstvo'),
+].filter((f): f is { q: string; a: string } => !!f);
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base
+  title="Krovovi i opšavi za zgrade, Zagreb | Limarija Karamatić"
+  description="Krovovi i opšavi za stambene zgrade u Zagrebu: opšav atike, ravni krovovi, oluci i dimnjaci. Ponuda za suvlasnike, plaćanje iz pričuve i fotodokumentacija."
+  schema={[breadcrumbSchema(crumbs, Astro.site), faqSchema]}
+>
+  <PageHero
+    eyebrow="Za upravitelje zgrada i izvođače"
+    title="Krovovi za stambene zgrade."
+    lead="Ponuda koju upravitelj može staviti pred suvlasnike, račun na zgradu i plaćanje iz pričuve. Uz fotografije krova prije, tijekom i nakon radova."
+    crumbs={crumbs}
+    image={heroImg}
+    imageAlt="Opšav atike na ravnom krovu zgrade, RAL 7016"
+  >
+    <HeroFacts
+      items={[
+        { k: 'Račun', v: 'Na zgradu · OIB', example: true },
+        { k: 'Plaćanje', v: 'Iz pričuve', example: true },
+        { k: 'Fotografije', v: 'Prije · poslije' },
+      ]}
+    />
+  </PageHero>
+
+  <Benefits index="01" />
+  <BuildingProcess index="02" />
+  <Works index="03" />
+  <Faq items={items} tone="light" compact id="pitanja" index="04" title="Pitanja upravitelja." />
+  <FinalCta
+    index="05"
+    variant="zgrada"
+    title="Pošaljite adresu zgrade."
+    lead="Odaberite posao i upišite adresu. Dolazimo izmjeriti i fotografirati krov, besplatno i bez obveze."
+  >
+    <Fragment slot="note">
+      <p class="eyebrow text-celik">Za ponudu trebamo</p>
+      <ul class="mt-4 space-y-2.5 font-mono text-[0.8125rem] leading-relaxed text-linija">
+        <li class="flex gap-3"><span class="text-redline" aria-hidden="true">01</span> Adresu zgrade i ime upravitelja</li>
+        <li class="flex gap-3"><span class="text-redline" aria-hidden="true">02</span> Što curi ili što treba zamijeniti</li>
+        <li class="flex gap-3"><span class="text-redline" aria-hidden="true">03</span> OIB zgrade, za račun na zgradu</li>
+      </ul>
+    </Fragment>
+  </FinalCta>
+</Base>
+

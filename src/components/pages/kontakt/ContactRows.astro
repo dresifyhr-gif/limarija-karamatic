@@ -1,0 +1,142 @@
+---
+/**
+ * /kontakt · područje rada, podaci o tvrtki i poveznica za zgrade (papir).
+ * Radnje na dodir (telefon, WhatsApp, Viber, e-pošta) su u heru (ContactSheet), ovdje su samo podaci.
+ * Nepotvrđeno → <ExampleTag/>.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import { site, areas } from '@/data/site';
+
+interface Props {
+  index?: string;
+}
+const { index = '01' } = Astro.props;
+---
+
+<section id="podaci" class="bg-papir py-14 text-tinta sm:py-20 lg:py-24" aria-labelledby="podaci-naslov">
+  <div class="wrap">
+    <h2 id="podaci-naslov" class="eyebrow flex items-center gap-3 text-tinta/70">
+      <span class="text-redline-dark" aria-hidden="true">{index}</span>
+      <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+      <span>Područje rada i podaci o tvrtki</span>
+    </h2>
+
+    <div class="ct-facts" data-reveal-group>
+      <div class="ct-fact" data-reveal>
+        <p class="ct-fk"><Icon name="map-pin" size={14} /> Područje rada <ExampleTag class="ml-1" /></p>
+        <p class="ct-big">{site.area}</p>
+        <p class="mt-3 text-[0.9375rem] leading-relaxed text-pretty text-tinta/70">
+          {areas.join(' · ')}
+        </p>
+      </div>
+      <div class="ct-fact" data-reveal>
+        <p class="ct-fk"><Icon name="file" size={14} /> Podaci o tvrtki</p>
+        <dl class="ct-legal mt-4">
+          <div>
+            <dt>Naziv</dt>
+            <dd>{site.legalName}</dd>
+          </div>
+          <div>
+            <dt>OIB</dt>
+            <dd class="font-mono tracking-[0.04em]">{site.oib} <ExampleTag class="ml-1" /></dd>
+          </div>
+          <div>
+            <dt>Sjedište</dt>
+            <dd>{site.city} <ExampleTag class="ml-1" /></dd>
+          </div>
+          <div>
+            <dt>E-pošta</dt>
+            <dd class="min-w-0 break-all">{site.email}</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="ct-fact" data-reveal>
+        <p class="ct-fk"><Icon name="building" size={14} /> Za upravitelje zgrada</p>
+        <p class="mt-4 text-[0.9375rem] leading-relaxed text-pretty text-tinta/70">
+          Ponuda za suvlasnike, račun na zgradu i fotodokumentacija prije i poslije radova.
+        </p>
+        <a
+          href="/upravitelji-zgrada"
+          class="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta"
+        >
+          Za zgrade <Icon name="arrow-right" size={18} />
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ct-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--color-tinta);
+  }
+  @media (width >= 48rem) {
+    .ct-facts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 2.5rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .ct-facts {
+      grid-template-columns: 5fr 4fr 3fr;
+      gap: 3rem;
+      margin-top: 2.5rem;
+      padding-top: 2.5rem;
+    }
+    .ct-fact + .ct-fact {
+      padding-left: 3rem;
+      border-left: 1px solid rgb(21 24 27 / 0.15);
+    }
+  }
+  .ct-fk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+  }
+  .ct-big {
+    margin-top: 0.875rem;
+    font-size: 1.5rem;
+    line-height: 1.1;
+    font-weight: 800;
+    font-stretch: 118%;
+    letter-spacing: -0.01em;
+  }
+  .ct-legal > div {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed rgb(21 24 27 / 0.15);
+    font-size: 0.9375rem;
+  }
+  .ct-legal > div:first-child {
+    padding-top: 0;
+  }
+  .ct-legal dt {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.5rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+  }
+  .ct-legal dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+  }
+</style>

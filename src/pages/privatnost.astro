@@ -1,0 +1,25 @@
+---
+/**
+ * /privatnost — NACRT politike privatnosti (pravni tekst treba pregledati prije objave).
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
+import Privacy from '@/components/pages/Privacy.astro';
+
+const crumbs = [homeCrumb, { href: '/privatnost', label: 'Privatnost' }];
+---
+
+<Base
+  title="Politika privatnosti | Limarija Karamatić"
+  description="Kako Limarija Karamatić prikuplja, koristi i čuva osobne podatke iz upita za procjenu, poziva i poruka."
+  schema={[breadcrumbSchema(crumbs, Astro.site)]}
+>
+  <PageHero
+    eyebrow="Pravni podaci"
+    title="Politika privatnosti"
+    lead="Koje podatke prikupljamo kad nam pošaljete upit, nazovete ili pošaljete poruku, i što s njima radimo."
+    crumbs={crumbs}
+    cta={false}
+  />
+  <Privacy />
+</Base>

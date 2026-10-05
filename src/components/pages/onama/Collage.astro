@@ -1,0 +1,194 @@
+---
+/**
+ * /o-nama · kolaž stvarnih radova (papir).
+ * Desktop: tri stupca s pomakom (5 / 3 / 3 od 12), kao listovi na stolu; pomak raste udesno (0 / 3 / 9 rem) da se Sl. brojevi čitaju redom.
+ * Mobitel: stupci postaju `display: contents` → mreža 2 × n, prva fotografija preko cijele širine.
+ * Fotografije otkriva data-scan (jedini stil otkrivanja fotki).
+ */
+import SectionHead from '@/components/ui/SectionHead.astro';
+import Photo from '@/components/ui/Photo.astro';
+import Button from '@/components/ui/Button.astro';
+import { projects, projectKinds, type Project } from '@/data/site';
+
+interface Props {
+  index?: string;
+  /** broj prve slike u nizu stranice (hero Sl. 01, priča Sl. 02 → kolaž od Sl. 03) */
+  startAt?: number;
+}
+const { index = '03', startAt = 3 } = Astro.props;
+
+const pick = (slug: string) => projects.find((p) => p.slug === slug);
+const [p1, p2, p3, p4, p5] = [
+  'krov-crijep-lim-zalazak', // 17
+  'atika-kut-na-geru', // 7
+  'dimnjak-oblaganje', // 8
+  'falcani-krov-izlaz', // 16
+  'snjegobrani-odozgo', // 13
+].map(pick) as (Project | undefined)[];
+
+type Item = { p?: Project; n: number; ratio: string; sizes: string; cls: string };
+const colA: Item[] = [{ p: p1, n: 1, ratio: 'aspect-[4/5]', sizes: '(min-width: 64rem) 36vw, 100vw', cls: 'cl-o1' }];
+const colB: Item[] = [
+  { p: p2, n: 2, ratio: 'aspect-[4/5] lg:aspect-[3/4]', sizes: '(min-width: 64rem) 21vw, 50vw', cls: 'cl-o2' },
+  { p: p4, n: 4, ratio: 'aspect-[4/5] lg:aspect-[3/4]', sizes: '(min-width: 64rem) 21vw, 50vw', cls: 'cl-o4' },
+];
+const colC: Item[] = [
+  { p: p3, n: 3, ratio: 'aspect-[4/5]', sizes: '(min-width: 64rem) 21vw, 50vw', cls: 'cl-o3' },
+  { p: p5, n: 5, ratio: 'aspect-[4/5]', sizes: '(min-width: 64rem) 21vw, 50vw', cls: 'cl-o5' },
+];
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<section id="nas-rad" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+  <div class="wrap">
+    <SectionHead
+      tone="light"
+      index={index}
+      eyebrow="Naši radovi"
+      title="Pogledajte izbliza."
+      lead="Sve fotografije su s naših krovova u Zagrebu i okolici, snimljene na gradilištu."
+    />
+
+    <div class="cl mt-14 lg:mt-20">
+      {
+        [colA, colB, colC].map((col, ci) => (
+          <div class:list={['cl-col', `cl-col--${['a', 'b', 'c'][ci]}`]}>
+            {col.map(
+              (it) =>
+                it.p && (
+                  <a href={`/radovi/${it.p.slug}`} class:list={['cl-item group', it.cls]} aria-label={`${it.p.title} — pogledajte rad`}>
+                    <div class:list={['cl-media relative overflow-hidden bg-antracit', it.ratio]} data-scan>
+                      <Photo
+                        src={it.p.image}
+                        alt={it.p.alt}
+                        sizes={it.sizes}
+                        widths={[400, 640, 900, 1200]}
+                        imgClass="h-full w-full object-cover transition-transform duration-[400ms] ease-[var(--ease-draft)] group-hover:scale-[1.03]"
+                      />
+                    </div>
+                    <p class="cl-cap">
+                      <span class="text-redline-dark">Sl. {pad(startAt + it.n - 1)}</span>
+                      <span class="text-tinta">{it.p.title}</span>
+                      <span class="cl-cap-m">
+                        {projectKinds[it.p.kind]} · {it.p.material.split(' · ').pop()}
+                      </span>
+                    </p>
+                  </a>
+                ),
+            )}
+            {ci === 0 && (
+              <div class="cl-more cl-o6">
+                <p class="max-w-[24rem] leading-relaxed text-pretty text-tinta/70">
+                  Svaki rad u galeriji ima mjesto, materijal i boju. Isti antracit, isti detalji, od obiteljske kuće
+                  do zgrade.
+                </p>
+                <Button href="/radovi" variant="outline-dark" iconRight="arrow-right" class="mt-6">
+                  Svi radovi
+                </Button>
+              </div>
+            )}
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .cl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.75rem;
+    row-gap: 1.75rem;
+  }
+  .cl-col {
+    display: contents;
+  }
+  .cl-o1 {
+    order: 1;
+    grid-column: 1 / -1;
+  }
+  .cl-o2 {
+    order: 2;
+  }
+  .cl-o3 {
+    order: 3;
+  }
+  .cl-o4 {
+    order: 4;
+  }
+  .cl-o5 {
+    order: 5;
+  }
+  .cl-o6 {
+    order: 6;
+    grid-column: 1 / -1;
+  }
+  @media (width >= 40rem) {
+    .cl {
+      column-gap: 1.5rem;
+      row-gap: 2.25rem;
+    }
+  }
+  @media (width >= 64rem) {
+    .cl {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: 2rem;
+      row-gap: 0;
+      align-items: start;
+    }
+    .cl-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+    .cl-col > * {
+      order: 0;
+    }
+    .cl-col--a {
+      grid-column: 1 / span 5;
+    }
+    .cl-col--b {
+      grid-column: 7 / span 3;
+      padding-top: 3rem;
+    }
+    .cl-col--c {
+      grid-column: 10 / span 3;
+      padding-top: 9rem;
+    }
+    .cl-more {
+      padding-top: 0.5rem;
+    }
+  }
+
+  .cl-item {
+    display: block;
+    color: inherit;
+    min-width: 0;
+  }
+  .cl-cap {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.75rem;
+    row-gap: 0.125rem;
+    margin-top: 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.45;
+    letter-spacing: 0.06em;
+  }
+  .cl-cap > span:first-child {
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .cl-cap-m {
+    flex-basis: 100%;
+    color: rgb(21 24 27 / 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .cl-item:hover .cl-cap > span:nth-child(2) {
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+</style>

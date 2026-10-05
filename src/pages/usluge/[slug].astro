@@ -1,0 +1,757 @@
+---
+/**
+ * /usluge/[slug] — SEO stranica usluge (i landing za Google Ads).
+ * Ritam: hero (grafit+papir) → opseg radova (papir) → galerija + radovi (grafit) →
+ *        dokaz: ocjena · recenzija · jamstvo (papir) → pitanja (papir) →
+ *        procjena: FinalCta s predodabranom uslugom (grafit+papir) → ostale usluge (papir) → footer.
+ * Fotografije: nijedna se ne ponavlja na stranici (vidi servicePhotos u _parts/media.ts).
+ * Schema: Service (provider → '/#business' iz Base), BreadcrumbList, FAQPage.
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb, profileNames } from '@/components/layout/PageHero.astro';
+import ProfileIcon from '@/components/ui/ProfileIcon.astro';
+import ProjectCard from '@/components/ui/ProjectCard.astro';
+import Icon from '@/components/ui/Icon.astro';
+import Photo from '@/components/ui/Photo.astro';
+import Faq from '@/components/home/Faq.astro';
+import FinalCta from '@/components/home/FinalCta.astro';
+import Gallery from './_parts/Gallery.astro';
+import Scope from './_parts/Scope.astro';
+import Proof from './_parts/Proof.astro';
+import { faqFor, pad, radova, servicePhotos } from './_parts/media';
+import { services, projects, projectKinds, type Service, type ProjectKind } from '@/data/site';
+
+export function getStaticPaths() {
+  return services.map((service) => ({ params: { slug: service.slug }, props: { service } }));
+}
+
+interface Props {
+  service: Service;
+}
+const { service } = Astro.props;
+const total = pad(services.length);
+
+/* Popravak je landing za Google Ads: telefon je glavni gumb (kreativni smjer §4). */
+const urgent = service.slug === 'popravak-krova';
+
+const crumbs = [homeCrumb, { href: '/usluge', label: 'Usluge' }, { href: `/usluge/${service.slug}`, label: service.title }];
+
+/* hero → kartice radova → galerija → sličice: svaka fotografija jednom */
+const { heroProject, cards, gallery, thumbs } = servicePhotos(service);
+const others = services.filter((s) => s.slug !== service.slug);
+
+/* "Svi radovi" pločica popunjava ostatak zadnjeg reda (sm: 2 stupca, lg: 3) */
+const lgSpan = cards.length % 3 === 0 ? 3 : 3 - (cards.length % 3);
+const smSpan = cards.length % 2 === 0 ? 2 : 1;
+const legend = (Object.entries(projectKinds) as [ProjectKind, string][])
+  .map(([k, label]) => ({ k, label, n: projects.filter((p) => p.kind === k).length }))
+  .filter((x) => x.n > 0);
+
+const faqItems = faqFor(service);
+
+/* hrvatski navodnici u tekstu iz site.ts */
+const hr = (t: string) => t.replace(/"([^"]+)"/g, '„$1“');
+
+/* brojevi sekcija ovise o tome što se prikazuje */
+let n = 0;
+const idx = () => pad(++n);
+const iOpseg = idx();
+const iGal = gallery.length ? idx() : '';
+const iRad = idx();
+const iFaq = idx();
+const iProc = idx();
+
+/* završni naslov: hitni poslovi zadržavaju "Ne čekajte da počne kapati." (FinalCta default) */
+const closeTitle = urgent || service.slug === 'dimnjaci' ? undefined : 'Izmjerimo i vaš krov.';
+
+const pageUrl = new URL(`/usluge/${service.slug}`, Astro.site).toString();
+const serviceSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: service.title,
+  serviceType: service.title,
+  description: service.seoDescription,
+  url: pageUrl,
+  image: new URL(service.image.src, Astro.site).toString(),
+  provider: { '@id': new URL('/#business', Astro.site).toString() },
+  areaServed: { '@type': 'City', name: 'Zagreb' },
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: `${service.title} — što je uključeno`,
+    itemListElement: service.includes.map((x) => ({
+      '@type': 'Offer',
+      itemOffered: { '@type': 'Service', name: x },
+    })),
+  },
+};
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+
+const promise = [
+  { t: 'Mjerenje na terenu', d: 'Besplatno, bez obveze' },
+  { t: 'Pisana ponuda', d: 'Stavku po stavku' },
+  { t: 'Pisano jamstvo', d: 'Na izvedbu' },
+];
+---
+
+<Base
+  title={service.seoTitle}
+  description={service.seoDescription}
+  image={service.image}
+  imageAlt={service.imageAlt}
+  schema={[serviceSchema, breadcrumbSchema(crumbs, Astro.site), faqSchema]}
+>
+  <PageHero
+    eyebrow="Zagreb i okolica · besplatna procjena"
+    title={service.h1}
+    lead={service.lead ?? service.short}
+    crumbs={crumbs}
+    image={service.image}
+    imageAlt={service.imageAlt}
+    imageHref={heroProject ? `/radovi/${heroProject.slug}` : undefined}
+    profile={service.profile}
+    phoneFirst={urgent}
+  >
+    <ol class="ph-promise" aria-label="Kako radimo">
+      {
+        promise.map((p, k) => (
+          <li>
+            <span class="ph-promise-n" aria-hidden="true">{pad(k + 1)}</span>
+            <span class="ph-promise-t">{p.t}</span>
+            <span class="ph-promise-d">{p.d}</span>
+          </li>
+        ))
+      }
+    </ol>
+  </PageHero>
+
+  <!-- Opseg radova -->
+  <section id="opseg" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32" aria-labelledby="opseg-naslov">
+    <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
+      <div class="lg:col-span-5">
+        <div class="lg:sticky lg:top-28">
+          <p class="eyebrow mb-4 flex items-center gap-3 text-tinta/70" data-reveal>
+            <span class="text-redline-dark">{iOpseg}</span>
+            <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+            <span>Opseg radova</span>
+          </p>
+          <h2 id="opseg-naslov" class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
+            {service.includesTitle ?? 'Što je uključeno.'}
+          </h2>
+          <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-pretty text-tinta/80" data-reveal>
+            {hr(service.intro)}
+          </p>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 lg:pt-2">
+        <Scope items={service.includes} label={`${service.title}: što je uključeno`}>
+          <Fragment slot="foot">
+            <p>Sve stavke navodimo u ponudi: materijal, boju, debljinu lima i rok.</p>
+            <a href="/#kako-radimo" class="inc-link group/l">
+              Kako radimo
+              <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/l:translate-x-0.5" />
+            </a>
+          </Fragment>
+        </Scope>
+      </div>
+    </div>
+  </section>
+
+  <!-- Galerija -->
+  {
+    gallery.length > 0 && (
+      <Gallery
+        images={gallery}
+        tone="dark"
+        id="galerija"
+        index={iGal}
+        eyebrow="S gradilišta"
+        title={service.galleryTitle ?? 'Ovako izgleda gotovo.'}
+        lead={service.galleryLead ?? 'Fotografije s naših gradilišta. Antracit RAL 7016.'}
+      />
+    )
+  }
+
+  <!-- Radovi (kartice) + arhiva -->
+  <section
+    id="radovi"
+    class:list={['bg-grafit pb-20 text-linija sm:pb-28 lg:pb-32', gallery.length ? 'pt-4' : 'pt-20 sm:pt-28 lg:pt-32']}
+    aria-labelledby="radovi-naslov"
+  >
+    <div class="wrap">
+      <div class:list={[gallery.length > 0 && 'border-t border-linija/12 pt-16 sm:pt-20']}>
+        <header>
+          <p class="eyebrow mb-4 flex items-center gap-3 text-celik" data-reveal>
+            <span class="text-redline">{iRad}</span>
+            <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+            <span>{cards.length ? `Radovi · ${radova(cards.length)}` : 'Radovi'}</span>
+          </p>
+          <h2 id="radovi-naslov" class="type-display text-[2.125rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.25rem,3.4vw,3rem)]" data-reveal>
+            {cards.length ? (service.relatedTitle ?? 'Već izvedeno.') : 'Pogledajte i druge krovove.'}
+          </h2>
+        </header>
+
+        <ul class:list={['rad-grid mt-12 sm:mt-14', cards.length > 0 && 'rad-grid--rail']} role="list">
+          {
+            cards.map((p) => (
+              <li class="text-white">
+                <ProjectCard project={p} sizes="(min-width: 88rem) 26rem, (min-width: 64rem) 30vw, (min-width: 30rem) 46vw, 78vw" />
+              </li>
+            ))
+          }
+          <li class:list={['rad-all', `rad-all--lg${lgSpan}`, `rad-all--sm${smSpan}`, cards.length === 0 && 'rad-all--solo']}>
+            <div class="rad-all-in group/all">
+              <div class="rad-all-main">
+                <p class="eyebrow text-celik">Arhiva · {radova(projects.length)}</p>
+                {
+                  thumbs.length > 0 && (
+                    <div class="rad-thumbs" aria-hidden="true">
+                      {thumbs.map((p) => (
+                        <div class="rad-thumb">
+                          <Photo src={p.image} alt="" widths={[160, 320]} sizes="7rem" class="block h-full w-full" />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                }
+                <a href="/radovi" class="rad-all-a">
+                  <span class="type-display block text-[1.75rem] text-white sm:text-[2rem]">Svi radovi</span>
+                </a>
+                <span
+                  class="rad-all-arrow grid h-11 w-11 place-items-center border border-linija/30 text-white transition-colors duration-150 group-hover/all:border-white"
+                  aria-hidden="true"
+                >
+                  <Icon name="arrow-right" size={18} />
+                </span>
+              </div>
+              <div class="rad-legend-box">
+                <p class="rad-legend-k" aria-hidden="true">
+                  <span>Po vrsti</span>
+                  <span>Kom.</span>
+                </p>
+                <ul class="rad-legend" role="list" aria-label="Radovi po vrsti">
+                  {
+                    legend.map((x) => (
+                      <li>
+                        <a href={`/radovi?vrsta=${x.k}`}>
+                          <span>{x.label}</span>
+                          <span class="rad-legend-n">{pad(x.n)}</span>
+                        </a>
+                      </li>
+                    ))
+                  }
+                </ul>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dokaz uz formu: ocjena · recenzija · jamstvo -->
+  <Proof slug={service.slug} />
+
+  <!-- Pitanja -->
+  <Faq
+    items={faqItems}
+    tone="light"
+    id="pitanja"
+    index={iFaq}
+    title={service.faqTitle ?? 'Što nas najčešće pitaju.'}
+    compact={faqItems.length <= 4}
+  />
+
+  <!-- Procjena (zajednička završna forma, predodabrana usluga) -->
+  <FinalCta index={iProc} preselect={service.slug} title={closeTitle} />
+
+  <!-- Ostale usluge -->
+  <section class="bg-papir py-16 text-tinta sm:py-20 lg:py-24" aria-labelledby="ostale-naslov">
+    <div class="wrap">
+      <div class="flex items-center justify-between gap-6">
+        <h2 id="ostale-naslov" class="eyebrow flex items-center gap-3 text-tinta/70">
+          <span>Ostale usluge</span>
+          <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+          <span aria-hidden="true">{pad(others.length)}</span>
+        </h2>
+        <a href="/usluge" class="xl-all group/a">
+          Sve usluge
+          <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/a:translate-x-0.5" />
+        </a>
+      </div>
+      <ul class="xl-grid mt-6" role="list" data-reveal-group>
+        {
+          others.map((s) => {
+            const k = services.indexOf(s);
+            return (
+              <li data-reveal>
+                <a href={`/usluge/${s.slug}`} class="xl-card group/x" data-profile-host>
+                  <span class="xl-rule" aria-hidden="true" />
+                  <span class="xl-top" aria-hidden="true">
+                    <span>
+                      <span class="text-redline-dark">{pad(k + 1)}</span>
+                      <span class="text-tinta/70">/{total}</span>
+                    </span>
+                    <span class="text-tinta/70">{profileNames[s.profile]}</span>
+                  </span>
+                  <ProfileIcon profile={s.profile} size={56} animate class="xl-icon" />
+                  <span class="xl-title">{s.title}</span>
+                  <Icon
+                    name="arrow-right"
+                    size={18}
+                    class="xl-arrow transition-transform duration-150 group-hover/x:translate-x-0.5"
+                  />
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ── hero: obećanje u tri stavke (slot PageHero) ── */
+  .ph-promise {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    border-top: 1px solid rgb(213 219 223 / 0.14);
+  }
+  .ph-promise li {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0 0.5rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid rgb(213 219 223 / 0.14);
+  }
+  .ph-promise-n {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    color: var(--color-redline);
+  }
+  .ph-promise-t {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #fff;
+  }
+  .ph-promise-d {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    color: var(--color-celik);
+    text-align: right;
+  }
+  @media (width >= 40rem) {
+    .ph-promise {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-bottom: 1px solid rgb(213 219 223 / 0.14);
+    }
+    .ph-promise li {
+      grid-template-columns: minmax(0, 1fr);
+      align-content: start;
+      gap: 0.375rem;
+      padding: 1.125rem 1.25rem 1.25rem 0;
+      border-bottom: 0;
+    }
+    .ph-promise li + li {
+      padding-left: 1.25rem;
+      border-left: 1px solid rgb(213 219 223 / 0.14);
+    }
+    .ph-promise-d {
+      text-align: left;
+    }
+  }
+
+
+  /* ── radovi ── */
+  .rad-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem 1.25rem;
+  }
+  @media (width >= 30rem) {
+    .rad-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (width >= 64rem) {
+    .rad-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3.5rem 1.5rem;
+    }
+  }
+  /* "Svi radovi" — pločica s legendom vrsta */
+  .rad-all {
+    min-width: 0;
+  }
+  @media (width >= 30rem) and (width < 64rem) {
+    .rad-all--sm2 {
+      grid-column: span 2;
+    }
+  }
+  @media (width >= 64rem) {
+    .rad-all--lg2 {
+      grid-column: span 2;
+    }
+    .rad-all--lg3 {
+      grid-column: span 3;
+    }
+  }
+  .rad-all-in {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid rgb(213 219 223 / 0.16);
+    transition: border-color 200ms var(--ease-draft);
+  }
+  .rad-all-in:has(.rad-all-a:hover) {
+    border-color: rgb(213 219 223 / 0.4);
+  }
+  .rad-all-main {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 10rem;
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+  .rad-all-a {
+    margin-top: auto;
+    padding-top: 2rem;
+  }
+  /* kontaktni arak drugih radova — samo u širokoj pločici; ispunjava prostor do naslova */
+  .rad-thumbs {
+    display: none;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: start;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    max-width: 40rem;
+  }
+  .rad-thumb {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: var(--color-antracit);
+    opacity: 0.85;
+    transition: opacity 200ms var(--ease-draft);
+  }
+  .rad-thumb :global(img) {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+  }
+  .rad-all-in:has(.rad-all-a:hover) .rad-thumb {
+    opacity: 1;
+  }
+  @media (width >= 30rem) and (width < 64rem) {
+    .rad-all--sm2 .rad-thumbs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (width >= 64rem) {
+    .rad-all--lg2 .rad-thumbs,
+    .rad-all--lg3 .rad-thumbs {
+      display: grid;
+    }
+    /* pločica preko dva stupca: arak 2 × 2, visok kao kartica do nje */
+    .rad-all--lg2 .rad-thumbs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .rad-all-a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .rad-all-a:focus-visible {
+    outline: none;
+  }
+  .rad-all-a:focus-visible::after {
+    outline: 2px solid var(--color-redline);
+    outline-offset: -2px;
+  }
+  .rad-all-arrow {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+  .rad-all-a:hover ~ .rad-all-arrow {
+    background: #fff;
+    color: var(--color-grafit);
+  }
+  /* legenda vrsta: ćelija sastavnice (natpis gore, popis dolje) */
+  .rad-legend-box {
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.25rem 0.75rem;
+    border-top: 1px solid rgb(213 219 223 / 0.12);
+  }
+  .rad-legend-k {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0 0.75rem;
+    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .rad-legend {
+    margin-top: auto;
+  }
+  .rad-legend a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.75rem;
+    border-bottom: 1px solid rgb(213 219 223 / 0.08);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-linija);
+    transition: color 150ms var(--ease-press);
+  }
+  .rad-legend li:last-child a {
+    border-bottom: 0;
+  }
+  .rad-legend a:hover {
+    color: #fff;
+  }
+  .rad-legend-n {
+    color: var(--color-celik);
+    font-variant-numeric: tabular-nums;
+  }
+  .rad-legend a:hover .rad-legend-n {
+    color: var(--color-redline);
+  }
+  /* široka pločica: legenda desno, kao stupac sastavnice */
+  @media (width >= 30rem) and (width < 64rem) {
+    .rad-all--sm2 .rad-all-in {
+      flex-direction: row;
+    }
+    .rad-all--sm2 .rad-legend-box {
+      width: 50%;
+      border-top: 0;
+      border-left: 1px solid rgb(213 219 223 / 0.12);
+    }
+  }
+  @media (width >= 64rem) {
+    .rad-all--lg2 .rad-all-in,
+    .rad-all--lg3 .rad-all-in {
+      flex-direction: row;
+    }
+    .rad-all--lg2 .rad-legend-box,
+    .rad-all--lg3 .rad-legend-box {
+      width: 50%;
+      border-top: 0;
+      border-left: 1px solid rgb(213 219 223 / 0.12);
+      padding: 0 1.5rem 1rem;
+    }
+    .rad-all--lg2 .rad-legend-k,
+    .rad-all--lg3 .rad-legend-k {
+      padding-top: 1.5rem;
+    }
+    .rad-all--lg2 .rad-all-main,
+    .rad-all--lg3 .rad-all-main {
+      padding: 1.5rem;
+    }
+  }
+
+  /* mobitel: kartice radova kao vodoravni niz (native scroll-snap), "Svi radovi" je zadnja */
+  @media (width < 30rem) {
+    .rad-grid--rail {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: 78%;
+      gap: 1rem;
+      margin-inline: -1.25rem;
+      padding-inline: 1.25rem;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: 1.25rem;
+      scrollbar-width: none;
+    }
+    .rad-grid--rail::-webkit-scrollbar {
+      display: none;
+    }
+    .rad-grid--rail > li {
+      scroll-snap-align: start;
+    }
+  }
+  /* bez kartica: pločica preko cijele širine, sličice vidljive na svim širinama */
+  .rad-all--solo .rad-thumbs {
+    display: grid;
+  }
+  @media (width >= 30rem) {
+    .rad-all--solo {
+      grid-column: 1 / -1;
+    }
+    .rad-all--solo .rad-all-in {
+      flex-direction: row;
+    }
+    .rad-all--solo .rad-thumbs {
+      display: grid;
+    }
+    .rad-all--solo .rad-legend-box {
+      width: 50%;
+      border-top: 0;
+      border-left: 1px solid rgb(213 219 223 / 0.12);
+    }
+  }
+
+  /* ── ostale usluge ── */
+  .xl-all {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+    text-underline-offset: 4px;
+  }
+  .xl-all:hover {
+    text-decoration: underline;
+  }
+  .xl-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    border-top: 1px solid rgb(21 24 27 / 0.16);
+  }
+  @media (width >= 40rem) {
+    .xl-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-left: 1px solid rgb(21 24 27 / 0.16);
+    }
+  }
+  @media (width >= 64rem) {
+    .xl-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+  .xl-grid > li {
+    border-bottom: 1px solid rgb(21 24 27 / 0.16);
+  }
+  @media (width >= 40rem) {
+    .xl-grid > li {
+      border-right: 1px solid rgb(21 24 27 / 0.16);
+    }
+  }
+  .xl-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      'icon top   arrow'
+      'icon title arrow';
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0.25rem;
+    padding: 1.125rem 0.25rem;
+    min-height: 5.5rem;
+    color: var(--color-tinta);
+    transition: background-color 200ms var(--ease-draft);
+  }
+  .xl-top {
+    grid-area: top;
+    display: flex;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .xl-top > span:last-child {
+    display: none;
+  }
+  .xl-card :global(.xl-icon) {
+    grid-area: icon;
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+  .xl-title {
+    grid-area: title;
+    font-size: 1.0625rem;
+    font-weight: 650;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+  .xl-card :global(.xl-arrow) {
+    grid-area: arrow;
+    color: rgb(21 24 27 / 0.7);
+  }
+  .xl-rule {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    height: 2px;
+    background: var(--color-redline-dark);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 380ms var(--ease-draft);
+  }
+  @media (width >= 40rem) {
+    .xl-card {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        'top   top'
+        'icon  icon'
+        'title arrow';
+      align-items: end;
+      row-gap: 1rem;
+      min-height: 15rem;
+      padding: 1.25rem 1.25rem 1.375rem;
+    }
+    .xl-top {
+      justify-content: space-between;
+    }
+    .xl-top > span:last-child {
+      display: inline;
+    }
+    .xl-card :global(.xl-icon) {
+      align-self: center;
+      justify-self: start;
+      width: 4.5rem;
+      height: 4.5rem;
+    }
+    .xl-title {
+      font-size: 1.125rem;
+    }
+  }
+  @media (hover: hover) {
+    .xl-card:hover {
+      background: rgb(226 223 216 / 0.7);
+    }
+    .xl-card:hover .xl-rule {
+      transform: scaleX(1);
+    }
+    .xl-card:hover :global(.xl-arrow) {
+      color: var(--color-tinta);
+    }
+  }
+  .xl-card:focus-visible {
+    outline-offset: -2px;
+  }
+</style>

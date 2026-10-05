@@ -1,0 +1,47 @@
+---
+import Base from '@/layouts/Base.astro';
+import Hero from '@/components/home/Hero.astro';
+import ProofStrip from '@/components/home/ProofStrip.astro';
+import Services from '@/components/home/Services.astro';
+import WhatsAppBand from '@/components/home/WhatsAppBand.astro';
+import Projects from '@/components/home/Projects.astro';
+import DetailSignature from '@/components/home/DetailSignature.astro';
+import Process from '@/components/home/Process.astro';
+import Warranty from '@/components/home/Warranty.astro';
+import Managers from '@/components/home/Managers.astro';
+import Reviews from '@/components/home/Reviews.astro';
+import ServiceArea from '@/components/home/ServiceArea.astro';
+import Faq from '@/components/home/Faq.astro';
+import FinalCta from '@/components/home/FinalCta.astro';
+import { faq } from '@/data/site';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+};
+---
+
+<Base
+  title="Limarija Karamatić — limeni krovovi, opšavi i oluci | Zagreb"
+  description="Limeni i falcani krovovi, popravak krova, opšav atike, dimnjaci, oluci i snjegobrani u Zagrebu i okolici. Besplatna procjena — nazovite ili pošaljite slike na WhatsApp."
+  schema={[faqSchema]}
+>
+  <Hero />
+  <ProofStrip />
+  <Services />
+  <WhatsAppBand />
+  <Projects />
+  <DetailSignature />
+  <Process />
+  <Warranty />
+  <Managers />
+  <Reviews />
+  <ServiceArea />
+  <Faq />
+  <FinalCta />
+</Base>

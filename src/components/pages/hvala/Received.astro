@@ -1,0 +1,457 @@
+---
+/**
+ * /hvala · potvrda upita.
+ *  - list "Upit za procjenu" (isti jezik kao forma) s velikim pečatom PRIMLJENO
+ *  - čita ?upit=1234 (ili KR-1234; staro ?nalog), ?posao=<id iz jobTypes ili slug usluge> (staro ?vrsta) i ?slike=<broj>
+ *  - posao "hitno" → odmah gore crveni gumb "Nazovite odmah"; slike > 0 → okvir "Imate još slika?"
+ *  - "Što slijedi" u 3 koraka, WhatsApp za slike, povratak na naslovnicu
+ * Pokret (samo pod .motion): pečat se jednom utisne (press, 0,24 s). Bez JS-a pečat je već na listu.
+ * Podaci se čitaju samo iz broja upita, vrste posla i broja slika; osobni podaci iz URL-a se nikad ne ispisuju.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import Button from '@/components/ui/Button.astro';
+import NextSteps from '@/components/pages/NextSteps.astro';
+import { site, telHref, waHref, jobTypes, services } from '@/data/site';
+
+// samo poznate vrijednosti (nikad slobodan tekst iz URL-a)
+const jobs: Record<string, string> = {
+  ...Object.fromEntries(services.map((sv) => [sv.slug, sv.title])),
+  ravni: 'Ravni krov',
+  'ravni-krov': 'Ravni krov',
+  ...Object.fromEntries(jobTypes.map((j) => [j.id, j.label])),
+};
+const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
+---
+
+<section class="hv relative isolate overflow-hidden bg-grafit grid-paper text-linija" aria-labelledby="hv-title" data-hv data-jobs={JSON.stringify(jobs)}>
+  <div class="wrap pt-10 pb-20 sm:pt-14 sm:pb-24 lg:pt-20 lg:pb-24">
+    <div class="hv-grid">
+      <div class="hv-col hv-col--l">
+        <!-- naslov -->
+        <div class="hv-head">
+          <p class="eyebrow flex flex-wrap items-center gap-3 text-celik">
+            <Icon name="check" size={14} class="text-redline" />
+            <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+            <span>Upit <span class="text-linija">#KR-<span data-hv-no>····</span></span></span>
+          </p>
+          <h1 id="hv-title" class="type-display mt-5 text-[2.75rem] text-balance text-white xs:text-[3rem] sm:text-[4rem] lg:text-[clamp(3.5rem,5vw,5rem)]">
+            Hvala. Upit je kod nas.
+          </h1>
+          <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-pretty text-linija sm:text-xl">
+            Prije poziva pregledamo upit i slike. Ne trebate ništa poduzimati, samo držite mobitel pri ruci.
+          </p>
+        </div>
+
+        <!-- hitno: prikazuje se samo kad je odabrano "Hitno — curi sada" -->
+        <div class="hv-urgent" data-hv-urgent hidden>
+          <p class="eyebrow flex items-center gap-2 text-white">
+            <Icon name="clock" size={14} class="text-celik" /> Curi sada?
+          </p>
+          <p class="mt-3 text-[1.0625rem] leading-relaxed text-pretty text-linija">
+            Ne čekajte naš poziv. Nazovite odmah pa dogovorimo zaštitu krova.
+          </p>
+          <Button href={telHref} size="lg" icon="phone" class="mt-5 w-full sm:w-auto">
+            Nazovite <span class="font-mono tracking-[0.02em]">{site.phoneDisplay}</span>
+          </Button>
+        </div>
+
+        <!-- što slijedi -->
+        <div class="hv-next">
+          <NextSteps />
+        </div>
+
+        <a
+          href="/"
+          class="hv-back group inline-flex min-h-11 items-center gap-3 self-start font-mono text-[0.75rem] tracking-[0.14em] text-linija uppercase transition-colors duration-150 hover:text-white"
+        >
+          <span class="grid size-11 place-items-center border border-linija/30 transition-colors duration-150 group-hover:border-white">
+            <Icon name="arrow-right" size={18} class="rotate-180" />
+          </span>
+          Natrag na naslovnicu
+        </a>
+      </div>
+
+      <div class="hv-col hv-col--r">
+        <!-- list upita s pečatom -->
+        <div class="hv-sheet-wrap">
+          <span class="hv-crop hv-crop--tl" aria-hidden="true"></span>
+          <span class="hv-crop hv-crop--tr" aria-hidden="true"></span>
+          <span class="hv-crop hv-crop--bl" aria-hidden="true"></span>
+          <span class="hv-crop hv-crop--br" aria-hidden="true"></span>
+          <div class="hv-sheet bg-papir text-tinta">
+            <header class="grid grid-cols-[minmax(0,1fr)_auto] border-b border-tinta/15">
+              <div class="px-5 py-4 sm:px-7 sm:py-5">
+                <p class="type-display text-[1.25rem] tracking-[0.01em] uppercase sm:text-[1.5rem]">Upit za procjenu</p>
+                <p class="mt-1.5 font-mono text-[0.6875rem] leading-snug tracking-[0.06em] text-tinta/70 uppercase">
+                  Besplatno · bez obveze
+                </p>
+              </div>
+              <dl class="flex flex-col justify-center border-l border-tinta/15 px-4 font-mono sm:px-6">
+                <dt class="text-[0.625rem] tracking-[0.14em] text-tinta/70 uppercase">Br.</dt>
+                <dd class="mt-1 text-[0.875rem] font-medium whitespace-nowrap tabular-nums">KR-<span data-hv-no>····</span></dd>
+              </dl>
+            </header>
+
+            <dl class="hv-rows">
+              <div>
+                <dt>Datum</dt>
+                <dd data-hv-date>—</dd>
+              </div>
+              <div>
+                <dt>Posao</dt>
+                <dd data-hv-job>Besplatna procjena krova</dd>
+              </div>
+              <div>
+                <dt>Slike</dt>
+                <dd data-hv-photos>—</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd class="font-semibold">Primljeno · slijedi poziv</dd>
+              </div>
+              <div>
+                <dt>Izvršava</dt>
+                <dd>{site.name}</dd>
+              </div>
+            </dl>
+
+            <!-- pečat: u HTML-u je već utisnut (završno stanje) -->
+            <div class="hv-stamp" data-hv-stamp aria-hidden="true">
+              <span class="hv-stamp-in">
+                <span class="hv-stamp-top">Limarija · Karamatić</span>
+                <span class="hv-stamp-word">Primljeno</span>
+                <span class="hv-stamp-bot">KR-<span data-hv-no>····</span> · <span data-hv-date-short>{site.city}</span></span>
+              </span>
+            </div>
+            <p class="sr-only">Status upita: primljeno.</p>
+          </div>
+        </div>
+
+        <div class="hv-wa border border-linija/15 bg-grafit-2 p-5 sm:p-7" data-hv-wa-box>
+          <p class="flex items-center gap-2 font-mono text-[0.6875rem] tracking-[0.12em] text-celik uppercase">
+            <Icon name="camera" size={14} class="text-celik" />
+            <span data-hv-wa-k>Niste priložili slike?</span>
+          </p>
+          <p class="mt-3 text-[1.0625rem] leading-relaxed text-pretty text-linija" data-hv-wa-t>
+            Pošaljite tri slike krova na WhatsApp, uz broj upita. Iz slika često već znamo o čemu se radi.
+          </p>
+          <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <Button href={waDefault} variant="whatsapp" icon="whatsapp" data-hv-wa>Pošaljite slike</Button>
+            <a
+              href={telHref}
+              class="inline-flex min-h-11 items-center gap-2.5 font-mono text-[1rem] tracking-[0.02em] text-linija transition-colors duration-150 hover:text-white"
+              aria-label={`Nazovite ${site.phoneDisplay}`}
+            >
+              <Icon name="phone" size={18} class="text-celik" />
+              {site.phoneDisplay}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Mobitel: stupci su display: contents → redoslijed naslov, list, koraci, slike, povratak.
+     Desktop: lijevo naslov + koraci + povratak, desno list + slike. */
+  .hv-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 3rem;
+  }
+  .hv-col {
+    display: contents;
+  }
+  .hv-head {
+    order: 1;
+  }
+  .hv-urgent {
+    order: 2;
+    max-width: 34rem;
+    padding: 1.25rem 1.25rem 1.375rem;
+    border: 1px solid rgb(213 219 223 / 0.22);
+    background: var(--color-grafit-2);
+  }
+  .hv-urgent[hidden] {
+    display: none;
+  }
+  @media (width >= 40rem) {
+    .hv-urgent {
+      padding: 1.5rem 1.75rem 1.75rem;
+    }
+  }
+  .hv-sheet-wrap {
+    order: 3;
+    position: relative;
+    max-width: 34rem;
+  }
+  .hv-next {
+    order: 4;
+    max-width: 34rem;
+  }
+  .hv-wa {
+    order: 5;
+    max-width: 34rem;
+  }
+  .hv-back {
+    order: 6;
+    margin-top: -1rem;
+  }
+  @media (width >= 64rem) {
+    .hv-grid {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+      column-gap: 5rem;
+      align-items: start;
+    }
+    .hv-col {
+      display: flex;
+      flex-direction: column;
+    }
+    .hv-col--l {
+      gap: 3.5rem;
+    }
+    .hv-col--r {
+      gap: 2.5rem;
+      padding-top: 0.75rem;
+    }
+    .hv-col > * {
+      order: 0;
+    }
+    .hv-sheet-wrap,
+    .hv-wa {
+      max-width: none;
+    }
+    .hv-back {
+      margin-top: -0.5rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .hv-grid {
+      column-gap: 7rem;
+    }
+  }
+
+  /* ── list ── */
+  .hv-sheet {
+    position: relative;
+    container-type: inline-size;
+    outline: 1px solid rgb(21 24 27 / 0.12);
+    outline-offset: -1px;
+    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.6);
+  }
+  .hv-rows {
+    padding: 0.5rem 1.25rem 8.75rem;
+  }
+  @media (width >= 40rem) {
+    .hv-rows {
+      padding: 0.75rem 1.75rem 11.5rem;
+    }
+  }
+  .hv-rows > div {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px dashed rgb(21 24 27 / 0.18);
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+  .hv-rows dt {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.3rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+  }
+  .hv-crop {
+    position: absolute;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-color: rgb(213 219 223 / 0.35);
+    pointer-events: none;
+  }
+  .hv-crop--tl {
+    top: -0.5rem;
+    left: -0.5rem;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+  .hv-crop--tr {
+    top: -0.5rem;
+    right: -0.5rem;
+    border-top: 1px solid;
+    border-right: 1px solid;
+  }
+  .hv-crop--bl {
+    bottom: -0.5rem;
+    left: -0.5rem;
+    border-bottom: 1px solid;
+    border-left: 1px solid;
+  }
+  .hv-crop--br {
+    bottom: -0.5rem;
+    right: -0.5rem;
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+  }
+  @media (width < 40rem) {
+    .hv-crop {
+      display: none;
+    }
+  }
+
+  /* ── pečat ── */
+  .hv-stamp {
+    position: absolute;
+    right: 1rem;
+    bottom: 1.75rem;
+    transform: rotate(-7deg);
+    transform-origin: 60% 60%;
+    color: var(--color-redline-dark);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  @media (width >= 40rem) {
+    .hv-stamp {
+      right: 1.75rem;
+      bottom: 2.75rem;
+    }
+  }
+  .hv-stamp-in {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 1rem 0.625rem;
+    border: 3px solid currentColor;
+    outline: 1px solid currentColor;
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+  .hv-stamp-top,
+  .hv-stamp-bot {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .hv-stamp-top {
+    padding-bottom: 0.375rem;
+    border-bottom: 1px solid currentColor;
+    width: 100%;
+    text-align: center;
+  }
+  .hv-stamp-bot {
+    padding-top: 0.375rem;
+    border-top: 1px solid currentColor;
+    width: 100%;
+    text-align: center;
+  }
+  .hv-stamp-word {
+    padding: 0.3rem 0 0.2rem;
+    /* pečat raste s listom: nikad širi od ~80 % lista */
+    font-size: min(3.125rem, 8.4cqi);
+    font-weight: 800;
+    font-stretch: 125%;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  @media (width >= 40rem) {
+    .hv-stamp-in {
+      padding: 0.625rem 1.375rem 0.75rem;
+      border-width: 4px;
+    }
+    .hv-stamp-top,
+    .hv-stamp-bot {
+      font-size: 0.6875rem;
+    }
+  }
+  :global(.motion) .hv-stamp {
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { gsap, motionOn } from '@/lib/motion';
+
+  /** 1 slika · 2–4 slike · 5+ slika */
+  const photosLabel = (n: number) => {
+    const d = n % 10;
+    const dd = n % 100;
+    const w = d >= 2 && d <= 4 && (dd < 12 || dd > 14) ? 'slike' : 'slika';
+    return `${n} ${w}`;
+  };
+
+  function initHvala() {
+    document.querySelectorAll<HTMLElement>('[data-hv]:not([data-hv-ready])').forEach((root) => {
+      root.setAttribute('data-hv-ready', '');
+      const params = new URLSearchParams(location.search);
+
+      // broj upita: samo 4–6 znamenki (s ili bez "KR-"); ?nalog je stari naziv
+      const m = (params.get('upit') ?? params.get('nalog') ?? '').trim().match(/^(?:KR-?)?(\d{4,6})$/i);
+      const no = m ? m[1] : null;
+      const wa = root.querySelector<HTMLAnchorElement>('[data-hv-wa]');
+      if (no) {
+        root.querySelectorAll<HTMLElement>('[data-hv-no]').forEach((el) => (el.textContent = no));
+        if (wa) {
+          const url = new URL(wa.href);
+          url.searchParams.set('text', `Pozdrav, šaljem slike krova uz upit #KR-${no}.`);
+          wa.href = url.toString();
+        }
+        document.title = `Upit KR-${no} je primljen | Limarija Karamatić`;
+      }
+
+      // vrsta posla: samo poznati id-jevi (?vrsta je stari naziv)
+      const jobId = params.get('posao') ?? params.get('vrsta') ?? '';
+      try {
+        const jobs = JSON.parse(root.dataset.jobs ?? '{}') as Record<string, string>;
+        const job = Object.prototype.hasOwnProperty.call(jobs, jobId) ? jobs[jobId] : '';
+        const jobEl = root.querySelector<HTMLElement>('[data-hv-job]');
+        if (job && jobEl) jobEl.textContent = job;
+      } catch {
+        /* ostaje zadani tekst */
+      }
+      if (jobId === 'hitno') root.querySelector<HTMLElement>('[data-hv-urgent]')?.removeAttribute('hidden');
+
+      // slike
+      const raw = params.get('slike');
+      const n = raw !== null && /^\d{1,2}$/.test(raw) ? Number(raw) : null;
+      const photosEl = root.querySelector<HTMLElement>('[data-hv-photos]');
+      if (n !== null && photosEl) photosEl.textContent = n > 0 ? photosLabel(n) : 'Bez slika';
+      if (n !== null && n > 0) {
+        const k = root.querySelector<HTMLElement>('[data-hv-wa-k]');
+        const t = root.querySelector<HTMLElement>('[data-hv-wa-t]');
+        if (k) k.textContent = 'Imate još slika?';
+        if (t) t.textContent = 'Pošaljite ih na WhatsApp, uz broj upita. Dobro dođe i slika iz daljine, da vidimo cijeli krov.';
+      }
+
+      // datum
+      const now = new Date();
+      const d = `${now.getDate()}. ${now.getMonth() + 1}. ${now.getFullYear()}.`;
+      root.querySelectorAll<HTMLElement>('[data-hv-date]').forEach((el) => (el.textContent = d));
+      root.querySelectorAll<HTMLElement>('[data-hv-date-short]').forEach(
+        (el) => (el.textContent = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getFullYear()).slice(2)}`),
+      );
+
+      // pečat: jedan otisak (press), jednom
+      const stamp = root.querySelector<HTMLElement>('[data-hv-stamp]');
+      if (!stamp || !motionOn()) return;
+      gsap.fromTo(
+        stamp,
+        { opacity: 0, scale: 1.35, rotation: -2 },
+        { opacity: 1, scale: 1, rotation: -7, duration: 0.24, ease: 'press', delay: 0.85 },
+      );
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHvala, { once: true });
+  } else {
+    initHvala();
+  }
+</script>

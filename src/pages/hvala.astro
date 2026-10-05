@@ -1,0 +1,17 @@
+---
+/**
+ * /hvala — potvrda nakon slanja upita za procjenu (noindex, bez mobilne CTA trake).
+ * Čita ?upit=1234, ?posao=<id> i ?slike=<broj> (vidi Received.astro).
+ */
+import Base from '@/layouts/Base.astro';
+import Received from '@/components/pages/hvala/Received.astro';
+---
+
+<Base
+  title="Upit je primljen | Limarija Karamatić"
+  description="Hvala, vaš upit za besplatnu procjenu krova je primljen."
+  noindex
+  hideMobileBar
+>
+  <Received />
+</Base>

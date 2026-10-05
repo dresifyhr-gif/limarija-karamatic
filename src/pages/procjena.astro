@@ -1,0 +1,41 @@
+---
+/**
+ * /procjena — fokusirana stranica za QR kod na kombiju i oglase.
+ * Kompaktni hero (H1) → odmah forma (FinalCta bez zaglavlja: koraci forme su h2) → kontakt kao rezerva.
+ * Forma čita ?usluga=slug / ?vrsta=id za predodabir posla.
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
+import FinalCta from '@/components/home/FinalCta.astro';
+
+const crumbs = [homeCrumb, { href: '/procjena', label: 'Besplatna procjena' }];
+---
+
+<Base
+  title="Besplatna procjena krova, Zagreb | Limarija Karamatić"
+  description="Besplatna procjena krova u Zagrebu i okolici. Pošaljite upit u tri kratka koraka ili slike krova na WhatsApp. Pisana ponuda stavku po stavku."
+  schema={[breadcrumbSchema(crumbs, Astro.site)]}
+>
+  <PageHero
+    compact
+    eyebrow="Besplatno · bez obveze"
+    title="Besplatna procjena"
+    lead="Tri kratka koraka, minuta posla. Zatim vas nazovemo i dogovorimo izlazak."
+    crumbs={crumbs}
+    cta={false}
+  />
+  <FinalCta title="" index="" />
+</Base>
+
+<style>
+  /* forma odmah ispod kompaktnog heroa (oba su grafit + mreža): bez dvostrukog razmaka,
+     da prvi izbor posla bude vidljiv na prvom ekranu mobitela (QR s kombija) */
+  :global(#procjena) {
+    padding-top: 0.5rem;
+  }
+  @media (width >= 64rem) {
+    :global(#procjena) {
+      padding-top: 1.5rem;
+    }
+  }
+</style>

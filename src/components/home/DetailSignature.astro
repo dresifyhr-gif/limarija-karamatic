@@ -1,0 +1,330 @@
+---
+/**
+ * 03 · Detalj je potpis — foto 7 (kut atike na geru) s tri crvene kote/oznake.
+ * Desktop (md+): SVG pokazne linije od prstena na fotografiji do mono oznaka desno.
+ * Mobitel: numerirani prstenovi na fotografiji + numerirani popis ispod.
+ * Pozicije su u % fotografije pa prate svaku veličinu.
+ * Oznake (sadržaj) su UVIJEK vidljive. Animiraju se samo prstenovi i pokazne linije: brzo
+ * (≈ 0,9 s ukupno), tek kad scan fotografije završi — jedna crvena stvar u pokretu.
+ */
+import SectionHead from '@/components/ui/SectionHead.astro';
+import Photo from '@/components/ui/Photo.astro';
+import Icon from '@/components/ui/Icon.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import photo from '@/assets/projects/atika-opsav-kut-detalj.jpg';
+
+/*
+ * Geometrija (viewBox 1000 × 800): fotografija 3:4 zauzima x 0–600, oznake počinju na x 665.
+ * Fotografija je izrezana CSS-om (125 % veličine, sidrena dolje desno = izvornik x 240–1200, y 320–1600).
+ * pt = točka na izrezanoj fotografiji u % (x, y); ly = visina oznake u viewBoxu.
+ */
+const R = 16.2; // polumjer prstena u jedinicama viewBoxa (= 5,4 % širine fotografije / 2)
+const KNEE_X = 616;
+const END_X = 642;
+const callouts = [
+  {
+    n: '01',
+    title: 'Kut savijen na geru',
+    text: 'Savijen i spojen na licu mjesta, po stvarnom kutu zida.',
+    pt: [34.9, 41.41],
+    ly: 200,
+    confirmed: true,
+  },
+  {
+    n: '02',
+    title: 'Vijak s EPDM brtvom u boji lima',
+    text: 'Brtva zatvara rupu oko vijka, a glava je u boji lima pa se s ulice ne primjećuje.',
+    pt: [87.71, 62.66],
+    ly: 460,
+    // isto kao "Spojni materijal" u tablici standarda — čeka potvrdu klijenta
+    confirmed: false,
+  },
+  {
+    n: '03',
+    title: 'Preklop u smjeru vode',
+    text: 'Gornji lim uvijek ide preko donjeg. Voda klizi preko spoja, a ne u njega.',
+    pt: [51.04, 82.66],
+    ly: 700,
+    confirmed: true,
+  },
+].map((c) => {
+  const px = (c.pt[0] / 100) * 600;
+  const py = (c.pt[1] / 100) * 800;
+  const dx = KNEE_X - px;
+  const dy = c.ly - py;
+  const len = Math.hypot(dx, dy);
+  const sx = px + (dx / len) * R;
+  const sy = py + (dy / len) * R;
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+  return { ...c, d: `M${r1(sx)} ${r1(sy)}L${KNEE_X} ${c.ly}H${END_X}` };
+});
+---
+
+<section id="detalj" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+  <div class="wrap grid gap-12 sm:gap-14 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-0">
+    <div class="lg:col-span-4 lg:row-start-1">
+      <SectionHead index="03" eyebrow="Detalj · kapa atike" title="Detalj je potpis." tone="light" />
+      <div class="mt-6 max-w-[34rem] space-y-4 text-lg leading-relaxed text-tinta/75" data-reveal>
+        <p>
+          Krov ne procuri nasred lima. Procuri u kutu, na preklopu i oko vijka. Zato kutove savijamo na licu
+          mjesta, po stvarnoj mjeri, a svaki preklop okrećemo u smjeru vode.
+        </p>
+        <p class="text-tinta">Ovo je kut atike točno onakav kakav smo ga ostavili.</p>
+      </div>
+    </div>
+
+    <figure class="dsig relative lg:col-span-8 lg:col-start-5 lg:row-span-2 lg:row-start-1" data-callouts>
+      <div class="dsig-photo relative aspect-[3/4] overflow-hidden bg-antracit md:w-[60%]" data-scan>
+        <Photo
+          src={photo}
+          alt="Kut opšava atike u antracitu: dvije kape spojene na geru, vijci s brtvom i preklop uz šljunčani ravni krov"
+          sizes="(min-width: 1280px) 42rem, (min-width: 1024px) 48vw, (min-width: 768px) 72vw, 100vw"
+          imgClass="absolute right-0 bottom-0 h-[125%] w-[125%] max-w-none object-cover"
+        />
+        {
+          callouts.map((c) => (
+            <span
+              class="dsig-ring"
+              style={`left:${c.pt[0]}%;top:${c.pt[1]}%`}
+              aria-hidden="true"
+              data-ring
+            >
+              <span class="dsig-badge type-mono md:hidden">{Number(c.n)}</span>
+            </span>
+          ))
+        }
+      </div>
+
+      <svg
+        class="dsig-svg pointer-events-none absolute inset-0 hidden h-full w-full overflow-visible md:block"
+        viewBox="0 0 1000 800"
+        fill="none"
+        aria-hidden="true"
+      >
+        {
+          callouts.map((c) => (
+            <path
+              d={c.d}
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="square"
+              stroke-linejoin="miter"
+              data-leader
+            />
+          ))
+        }
+      </svg>
+
+      <ol class="dsig-list mt-6 border-t border-tinta/15 md:mt-0 md:border-0" aria-label="Oznake na fotografiji">
+        {
+          callouts.map((c) => (
+            <li class="dsig-label" style={`--y:${(c.ly / 800) * 100}%`}>
+              <span class="dsig-num type-mono" aria-hidden="true">
+                <span class="md:hidden">{Number(c.n)}</span>
+                <span class="hidden md:inline">{c.n}</span>
+              </span>
+              <div>
+                <p class="type-mono text-[0.75rem] leading-4 font-medium tracking-[0.06em] text-tinta uppercase">
+                  {c.title}
+                </p>
+                <p class="mt-1.5 text-[0.9375rem] leading-snug text-tinta/75">
+                  {c.text}
+                  {!c.confirmed && <ExampleTag class="ml-1 -translate-y-px" />}
+                </p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </figure>
+
+    <div class="border-tinta/15 lg:col-span-4 lg:row-start-2 lg:self-end lg:border-t lg:pt-5" data-reveal>
+      <p class="type-mono text-[0.6875rem] leading-4 tracking-[0.1em] text-tinta/70 uppercase">
+        Detalj A · opšav atike · RAL 7016
+      </p>
+      <a
+        href="/radovi/atika-kut-na-geru"
+        class="group/lnk mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta"
+      >
+        Cijeli rad: kut atike na geru
+        <Icon
+          name="arrow-right"
+          size={18}
+          class="transition-transform duration-150 group-hover/lnk:translate-x-0.5"
+        />
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* prsten oko detalja: prazan u sredini da se detalj vidi */
+  .dsig-ring {
+    position: absolute;
+    width: max(1.5rem, 5.4%);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 9999px;
+    border: 1.5px solid var(--color-redline);
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.55),
+      inset 0 0 0 1px rgb(255 255 255 / 0.35);
+    z-index: 2;
+  }
+  .dsig-badge {
+    position: absolute;
+    left: 100%;
+    bottom: 100%;
+    translate: -35% 35%;
+    display: grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    background: var(--color-redline-dark);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+    box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.85);
+  }
+  .dsig-svg {
+    color: var(--color-redline);
+  }
+
+  /* Mobitel: numerirani popis ispod fotografije */
+  .dsig-label {
+    display: grid;
+    grid-template-columns: 1.25rem 1fr;
+    gap: 0.875rem;
+    padding-block: 1rem;
+    border-bottom: 1px solid rgb(21 24 27 / 0.15);
+  }
+  .dsig-num {
+    display: grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: -0.125rem;
+    border-radius: 9999px;
+    background: var(--color-redline-dark);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  /* md+: oznake desno od fotografije, na visini kraja pokazne linije */
+  @media (width >= 48rem) {
+    .dsig {
+      aspect-ratio: 5 / 4;
+    }
+    .dsig-badge {
+      display: none;
+    }
+    .dsig-label {
+      position: absolute;
+      left: 66.5%;
+      right: 0;
+      top: var(--y);
+      margin-top: -0.5rem;
+      grid-template-columns: 1.75rem 1fr;
+      gap: 0.5rem;
+      padding: 0;
+      border: 0;
+      max-width: 19rem;
+    }
+    .dsig-num {
+      display: block;
+      width: auto;
+      height: auto;
+      margin: 0;
+      border-radius: 0;
+      background: none;
+      color: var(--color-redline-dark);
+      font-size: 0.75rem;
+      line-height: 1rem;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  /* Pokret: prije animacije skriveni su samo prstenovi i pokazne linije (oznake su uvijek tu) */
+  :global(.motion) .dsig-ring {
+    opacity: 0;
+  }
+  @media (width >= 48rem) {
+    :global(.motion) .dsig-svg {
+      visibility: hidden;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
+
+  /**
+   * Pokreni kad je scan fotografije gotov (reveal.ts postavi data-revealed). Pokazne linije se nikad
+   * ne crtaju preko još neotkrivene fotografije; 8 s je samo sigurnosna mreža ako reveal zakaže.
+   */
+  function whenScanDone(photo: HTMLElement | null, cb: () => void) {
+    const t0 = performance.now();
+    const check = () => {
+      const done = !photo || photo.hasAttribute('data-revealed');
+      if (done || performance.now() - t0 > 8000) cb();
+      else gsap.delayedCall(0.08, check);
+    };
+    check();
+  }
+
+  function init() {
+    if (!motionOn()) return;
+
+    document.querySelectorAll<HTMLElement>('[data-callouts]').forEach((fig) => {
+      const photo = fig.querySelector<HTMLElement>('[data-scan]');
+      const rings = Array.from(fig.querySelectorAll<HTMLElement>('[data-ring]'));
+      const leaders = Array.from(fig.querySelectorAll<SVGPathElement>('[data-leader]'));
+      const svg = fig.querySelector<SVGSVGElement>('.dsig-svg');
+      const mm = gsap.matchMedia();
+
+      // md+: prstenovi pucnu, pokazne linije se nacrtaju prema oznakama (stagger 0,15 s)
+      mm.add('(min-width: 48rem)', () => {
+        gsap.set(leaders, { drawSVG: '0%' });
+        if (svg) gsap.set(svg, { visibility: 'visible' });
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo(
+          rings,
+          { opacity: 0, scale: 0.4 },
+          { opacity: 1, scale: 1, duration: 0.2, ease: 'press', stagger: 0.15 },
+          0,
+        ).fromTo(leaders, { drawSVG: '0%' }, { drawSVG: '100%', duration: 0.45, ease: 'draft', stagger: 0.15 }, 0.12);
+        ScrollTrigger.create({
+          trigger: fig,
+          start: 'top 70%',
+          once: true,
+          onEnter: () => whenScanDone(photo, () => tl.play()),
+        });
+      });
+
+      // mobitel: samo prstenovi s brojevima, jedan za drugim
+      mm.add('(max-width: 47.999rem)', () => {
+        const tw = gsap.fromTo(
+          rings,
+          { opacity: 0, scale: 0.4 },
+          { opacity: 1, scale: 1, duration: 0.22, ease: 'press', stagger: 0.15, paused: true },
+        );
+        ScrollTrigger.create({
+          trigger: fig,
+          start: 'top 70%',
+          once: true,
+          onEnter: () => whenScanDone(photo, () => tw.play()),
+        });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+</script>

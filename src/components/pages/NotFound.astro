@@ -1,0 +1,303 @@
+---
+/**
+ * 404 · "Nije po mjeri."
+ * Crtež: iscrtkani nacrt i stvarni lim koji je "sjeo" krivo (−6°, pomak), s crvenom kotom ± 404 mm.
+ * Pokret (samo pod .motion, jednom): lim se pojavi točno na nacrtu, pa sklizne u krivi položaj (press),
+ * zatim se povuče crvena kota (draft). Bez JS-a/pokreta crtež je odmah u završnom stanju.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import { site, telHref } from '@/data/site';
+
+const links = [
+  { href: '/', label: 'Naslovnica', hint: 'Počnite ispočetka' },
+  { href: '/usluge', label: 'Usluge', hint: 'Krovovi, opšavi, dimnjaci, oluci' },
+  { href: '/kontakt', label: 'Kontakt', hint: 'Telefon, WhatsApp, Viber' },
+];
+const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
+---
+
+<section class="nf relative isolate overflow-hidden bg-grafit grid-paper text-linija" aria-labelledby="nf-title" data-nf>
+  <div class="wrap pt-10 pb-20 sm:pt-16 sm:pb-24 lg:pt-24 lg:pb-32">
+    <div class="nf-grid">
+      <div class="nf-head">
+        <p class="eyebrow flex items-center gap-3 text-celik">
+          <span class="text-redline">404</span>
+          <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+          <span>Stranica nije pronađena</span>
+        </p>
+        <h1 id="nf-title" class="type-display mt-5 text-[3rem] text-balance text-white xs:text-[3.375rem] sm:text-[4.5rem] lg:text-[clamp(4.5rem,6.4vw,6.5rem)]">
+          Nije po mjeri.
+        </h1>
+        <p class="mt-6 max-w-[30rem] text-lg leading-relaxed text-pretty text-linija sm:text-xl">
+          Ova stranica ne postoji ili je premještena. Na krovu nam se to ne događa.
+        </p>
+      </div>
+
+      <nav class="nf-links" aria-label="Kamo dalje">
+        <ul class="border-t border-linija/15">
+          {
+            links.map((l, i) => (
+              <li>
+                <a href={l.href} class="nf-link group">
+                  <span class="font-mono text-[0.75rem] tracking-[0.12em] text-redline" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="min-w-0">
+                    <span class="block text-[1.25rem] leading-tight font-bold text-white [font-stretch:115%] sm:text-[1.5rem]">
+                      {l.label}
+                    </span>
+                    <span class="mt-1 block text-[0.9375rem] text-celik">{l.hint}</span>
+                  </span>
+                  <span class="nf-arrow" aria-hidden="true">
+                    <Icon name="arrow-right" size={20} />
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.9375rem] text-celik">
+          Ili odmah nazovite:
+          <a href={telHref} class="inline-flex min-h-11 items-center font-mono text-[1.0625rem] tracking-[0.02em] text-white underline decoration-linija/30 underline-offset-[6px] hover:decoration-white">
+            {site.phoneDisplay}
+          </a>
+        </p>
+      </nav>
+
+      <figure class="nf-fig">
+        <svg viewBox="0 0 600 440" class="nf-svg" role="img" aria-labelledby="nf-svg-t">
+          <title id="nf-svg-t">Limeni lim položen pod kutom pored nacrta, s crvenom kotom ± 404 mm</title>
+
+          <!-- stvarni lim -->
+          <g data-nf-sheet class="nf-sheet">
+            <g data-nf-shift transform="translate(36 -10)">
+              <g data-nf-rot transform="rotate(-6 250 205)">
+                <rect x="60" y="80" width="380" height="250" class="nf-plate" />
+                <path d="M60 88H440" class="nf-hem" />
+                <g class="nf-seams">
+                  {seams.map((x) => <path d={`M${x} 80V330`} />)}
+                </g>
+                <text x="76" y="316" class="nf-t nf-t--plate">LIM · RAL 7016</text>
+              </g>
+            </g>
+          </g>
+
+          <!-- nacrt (gdje je lim trebao sjesti) — iznad lima, kao skriveni brid -->
+          <g class="nf-axis" fill="none">
+            <path d="M24 205H476M250 44V366" />
+          </g>
+          <rect x="60" y="80" width="380" height="250" class="nf-ghost" />
+          <text x="60" y="66" class="nf-t">NACRT · 380 × 250</text>
+
+          <!-- kota ± 404 mm -->
+          <g data-nf-dim class="nf-dim">
+            <path d="M440 336V398M488 306V398" class="nf-ext" data-nf-ext />
+            <path d="M440 390H488" class="nf-red" data-nf-line />
+            <path d="M434 396L446 384M482 396L494 384" class="nf-red" data-nf-ticks />
+            <text x="426" y="395" text-anchor="end" class="nf-t nf-t--red" data-nf-label>± 404 mm</text>
+          </g>
+        </svg>
+        <figcaption class="nf-cap">
+          <span>List 404</span>
+          <span>Mjerilo 1 : 1</span>
+          <span class="text-linija">Status: nije po mjeri</span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<style>
+  .nf {
+    min-height: min(52rem, calc(100svh - 4rem));
+  }
+  .nf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'head'
+      'links'
+      'fig';
+    row-gap: 2.75rem;
+  }
+  .nf-head {
+    grid-area: head;
+  }
+  .nf-links {
+    grid-area: links;
+    max-width: 34rem;
+  }
+  .nf-fig {
+    grid-area: fig;
+    margin: 0;
+  }
+  @media (width >= 64rem) {
+    .nf-grid {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        'head fig'
+        'links fig';
+      column-gap: 5rem;
+      row-gap: 3rem;
+    }
+    .nf-fig {
+      align-self: center;
+    }
+  }
+
+  .nf-link {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) 2.75rem;
+    align-items: center;
+    column-gap: 1rem;
+    min-height: 4.5rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgb(213 219 223 / 0.15);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nf-arrow {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(213 219 223 / 0.3);
+    color: var(--color-linija);
+    transition:
+      border-color 180ms var(--ease-press),
+      background-color 180ms var(--ease-press),
+      transform 180ms var(--ease-press);
+  }
+  .nf-link:hover .nf-arrow,
+  .nf-link:focus-visible .nf-arrow {
+    border-color: #fff;
+    color: #fff;
+    transform: translateX(3px);
+  }
+
+  /* ── crtež ── */
+  .nf-svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .nf-axis path {
+    stroke: rgb(138 147 155 / 0.45);
+    stroke-width: 1;
+    stroke-dasharray: 18 4 2 4;
+  }
+  .nf-ghost {
+    fill: none;
+    stroke: rgb(213 219 223 / 0.7);
+    stroke-width: 1.25;
+    stroke-dasharray: 7 5;
+  }
+  .nf-plate {
+    fill: #2b3135;
+    stroke: var(--color-linija);
+    stroke-width: 1.5;
+  }
+  .nf-hem {
+    stroke: rgb(213 219 223 / 0.5);
+    stroke-width: 1;
+  }
+  .nf-seams path {
+    stroke: rgb(213 219 223 / 0.28);
+    stroke-width: 1.25;
+  }
+  .nf-ext {
+    fill: none;
+    stroke: rgb(213 219 223 / 0.5);
+    stroke-width: 1;
+  }
+  .nf-red {
+    fill: none;
+    stroke: var(--color-redline);
+    stroke-width: 1.75;
+  }
+  .nf-t {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    fill: var(--color-celik);
+  }
+  .nf-t--plate {
+    fill: rgb(213 219 223 / 0.8);
+  }
+  .nf-t--red {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    fill: var(--color-redline);
+  }
+  @media (width < 40rem) {
+    .nf-t {
+      font-size: 17px;
+    }
+    .nf-t--plate {
+      font-size: 16px;
+    }
+    .nf-t--red {
+      font-size: 23px;
+    }
+  }
+  .nf-cap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-top: 1.25rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid rgb(213 219 223 / 0.15);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+
+  /* prije animacije (samo uz pokret) */
+  :global(.motion) .nf-sheet,
+  :global(.motion) .nf-dim {
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { gsap, motionOn } from '@/lib/motion';
+
+  function initNotFound() {
+    if (!motionOn()) return;
+    document.querySelectorAll<SVGElement>('[data-nf]:not([data-nf-ready])').forEach((root) => {
+      root.setAttribute('data-nf-ready', '');
+      const sheet = root.querySelector('[data-nf-sheet]');
+      const shift = root.querySelector('[data-nf-shift]');
+      const rot = root.querySelector('[data-nf-rot]');
+      const dim = root.querySelector('[data-nf-dim]');
+      if (!sheet || !shift || !rot || !dim) return;
+      const line = dim.querySelector('[data-nf-line]');
+      const ticks = dim.querySelector('[data-nf-ticks]');
+      const ext = dim.querySelector('[data-nf-ext]');
+      const label = dim.querySelector('[data-nf-label]');
+
+      const finalShift = shift.getAttribute('transform') ?? '';
+      const finalRot = rot.getAttribute('transform') ?? '';
+
+      const tl = gsap.timeline({ delay: 0.25 });
+      tl.set(shift, { attr: { transform: 'translate(0 0)' } })
+        .set(rot, { attr: { transform: 'rotate(0 250 205)' } })
+        .to(sheet, { opacity: 1, duration: 0.2, ease: 'draft' })
+        // lim "promaši" mjeru: kratko klizanje s tvrdim stopom
+        .to(shift, { attr: { transform: finalShift }, duration: 0.3, ease: 'press' }, '+=0.3')
+        .to(rot, { attr: { transform: finalRot }, duration: 0.3, ease: 'press' }, '<')
+        .set(dim, { opacity: 1 }, '+=0.1')
+        .from(ext, { drawSVG: '0% 0%', duration: 0.35, ease: 'draft' })
+        .from(line, { drawSVG: '50% 50%', duration: 0.55, ease: 'draft' }, '-=0.05')
+        .from(ticks, { opacity: 0, duration: 0.18, ease: 'press' }, '-=0.1')
+        .from(label, { opacity: 0, x: 6, duration: 0.2, ease: 'press' });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotFound, { once: true });
+  } else {
+    initNotFound();
+  }
+</script>

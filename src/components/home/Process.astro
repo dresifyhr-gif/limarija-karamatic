@@ -1,0 +1,290 @@
+---
+/**
+ * 04 · Kako radimo — 5 koraka na "kotnoj liniji".
+ * Tanka okomita linija lijevo puni se crveno dok skrolate (ScrollTrigger scrub na scaleY, bez pinanja).
+ * Desno (desktop, sticky): obična fotografija s potpisom — mjesto za budući timelapse
+ *   (u prototipu označeno s ExampleTag; posjetitelj nikad ne vidi "uskoro").
+ * Fotografija je izrezana odozdo tako da limar bez vidljivog osiguranja ostane izvan kadra.
+ * HTML je u završnom stanju (linija puna, svi koraci "dosegnuti"); .motion to resetira.
+ */
+import SectionHead from '@/components/ui/SectionHead.astro';
+import Photo from '@/components/ui/Photo.astro';
+import Icon from '@/components/ui/Icon.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import { steps } from '@/data/site';
+import poster from '@/assets/projects/krov-crijep-lim-spoj-radnik.jpg';
+
+const total = String(steps.length).padStart(2, '0');
+// timelapse "Tri dana u 15 sekundi" još ne postoji — dok ga nema, prikazuje se samo fotografija
+const hasTimelapse = false;
+---
+
+<section id="kako-radimo" class="bg-grafit py-20 text-linija sm:py-28 lg:py-32" data-process>
+  <div class="wrap">
+    <SectionHead
+      index="04"
+      eyebrow="Kako radimo"
+      title="Od poziva do pisanog jamstva."
+      lead="Pet koraka, uvijek istim redom. U svakom trenutku znate što slijedi."
+      tone="dark"
+    />
+
+    <div class="mt-14 grid gap-14 sm:mt-16 lg:mt-20 lg:grid-cols-12 lg:gap-x-12">
+      <div class="proc-list relative lg:col-span-7" data-process-list>
+        <span class="proc-track" aria-hidden="true"></span>
+        <span class="proc-fill" aria-hidden="true" data-process-fill></span>
+        <ol class="list-none">
+        {
+          steps.map((s, i) => (
+            <li class="proc-step" data-process-step>
+              <span class="proc-tick" aria-hidden="true" />
+              <p class="proc-n type-mono">
+                <span class="sr-only">Korak </span>
+                {s.n}
+                <span class="text-celik" aria-hidden="true">
+                  {' '}
+                  / {total}
+                </span>
+              </p>
+              <div class="proc-body">
+                <h3 class="type-wide text-[1.375rem] leading-tight font-bold tracking-[-0.01em] text-white sm:text-[1.625rem]">
+                  {s.title}
+                </h3>
+                <p class="mt-3 max-w-[34rem] text-base leading-relaxed text-celik sm:text-[1.0625rem]">{s.text}</p>
+                {i === steps.length - 1 && (
+                  <a
+                    href="#jamstvo"
+                    class="group/j mt-4 inline-flex min-h-11 items-center gap-2 type-mono text-[0.75rem] tracking-[0.1em] text-white uppercase underline decoration-linija/30 underline-offset-[6px] transition-colors duration-150 hover:decoration-white"
+                  >
+                    Što piše u jamstvu
+                    <Icon
+                      name="arrow-right"
+                      size={16}
+                      class="rotate-90 transition-transform duration-150 group-hover/j:translate-y-0.5"
+                    />
+                  </a>
+                )}
+              </div>
+            </li>
+          ))
+        }
+        </ol>
+      </div>
+
+      <div class="lg:col-span-5">
+        <figure class="proc-media lg:sticky lg:top-28">
+          <div class="relative">
+            <div class="proc-photo relative aspect-[4/5] overflow-hidden bg-antracit" data-scan>
+              <Photo
+                src={poster}
+                alt="Spoj dva limena krova od crijep-lima u antracitu"
+                sizes="(min-width: 1280px) 34rem, (min-width: 1024px) 38vw, 92vw"
+                imgClass="proc-img h-full w-full object-cover object-bottom"
+              />
+            </div>
+            <span class="proc-crop proc-crop--tl" aria-hidden="true"></span>
+            <span class="proc-crop proc-crop--tr" aria-hidden="true"></span>
+            <span class="proc-crop proc-crop--bl" aria-hidden="true"></span>
+            <span class="proc-crop proc-crop--br" aria-hidden="true"></span>
+          </div>
+          <figcaption
+            class="type-mono mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-[0.6875rem] leading-4 tracking-[0.08em] text-celik uppercase"
+            data-reveal
+          >
+            <span>Spoj dva krova · crijep-lim · RAL 7016</span>
+            {!hasTimelapse && <ExampleTag text="mjesto za timelapse" class="text-celik" />}
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* kadar: donjih ~82 % fotografije (limar na rubu krova ostaje izvan kadra) */
+  .proc-photo :global(.proc-img) {
+    transform: scale(1.14);
+    transform-origin: 50% 100%;
+  }
+
+  /* Kotna linija: x položaj linije i uvlaka sadržaja */
+  .proc-list {
+    --rail-x: 0.4375rem;
+    --pad: 3rem;
+  }
+  @media (width >= 40rem) {
+    .proc-list {
+      --pad: 4.5rem;
+    }
+  }
+  .proc-track,
+  .proc-fill {
+    position: absolute;
+    left: var(--rail-x);
+    top: 0.75rem;
+    bottom: 0.75rem;
+    width: 1px;
+  }
+  .proc-track {
+    background: rgb(213 219 223 / 0.16);
+  }
+  .proc-fill {
+    background: var(--color-redline);
+    transform-origin: 50% 0;
+    width: 2px;
+    margin-left: -0.5px;
+  }
+  .proc-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-left: var(--pad);
+    padding-bottom: 2.75rem;
+  }
+  .proc-step:last-child {
+    padding-bottom: 0;
+  }
+  @media (width >= 40rem) {
+    .proc-step {
+      grid-template-columns: 5.5rem 1fr;
+      padding-left: calc(var(--rail-x) + 2.25rem);
+      padding-bottom: 3.5rem;
+    }
+  }
+  /* kosi zarez na kotnoj liniji (kao granica kote na nacrtu) + kratka pomoćna linija do broja */
+  .proc-tick {
+    position: absolute;
+    left: calc(var(--rail-x) - 0.5rem);
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-redline);
+    transition: color 200ms var(--ease-draft);
+  }
+  @media (width >= 40rem) {
+    .proc-tick {
+      top: 0.5rem;
+    }
+  }
+  .proc-tick::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    margin-left: -0.75px;
+    background: currentColor;
+    transform: rotate(45deg);
+  }
+  .proc-tick::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1.25rem;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.45;
+  }
+  .proc-n {
+    font-size: 0.8125rem;
+    line-height: 1.5rem;
+    letter-spacing: 0.06em;
+    color: var(--color-redline);
+    transition: color 200ms var(--ease-draft);
+    margin-bottom: 0.5rem;
+  }
+  @media (width >= 40rem) {
+    .proc-n {
+      margin-bottom: 0;
+      padding-top: 0.25rem;
+    }
+  }
+
+  /* kutne oznake okvira (rez za kadar) */
+  .proc-crop {
+    position: absolute;
+    width: 0.875rem;
+    height: 0.875rem;
+    border-color: rgb(213 219 223 / 0.55);
+    border-style: solid;
+    border-width: 0;
+    pointer-events: none;
+  }
+  .proc-crop--tl {
+    top: -0.5rem;
+    left: -0.5rem;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+  .proc-crop--tr {
+    top: -0.5rem;
+    right: -0.5rem;
+    border-top-width: 1px;
+    border-right-width: 1px;
+  }
+  .proc-crop--bl {
+    bottom: -0.5rem;
+    left: -0.5rem;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
+  .proc-crop--br {
+    bottom: -0.5rem;
+    right: -0.5rem;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+  }
+
+  /* Pokret: linija prazna, koraci "nedosegnuti" dok ih linija ne prođe */
+  :global(.motion) .proc-fill {
+    transform: scaleY(0);
+  }
+  :global(.motion) .proc-step:not(.is-on) .proc-tick {
+    color: rgb(138 147 155 / 0.7);
+  }
+  :global(.motion) .proc-step:not(.is-on) .proc-n {
+    color: var(--color-celik);
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
+
+  function init() {
+    if (!motionOn()) return;
+
+    document.querySelectorAll<HTMLElement>('[data-process]').forEach((root) => {
+      const list = root.querySelector<HTMLElement>('[data-process-list]');
+      const fill = root.querySelector<HTMLElement>('[data-process-fill]');
+      if (!list || !fill) return;
+
+      // vrh crvene linije uvijek je na 62 % visine ekrana; korak "upali" kad ga dosegne
+      gsap.fromTo(
+        fill,
+        { scaleY: 0 },
+        {
+          scaleY: 1,
+          ease: 'none',
+          scrollTrigger: { trigger: list, start: 'top 62%', end: 'bottom 62%', scrub: 0.35 },
+        },
+      );
+
+      list.querySelectorAll<HTMLElement>('[data-process-step]').forEach((step) => {
+        ScrollTrigger.create({
+          trigger: step,
+          start: 'top 62%',
+          onEnter: () => step.classList.add('is-on'),
+          onLeaveBack: () => step.classList.remove('is-on'),
+        });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+</script>

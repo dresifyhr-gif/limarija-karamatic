@@ -1,0 +1,1331 @@
+---
+/**
+ * Forma "Upit za procjenu" — 3 koraka, složena kao tehnički list (radni nalog).
+ *
+ * Props:
+ *  preselect?     id iz `jobTypes` ili slug usluge (npr. "dimnjaci") → unaprijed odabran korak 1
+ *  id?            id korijena (default "radni-nalog"); svi interni id-jevi su izvedeni iz njega
+ *  variant?       'standard' (default) | 'zgrada' — za upravitelje: uži izbor poslova (+ "Ravni krov"),
+ *                 u koraku 2 adresa zgrade (obavezno), upravitelj / tvrtka i broj ulaza
+ *  headingLevel?  2 | 3 (default 3) — razina naslova koraka (2 kad iznad forme nema h2, npr. /procjena)
+ *
+ * Bez JS-a: sva tri koraka jedan ispod drugog, POST multipart na /api/upit (fotografije idu s formom).
+ * S JS-om (src/lib/form.ts): koraci, validacija, crtež sloj po korak, pečat "PRIMLJENO",
+ * pa preusmjeravanje na /hvala?upit=XXXX&posao=<id>&slike=<broj>.
+ * Na stranici ?usluga=<slug> (ili ?vrsta=<id>) također odabire vrstu posla.
+ */
+import Icon from '@/components/ui/Icon.astro';
+import NalogDrawing from './NalogDrawing.astro';
+import { jobTypes, roofSizes, areas, site, telHref } from '@/data/site';
+
+interface Props {
+  preselect?: string;
+  id?: string;
+  variant?: 'standard' | 'zgrada';
+  headingLevel?: 2 | 3;
+}
+const { preselect, id = 'radni-nalog', variant = 'standard', headingLevel = 3 } = Astro.props;
+const zgrada = variant === 'zgrada';
+const H = (headingLevel === 2 ? 'h2' : 'h3') as 'h2' | 'h3';
+
+type Job = { id: string; label: string; service: string };
+const byId = (jid: string) => jobTypes.find((j) => j.id === jid) as Job;
+/* Zgrade: samo poslovi koji se rade na zgradama + "Ravni krov" (nije usluga u site.ts, samo vrsta upita). */
+const jobs: Job[] = zgrada
+  ? [byId('atika'), { id: 'ravni-krov', label: 'Ravni krov', service: '' }, byId('popravak'), byId('dimnjak'), byId('oluci'), byId('hitno')]
+  : (jobTypes as Job[]);
+const regularCount = jobs.filter((j) => j.id !== 'hitno').length;
+
+const preJob = jobs.find((j) => j.id === preselect)?.id ?? jobs.find((j) => j.service && j.service === preselect && j.id !== 'hitno')?.id ?? null;
+
+const stepNames = zgrada ? ['Što treba', 'Zgrada', 'Kontakt'] : ['Što treba', 'Gdje i koliko', 'Kontakt'];
+const callTimes = ['Ujutro', 'Popodne', 'Svejedno'];
+const pad = (n: number) => String(n).padStart(2, '0');
+const f = (name: string) => `${id}-${name}`;
+---
+
+<div class="rn @container/rn relative" id={id} data-variant={variant}>
+  <!-- kutni rezovi lista (crtački detalj) -->
+  <span class="rn-crop rn-crop-tl" aria-hidden="true"></span>
+  <span class="rn-crop rn-crop-tr" aria-hidden="true"></span>
+  <span class="rn-crop rn-crop-bl" aria-hidden="true"></span>
+  <span class="rn-crop rn-crop-br" aria-hidden="true"></span>
+
+  <div class="rn-sheet relative bg-papir text-tinta outline outline-1 -outline-offset-1 outline-tinta/12">
+    <!-- zaglavlje lista -->
+    <header class="grid grid-cols-[minmax(0,1fr)_auto] border-b border-tinta/15">
+      <div class="px-5 py-4 @[36rem]/rn:px-7 @[36rem]/rn:py-5">
+        <p class="type-display text-[1.125rem] tracking-[0.01em] uppercase @[24rem]/rn:text-[1.25rem] @[36rem]/rn:text-[1.5rem]">
+          {zgrada ? 'Upit za zgradu' : 'Upit za procjenu'}
+        </p>
+        <p class="mt-1.5 font-mono text-[0.6875rem] leading-snug tracking-[0.06em] text-tinta/70 uppercase">
+          Besplatno · bez obveze
+        </p>
+      </div>
+      <dl class="flex border-l border-tinta/15 font-mono">
+        <div class="flex flex-col justify-center px-4 @[36rem]/rn:px-5">
+          <dt class="text-[0.625rem] tracking-[0.14em] text-tinta/70 uppercase">Br.</dt>
+          <dd class="mt-1 text-[0.8125rem] font-medium whitespace-nowrap tabular-nums">
+            KR-<span data-rn-no>····</span>
+          </dd>
+        </div>
+        <div class="hidden flex-col justify-center border-l border-tinta/15 px-4 @[24rem]/rn:flex @[36rem]/rn:px-5" data-rn-js hidden>
+          <dt class="text-[0.625rem] tracking-[0.14em] text-tinta/70 uppercase">Korak</dt>
+          <dd class="mt-1 text-[0.8125rem] font-medium whitespace-nowrap tabular-nums">
+            0<span data-rn-stepno>1</span> / 03
+          </dd>
+        </div>
+      </dl>
+    </header>
+
+    <!-- kotni lanac koraka -->
+    <ol class="rn-dims grid grid-cols-3 px-5 pt-5 pb-1 @[36rem]/rn:px-7 @[36rem]/rn:pt-6" aria-label="Koraci" data-rn-js hidden>
+      {
+        stepNames.map((t, i) => (
+          <li class="rn-dim" data-rn-dim={i + 1}>
+            <span class="rn-dim-label">
+              <span class="rn-dim-n">{pad(i + 1)}</span>
+              <span class="rn-dim-t">{t}</span>
+            </span>
+            <span class="rn-dim-line" aria-hidden="true" />
+          </li>
+        ))
+      }
+    </ol>
+
+    <p class="sr-only" role="status" aria-live="polite" data-rn-status></p>
+
+    <!--
+      TODO(backend): Cloudflare Pages Function  POST /api/upit  (multipart/form-data: polja + do 6 fotografija)
+        → Turnstile → fotografije u R2 → e-mail vlasniku + Telegram poruka
+        → 303 See Other na /hvala?upit=XXXX&posao=<id>&slike=<broj>   (nikad osobni podaci u URL-u)
+      Dok backend ne postoji, slanje bez JS-a je samo demonstracija.
+    -->
+    <form
+      class="rn-form"
+      action="/api/upit"
+      method="post"
+      enctype="multipart/form-data"
+      data-rn
+      aria-label={zgrada ? 'Upit za zgradu — besplatna procjena' : 'Upit za besplatnu procjenu'}
+    >
+      <!-- zamka za botove (TODO: Turnstile u pravoj verziji) -->
+      <div class="hidden" aria-hidden="true">
+        <label>Ne ispunjavati <input type="text" name="web" tabindex="-1" autocomplete="off" /></label>
+      </div>
+      <input type="hidden" name="varijanta" value={variant} />
+
+      <div class="rn-steps relative min-w-0">
+        <!-- KORAK 1 -->
+        <fieldset class="rn-step" data-step="1" aria-labelledby={f('h1')}>
+          <div class="rn-step-head">
+            <p class="rn-kicker" aria-hidden="true">Korak 01</p>
+            <H id={f('h1')} class="rn-h" tabindex="-1" data-rn-heading>Što treba?</H>
+            <p class="rn-lead">Odaberite jedno. Detalje dogovaramo na krovu.</p>
+          </div>
+          <div class="rn-chips grid gap-2 @[30rem]/rn:grid-cols-2" data-rn-group="vrsta">
+            {
+              jobs.map((j, i) => (
+                <label
+                  class:list={[
+                    'rn-chip',
+                    j.id === 'hitno' && 'rn-chip-urgent',
+                    j.id === 'hitno' && regularCount % 2 === 0 && '@[30rem]/rn:col-span-2',
+                  ]}
+                >
+                  <input
+                    type="radio"
+                    name="vrsta"
+                    value={j.id}
+                    data-service={j.service || undefined}
+                    data-label={j.label}
+                    checked={j.id === preJob}
+                    required
+                    aria-describedby={f('vrsta-err')}
+                    class="sr-only"
+                  />
+                  <span class="rn-chip-n" aria-hidden="true">
+                    {pad(i + 1)}
+                  </span>
+                  {j.id === 'hitno' && <span class="rn-dot" aria-hidden="true" />}
+                  <span class="rn-chip-t">{j.label}</span>
+                  <svg class="rn-chip-tick" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path d="m4.5 12.5 4.5 4.5L19.5 6.5" />
+                  </svg>
+                </label>
+              ))
+            }
+          </div>
+          <p class="rn-err" id={f('vrsta-err')} data-rn-err="vrsta" hidden></p>
+          <div class="rn-urgent">
+            <p class="rn-urgent-t">
+              <span class="rn-dot" aria-hidden="true"></span>
+              Curi sada? Najbrže je nazvati.
+            </p>
+            <a href={telHref} class="rn-btn rn-btn-call">
+              <span class="inline-flex items-center gap-2.5 whitespace-nowrap"><Icon name="phone" size={18} />Nazovite odmah</span>{' '}
+              <span class="font-mono font-medium whitespace-nowrap">{site.phoneDisplay}</span>
+            </a>
+            <p class="rn-urgent-s">Ako ipak pošaljete upit, stavljamo ga na vrh. Veličinu krova tada ne trebate upisivati.</p>
+          </div>
+        </fieldset>
+
+        <!-- KORAK 2 -->
+        <fieldset class="rn-step" data-step="2" aria-labelledby={f('h2')}>
+          <div class="rn-step-head">
+            <p class="rn-kicker" aria-hidden="true">Korak 02</p>
+            <H id={f('h2')} class="rn-h" tabindex="-1" data-rn-heading>{zgrada ? 'Koja zgrada?' : 'Gdje i koliko?'}</H>
+            <p class="rn-lead">
+              {zgrada ? 'Adresa je dovoljna — krov izmjerimo i fotografiramo na terenu.' : 'Otprilike je dovoljno — sve izmjerimo na terenu.'}
+            </p>
+          </div>
+
+          <div class="grid gap-6">
+            {
+              zgrada ? (
+                <>
+                  <div>
+                    <label for={f('adresa')} class="rn-label">Adresa zgrade</label>
+                    <input
+                      id={f('adresa')}
+                      name="adresa"
+                      type="text"
+                      class="rn-input"
+                      autocomplete="street-address"
+                      placeholder="npr. Ilica 120, Zagreb"
+                      required
+                      minlength="4"
+                      aria-describedby={f('adresa-err')}
+                    />
+                    <p class="rn-err" id={f('adresa-err')} data-rn-err="adresa" hidden></p>
+                  </div>
+                  <div class="grid gap-6">
+                    <div>
+                      <label for={f('upravitelj')} class="rn-label">
+                        Upravitelj / tvrtka <span class="rn-opt">· nije obavezno</span>
+                      </label>
+                      <input id={f('upravitelj')} name="upravitelj" type="text" class="rn-input" autocomplete="organization" />
+                    </div>
+                    <div>
+                      <label for={f('ulazi')} class="rn-label">
+                        Broj ulaza <span class="rn-opt">· ako znate</span>
+                      </label>
+                      <input id={f('ulazi')} name="ulazi" type="text" inputmode="numeric" class="rn-input max-w-[10rem] font-mono" autocomplete="off" placeholder="npr. 2" />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label for={f('mjesto')} class="rn-label">Mjesto ili kvart</label>
+                  <input
+                    id={f('mjesto')}
+                    name="mjesto"
+                    type="text"
+                    class="rn-input"
+                    list={f('areas')}
+                    autocomplete="address-level2"
+                    placeholder="npr. Sesvete"
+                    required
+                    minlength="2"
+                    aria-describedby={f('mjesto-err')}
+                  />
+                  <datalist id={f('areas')}>{areas.map((a) => <option value={a} />)}</datalist>
+                  <p class="rn-err" id={f('mjesto-err')} data-rn-err="mjesto" hidden></p>
+                </div>
+              )
+            }
+
+            <fieldset data-rn-group="velicina">
+              <legend class="rn-label">
+                {zgrada ? 'Površina krova' : 'Veličina krova'} <span class="rn-opt">· {zgrada ? 'otprilike, nije obavezno' : 'otprilike'}</span>
+              </legend>
+              <div class="flex flex-wrap gap-2">
+                {
+                  roofSizes.map((s) => (
+                    <label class="rn-pill">
+                      <input
+                        type="radio"
+                        name="velicina"
+                        value={s}
+                        required={!zgrada}
+                        aria-describedby={f('velicina-err')}
+                        class="sr-only"
+                      />
+                      <span>{s}</span>
+                    </label>
+                  ))
+                }
+              </div>
+              <p class="rn-err" id={f('velicina-err')} data-rn-err="velicina" hidden></p>
+            </fieldset>
+
+            <div>
+              <p class="rn-label" id={f('foto-l')}>
+                Fotografije <span class="rn-opt">· do 6, nije obavezno</span>
+              </p>
+              <label class="rn-drop">
+                <input
+                  type="file"
+                  name="fotografije"
+                  accept="image/*"
+                  multiple
+                  class="rn-file"
+                  aria-labelledby={f('foto-l')}
+                  aria-describedby={f('foto-hint')}
+                />
+                <span class="rn-drop-ic" aria-hidden="true"><Icon name="camera" size={22} /></span>
+                <span class="min-w-0 flex-1">
+                  <span class="rn-drop-t block font-semibold">Dodajte slike krova</span>
+                  <span id={f('foto-hint')} class="mt-0.5 block text-[0.875rem] leading-snug text-tinta/70">
+                    {zgrada ? 'Krov, atika, mjesto gdje curi u stubište. S mobitela je sasvim dovoljno.' : 'Krov izvana, mjesto gdje curi, dimnjak. S mobitela je sasvim dovoljno.'}
+                  </span>
+                </span>
+                <span class="rn-drop-c font-mono text-[0.75rem] text-tinta/70 tabular-nums" data-rn-photocount data-rn-js hidden>0 / 6</span>
+              </label>
+              <p class="mt-2 font-mono text-[0.75rem] text-tinta/70 empty:hidden" data-rn-photonote aria-live="polite"></p>
+              <ul class="rn-thumbs" data-rn-thumbs hidden aria-label="Dodane fotografije"></ul>
+            </div>
+
+            <div>
+              <label for={f('napomena')} class="rn-label">Napomena <span class="rn-opt">· nije obavezno</span></label>
+              <textarea
+                id={f('napomena')}
+                name="napomena"
+                rows="3"
+                class="rn-input rn-textarea"
+                placeholder={zgrada ? 'npr. curi uz atiku iznad zadnjeg kata' : 'npr. curi uz dimnjak kad pada jača kiša'}></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- KORAK 3 -->
+        <fieldset class="rn-step" data-step="3" aria-labelledby={f('h3')}>
+          <div class="rn-step-head">
+            <p class="rn-kicker" aria-hidden="true">Korak 03</p>
+            <H id={f('h3')} class="rn-h" tabindex="-1" data-rn-heading>Kontakt</H>
+            <p class="rn-lead">Nazovemo vas da dogovorimo dolazak.</p>
+          </div>
+
+          <div class="grid gap-6">
+            <div class="grid gap-6 @[30rem]/rn:grid-cols-2 @[30rem]/rn:gap-4">
+              <div>
+                <label for={f('ime')} class="rn-label">Ime</label>
+                <input
+                  id={f('ime')}
+                  name="ime"
+                  type="text"
+                  class="rn-input"
+                  autocomplete="name"
+                  placeholder="Ime i prezime"
+                  required
+                  minlength="2"
+                  aria-describedby={f('ime-err')}
+                />
+                <p class="rn-err" id={f('ime-err')} data-rn-err="ime" hidden></p>
+              </div>
+              <div>
+                <label for={f('mobitel')} class="rn-label">Mobitel</label>
+                <input
+                  id={f('mobitel')}
+                  name="mobitel"
+                  type="tel"
+                  class="rn-input font-mono"
+                  autocomplete="tel"
+                  inputmode="tel"
+                  placeholder="091 234 5678"
+                  required
+                  pattern="[0-9+ ()/.\-]{8,}"
+                  aria-describedby={f('mobitel-err')}
+                />
+                <p class="rn-err" id={f('mobitel-err')} data-rn-err="mobitel" hidden></p>
+              </div>
+            </div>
+
+            {
+              zgrada && (
+                <div>
+                  <label for={f('email')} class="rn-label">
+                    E-pošta <span class="rn-opt">· za ponudu, nije obavezno</span>
+                  </label>
+                  <input
+                    id={f('email')}
+                    name="email"
+                    type="email"
+                    class="rn-input"
+                    autocomplete="email"
+                    inputmode="email"
+                    placeholder="ime@upravitelj.hr"
+                    aria-describedby={f('email-err')}
+                  />
+                  <p class="rn-err" id={f('email-err')} data-rn-err="email" hidden></p>
+                </div>
+              )
+            }
+
+            <fieldset>
+              <legend class="rn-label">Kad vas nazvati?</legend>
+              <div class="grid grid-cols-3 gap-2">
+                {
+                  callTimes.map((t) => (
+                    <label class="rn-pill justify-center">
+                      <input type="radio" name="termin" value={t} checked={t === 'Svejedno'} class="sr-only" />
+                      <span>{t}</span>
+                    </label>
+                  ))
+                }
+              </div>
+            </fieldset>
+          </div>
+        </fieldset>
+
+        <!-- pečat nakon slanja -->
+        <div class="rn-stamp" aria-hidden="true">
+          <div class="rn-stamp-in">
+            <span class="rn-stamp-top">Limarija Karamatić · upit</span>
+            <span class="rn-stamp-big">Primljeno</span>
+            <span class="rn-stamp-no">Upit #KR-<span data-rn-no>····</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- navigacija + napomena o podacima -->
+      <div class="rn-nav">
+        <div class="rn-nav-row">
+          <button type="button" class="rn-btn rn-btn-back" data-rn-back hidden>
+            <Icon name="arrow-right" size={18} class="rotate-180" />
+            <span>Natrag</span>
+          </button>
+          <button type="button" class="rn-btn rn-btn-next" data-rn-next hidden>
+            <span>Dalje</span>
+            <Icon name="arrow-right" size={18} class="rn-btn-arrow" />
+          </button>
+          <button type="submit" class="rn-btn rn-btn-submit" data-rn-submit>
+            <span>Pošaljite upit</span>
+            <Icon name="arrow-right" size={18} class="rn-btn-arrow" />
+          </button>
+        </div>
+        <p class="rn-legal">
+          Slanjem upita pristajete da vas kontaktiramo u vezi procjene.{' '}
+          <a href="/privatnost">Zaštita podataka</a>
+        </p>
+      </div>
+
+      <!-- crtež + sažetak: mobitel ispod gumba (kao sastavnica lista), desktop desni stupac -->
+      <aside class="rn-aside" aria-label="Sažetak upita">
+        <div class="rn-aside-in">
+          <figure class="rn-fig">
+            <NalogDrawing class="w-full" />
+            <figcaption class="rn-figcap" data-rn-js hidden>Upit · crtež se slaže sa svakim korakom</figcaption>
+          </figure>
+          <dl class="rn-sum" data-rn-js hidden>
+            <div><dt>Posao</dt><dd data-rn-sum="vrsta" class="is-empty">—</dd></div>
+            <div><dt>{zgrada ? 'Adresa' : 'Mjesto'}</dt><dd data-rn-sum="mjesto" class="is-empty">—</dd></div>
+            <div><dt>Krov</dt><dd data-rn-sum="velicina" class="is-empty">—</dd></div>
+            <div><dt>Foto</dt><dd data-rn-sum="foto" class="is-empty">—</dd></div>
+          </dl>
+        </div>
+      </aside>
+    </form>
+  </div>
+</div>
+
+<script>
+  import { initRadniNalog } from '@/lib/form';
+  initRadniNalog();
+</script>
+
+<style is:global>
+  /* ── Radni nalog (sve klase s prefiksom rn-) ────────────────── */
+  .rn {
+    --rn-line: rgb(21 24 27 / 0.14);
+    --rn-pad: 1.25rem;
+  }
+  @container rn (width >= 36rem) {
+    .rn-sheet {
+      --rn-pad: 1.75rem;
+    }
+  }
+
+  /* kutni rezovi */
+  .rn-crop {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: rgb(213 219 223 / 0.35);
+    pointer-events: none;
+    display: none;
+  }
+  @media (width >= 40rem) {
+    .rn-crop {
+      display: block;
+    }
+  }
+  .rn-crop-tl { top: -10px; left: -10px; border-top: 1px solid; border-left: 1px solid; }
+  .rn-crop-tr { top: -10px; right: -10px; border-top: 1px solid; border-right: 1px solid; }
+  .rn-crop-bl { bottom: -10px; left: -10px; border-bottom: 1px solid; border-left: 1px solid; }
+  .rn-crop-br { bottom: -10px; right: -10px; border-bottom: 1px solid; border-right: 1px solid; }
+  .rn-crop { border-color: rgb(213 219 223 / 0.35); }
+
+  /* kotni lanac */
+  .rn-dims {
+    transition: grid-template-columns 0.2s var(--ease-press);
+  }
+  @container rn (width < 30rem) {
+    .rn[data-step='1'] .rn-dims { grid-template-columns: 2.2fr 1fr 1fr; }
+    .rn[data-step='2'] .rn-dims { grid-template-columns: 1fr 2.6fr 1fr; }
+    .rn[data-step='3'] .rn-dims { grid-template-columns: 1fr 1fr 2fr; }
+  }
+  .rn-dim {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    color: rgb(21 24 27 / 0.7);
+    transition: color 0.2s var(--ease-press);
+  }
+  .rn-dim-label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-inline: 0.5rem 0.25rem;
+  }
+  .rn-dim-n {
+    font-weight: 500;
+  }
+  .rn-dim-line {
+    position: relative;
+    display: block;
+    height: 9px;
+  }
+  .rn-dim-line::before {
+    /* linija */
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 4px;
+    height: 1px;
+    background: currentColor;
+    transition: height 0.2s var(--ease-press), top 0.2s var(--ease-press);
+  }
+  .rn-dim-line::after {
+    /* kosa kotna oznaka na početku segmenta */
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 9px;
+    background: currentColor;
+    transform: rotate(45deg);
+  }
+  .rn-dim:last-child::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    height: 9px;
+    background: currentColor;
+    transform: rotate(45deg);
+  }
+  .rn-dim.is-done {
+    color: var(--color-tinta);
+  }
+  .rn-dim.is-active {
+    color: var(--color-redline-dark);
+  }
+  .rn-dim.is-active .rn-dim-line::before {
+    height: 2px;
+    top: 3.5px;
+  }
+  @container rn (width < 30rem) {
+    .rn-dim:not(.is-active) .rn-dim-t {
+      display: none;
+    }
+    .rn-dim-label {
+      padding-inline: 0.375rem 0;
+    }
+  }
+
+  /* tijelo: koraci → navigacija → sažetak (mobitel: sažetak dolazi zadnji, kao sastavnica lista);
+     od 40rem sažetak ide u desni stupac uz korake, navigacija preko cijele širine */
+  .rn-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rn-steps {
+    padding: 1.5rem var(--rn-pad) 1.75rem;
+  }
+  .rn-aside {
+    border-top: 1px solid var(--rn-line);
+    padding: 1rem var(--rn-pad);
+  }
+  .rn-aside-in {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: center;
+  }
+  @container rn (width >= 40rem) {
+    .rn-form {
+      grid-template-columns: minmax(0, 1fr) 14rem;
+    }
+    .rn-steps {
+      grid-column: 1;
+      grid-row: 1;
+      padding-top: 1.75rem;
+      min-height: 29rem;
+    }
+    .rn-aside {
+      grid-column: 2;
+      grid-row: 1;
+      border-top: 0;
+      border-left: 1px solid var(--rn-line);
+      padding: 1.75rem 1.5rem;
+    }
+    .rn-aside-in {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      position: sticky;
+      top: 6rem;
+    }
+    .rn-nav {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+  }
+  /* bez JS-a: crtež samo kao ilustracija, sva tri koraka redom */
+  .rn:not(.is-stepped) .rn-aside-in {
+    grid-template-columns: 6rem;
+  }
+  @container rn (width >= 40rem) {
+    .rn:not(.is-stepped) .rn-aside-in {
+      grid-template-columns: 1fr;
+    }
+  }
+  .rn:not(.is-stepped) .rn-step + .rn-step {
+    margin-top: 2.25rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rn-line);
+  }
+
+  .rn-fig {
+    margin: 0;
+  }
+  .rn-fig svg {
+    padding: 0.5rem 0.25rem;
+  }
+  @container rn (width >= 40rem) {
+    .rn-fig svg {
+      padding: 1.25rem 1rem 1rem;
+      border: 1px solid var(--rn-line);
+      background-color: rgb(255 255 255 / 0.35);
+    }
+  }
+  .rn-figcap {
+    display: none;
+    margin-top: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+    line-height: 1.4;
+  }
+  @container rn (width >= 40rem) {
+    .rn-figcap:not([hidden]) {
+      display: block;
+    }
+  }
+
+  .rn-sum {
+    font-family: var(--font-mono);
+    margin: 0;
+  }
+  .rn-sum > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-block: 0.3rem;
+    border-bottom: 1px dotted rgb(21 24 27 / 0.22);
+  }
+  .rn-sum > div:last-child {
+    border-bottom: 0;
+  }
+  .rn-sum dt {
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+    flex: none;
+  }
+  .rn-sum dd {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: right;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rn-sum dd.is-empty {
+    color: rgb(21 24 27 / 0.7);
+    font-weight: 400;
+  }
+  @container rn (width >= 40rem) {
+    .rn-sum > div {
+      padding-block: 0.5rem;
+    }
+    .rn-sum dd {
+      font-size: 0.8125rem;
+    }
+  }
+
+  /* crtež */
+  .rn-drawing {
+    overflow: visible;
+  }
+  .rn-ln {
+    stroke: var(--color-tinta);
+    stroke-width: 1.25;
+    stroke-linejoin: miter;
+    stroke-linecap: butt;
+    vector-effect: non-scaling-stroke;
+  }
+  .rn-ln-faint {
+    stroke: rgb(21 24 27 / 0.35);
+  }
+  .rn-strip {
+    fill: var(--color-antracit);
+    stroke: #6b7379;
+    stroke-width: 0.9;
+    stroke-linejoin: round;
+  }
+  .rn-barge,
+  .rn-cap {
+    fill: var(--color-tinta);
+  }
+  .rn-gutter {
+    fill: none;
+    stroke: var(--color-tinta);
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+  .rn-pipe {
+    fill: none;
+    stroke: var(--color-tinta);
+    stroke-width: 3.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .rn-eave {
+    fill: none;
+    stroke: var(--color-crvena);
+    stroke-width: 3;
+    stroke-linejoin: miter;
+  }
+  .rn.is-live .rn-layer,
+  .rn.is-live .rn-eave {
+    transition: opacity 0.2s var(--ease-press);
+  }
+  .rn.is-stepped[data-stage='1'] [data-layer='2'],
+  .rn.is-stepped[data-stage='1'] [data-layer='3'],
+  .rn.is-stepped[data-stage='2'] [data-layer='3'],
+  .rn.is-stepped:not(.is-sent) .rn-eave {
+    opacity: 0;
+  }
+
+  /* zaglavlja koraka */
+  .rn-step {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .rn-step-head {
+    margin-bottom: 1.5rem;
+  }
+  .rn-kicker {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-redline-dark);
+    margin-bottom: 0.5rem;
+  }
+  .rn-h {
+    font-stretch: 125%;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    line-height: 1;
+    padding-top: 0.08em;
+    font-size: 1.75rem;
+    outline: none;
+  }
+  .rn-h:focus-visible {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 4px;
+  }
+  @container rn (width >= 36rem) {
+    .rn-h {
+      font-size: 2rem;
+    }
+  }
+  .rn-lead {
+    margin-top: 0.625rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: rgb(21 24 27 / 0.72);
+  }
+
+  /* čipovi vrste posla */
+  .rn-chip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.5rem;
+    padding: 0.75rem 0.875rem 0.75rem 1rem;
+    border: 1px solid rgb(21 24 27 / 0.2);
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.55);
+    cursor: pointer;
+    user-select: none;
+    transition:
+      background-color 0.15s var(--ease-press),
+      border-color 0.15s var(--ease-press),
+      color 0.15s var(--ease-press),
+      transform 0.15s var(--ease-press);
+  }
+  .rn-chip:hover {
+    border-color: rgb(21 24 27 / 0.55);
+    background: #fff;
+  }
+  .rn-chip:active {
+    transform: translateY(1px);
+  }
+  .rn-chip-n {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    color: rgb(21 24 27 / 0.7);
+    flex: none;
+    min-width: 1.25rem;
+  }
+  .rn-chip-t {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.25;
+    min-width: 0;
+  }
+  .rn-chip-tick {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    margin-top: -9px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.25;
+    stroke-linecap: square;
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+      opacity 0.15s var(--ease-press),
+      transform 0.18s var(--ease-press);
+  }
+  .rn-chip:has(:checked) {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-papir);
+  }
+  .rn-chip-n {
+    transition: opacity 0.15s var(--ease-press);
+  }
+  .rn-chip:has(:checked) .rn-chip-n {
+    opacity: 0;
+  }
+  .rn-chip:has(:checked) .rn-chip-tick {
+    color: var(--color-redline);
+    opacity: 1;
+    transform: none;
+  }
+  .rn-chip:has(:focus-visible),
+  .rn-pill:has(:focus-visible),
+  .rn-drop:has(:focus-visible) {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+  .rn-dot {
+    display: inline-block;
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--color-crvena);
+    box-shadow: 0 0 0 3px rgb(215 20 26 / 0.15);
+  }
+  .rn-chip-urgent:has(:checked) .rn-dot {
+    box-shadow: 0 0 0 3px rgb(255 59 63 / 0.25);
+  }
+  /* hitno: veliki crveni poziv odmah u koraku 1 */
+  .rn-urgent {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-left: 2px solid var(--color-crvena);
+    background: rgb(215 20 26 / 0.06);
+  }
+  .rn:has(input[name='vrsta'][value='hitno']:checked) .rn-urgent {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .rn-urgent-t {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+  .rn-urgent-s {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: rgb(21 24 27 / 0.72);
+  }
+  .rn-btn.rn-btn-call {
+    width: 100%;
+    height: auto;
+    min-height: 3.25rem;
+    padding-block: 0.625rem;
+    flex-wrap: wrap;
+    column-gap: 0.625rem;
+    row-gap: 0.125rem;
+    white-space: normal;
+    text-align: center;
+    background: var(--color-crvena);
+    color: #fff;
+    font-size: 1.0625rem;
+  }
+  .rn-btn-call:hover {
+    background: var(--color-crvena-hover);
+  }
+
+  /* polja */
+  .rn-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.78);
+  }
+  .rn-opt {
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: rgb(21 24 27 / 0.7);
+  }
+  .rn-input {
+    display: block;
+    width: 100%;
+    height: 3.25rem;
+    padding: 0 0.9375rem;
+    border: 1px solid rgb(21 24 27 / 0.22);
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.6);
+    color: var(--color-tinta);
+    font-size: 1.0625rem;
+    transition:
+      border-color 0.15s var(--ease-press),
+      background-color 0.15s var(--ease-press);
+  }
+  .rn-input::placeholder {
+    color: rgb(21 24 27 / 0.5);
+  }
+  .rn-input:hover {
+    border-color: rgb(21 24 27 / 0.45);
+  }
+  .rn-input:focus-visible {
+    outline: 2px solid var(--color-tinta);
+    outline-offset: -1px;
+    border-color: var(--color-tinta);
+    background: #fff;
+  }
+  .rn-input::-webkit-calendar-picker-indicator {
+    opacity: 0.35;
+  }
+  .rn-textarea {
+    height: auto;
+    min-height: 6rem;
+    padding: 0.8rem 0.9375rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .rn-input[aria-invalid='true'] {
+    border-color: var(--color-redline-dark);
+    background: rgb(184 15 21 / 0.04);
+  }
+  .rn-input[aria-invalid='true']:focus-visible {
+    outline-color: var(--color-redline-dark);
+  }
+  .rn-err {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-redline-dark);
+  }
+  .rn-err[hidden] {
+    display: none;
+  }
+  .rn-err::before {
+    content: '';
+    flex: none;
+    width: 0.375rem;
+    height: 0.375rem;
+    background: currentColor;
+    transform: translateY(-0.1em);
+  }
+  [data-rn-group].is-invalid .rn-chip,
+  [data-rn-group].is-invalid .rn-pill {
+    border-color: rgb(184 15 21 / 0.6);
+  }
+
+  /* pilule (veličina krova, termin) */
+  .rn-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border: 1px solid rgb(21 24 27 / 0.2);
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.55);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      background-color 0.15s var(--ease-press),
+      border-color 0.15s var(--ease-press),
+      color 0.15s var(--ease-press),
+      transform 0.15s var(--ease-press);
+  }
+  .rn-pill:hover {
+    border-color: rgb(21 24 27 / 0.55);
+    background: #fff;
+  }
+  .rn-pill:active {
+    transform: translateY(1px);
+  }
+  .rn-pill:has(:checked) {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-papir);
+  }
+
+  /* fotografije */
+  .rn-drop {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 4.5rem;
+    padding: 0.875rem 1rem;
+    border: 1px dashed rgb(21 24 27 / 0.35);
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.35);
+    cursor: pointer;
+    transition:
+      border-color 0.15s var(--ease-press),
+      background-color 0.15s var(--ease-press);
+  }
+  .rn-drop:hover {
+    border-color: var(--color-tinta);
+    background: rgb(255 255 255 / 0.7);
+  }
+  .rn-drop-ic {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(21 24 27 / 0.2);
+    background: var(--color-papir);
+  }
+  .rn.is-stepped .rn-file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+  }
+  .rn:not(.is-stepped) .rn-drop {
+    flex-wrap: wrap;
+  }
+  .rn:not(.is-stepped) .rn-file {
+    order: 3;
+    width: 100%;
+    font-size: 0.875rem;
+  }
+  .rn.has-max-photos .rn-drop {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .rn-thumbs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0;
+    list-style: none;
+  }
+  .rn-thumbs[hidden] {
+    display: none;
+  }
+  @container rn (width >= 34rem) {
+    .rn-thumbs {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+  .rn-thumb {
+    position: relative;
+    aspect-ratio: 1;
+    background: var(--color-papir-2);
+    outline: 1px solid rgb(21 24 27 / 0.15);
+    outline-offset: -1px;
+  }
+  .rn-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .rn-thumb-n {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    padding: 0.125rem 0.3rem;
+    background: var(--color-tinta);
+    color: var(--color-papir);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.04em;
+  }
+  .rn-thumb-rm {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    background: var(--color-tinta);
+    color: var(--color-papir);
+    transition: background-color 0.15s var(--ease-press);
+  }
+  .rn-thumb-rm::before {
+    /* veća površina za dodir (≥ 44 px) */
+    content: '';
+    position: absolute;
+    inset: -0.5rem -0.5rem -0.5rem -0.5rem;
+  }
+  .rn-thumb-rm:hover {
+    background: var(--color-crvena);
+  }
+
+  /* navigacija */
+  .rn-nav {
+    padding: 1rem var(--rn-pad);
+    border-top: 1px solid var(--rn-line);
+    background: rgb(226 223 216 / 0.45);
+  }
+  .rn-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .rn-legal {
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: rgb(21 24 27 / 0.72);
+    text-wrap: pretty;
+  }
+  .rn-legal a {
+    display: inline-block;
+    padding-block: 0.125rem;
+    color: var(--color-tinta);
+    font-weight: 500;
+    white-space: nowrap;
+    text-decoration: underline;
+    text-decoration-color: rgb(21 24 27 / 0.3);
+    text-underline-offset: 0.25em;
+    transition: text-decoration-color 0.15s var(--ease-press);
+  }
+  .rn-legal a:hover {
+    text-decoration-color: currentColor;
+  }
+  @container rn (width >= 30rem) {
+    .rn-legal {
+      text-align: right;
+    }
+  }
+  /* s JS-om napomena stoji samo uz gumb za slanje (korak 3) */
+  .rn.is-stepped:not([data-step='3']) .rn-legal {
+    display: none;
+  }
+  .rn-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    height: 3.25rem;
+    padding: 0 1.375rem;
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    user-select: none;
+    border-radius: 2px;
+    transition:
+      background-color 0.15s var(--ease-press),
+      color 0.15s var(--ease-press),
+      border-color 0.15s var(--ease-press),
+      transform 0.15s var(--ease-press);
+  }
+  .rn-btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  .rn-btn[hidden] {
+    display: none;
+  }
+  .rn-btn:focus-visible {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 3px;
+  }
+  .rn-btn-back {
+    padding-inline: 1rem 1.25rem;
+    border: 1px solid rgb(21 24 27 / 0.25);
+    color: var(--color-tinta);
+  }
+  .rn-btn-back:hover {
+    border-color: var(--color-tinta);
+    background: rgb(21 24 27 / 0.04);
+  }
+  .rn-btn-next,
+  .rn-btn-submit {
+    margin-left: auto;
+    flex: 1 1 auto;
+  }
+  @container rn (width >= 30rem) {
+    .rn-btn-next,
+    .rn-btn-submit {
+      flex: 0 0 auto;
+      min-width: 11rem;
+    }
+  }
+  .rn-btn-next {
+    background: var(--color-tinta);
+    color: var(--color-papir);
+  }
+  .rn-btn-next:hover {
+    background: #000;
+  }
+  .rn-btn-submit {
+    background: var(--color-crvena);
+    color: #fff;
+  }
+  .rn-btn-submit:hover:not(:disabled) {
+    background: var(--color-crvena-hover);
+  }
+  .rn-btn-submit:disabled {
+    cursor: progress;
+    background: var(--color-crvena-hover);
+  }
+  .rn-btn-arrow {
+    transition: transform 0.15s var(--ease-press);
+  }
+  .rn-btn:hover .rn-btn-arrow {
+    transform: translateX(2px);
+  }
+  .rn:not(.is-stepped) .rn-btn-submit {
+    flex: 1 1 auto;
+  }
+
+  /* poslano: pečat */
+  .rn-stamp {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .rn.is-sent .rn-stamp {
+    display: flex;
+  }
+  .rn.is-sent .rn-step {
+    opacity: 0.22;
+    transition: opacity 0.3s var(--ease-press);
+  }
+  .rn.is-sent .rn-btn-back {
+    visibility: hidden;
+  }
+  .rn-stamp-in {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.75rem 1.125rem 0.875rem;
+    border: 3px solid var(--color-redline-dark);
+    outline: 1px solid var(--color-redline-dark);
+    outline-offset: -8px;
+    color: var(--color-redline-dark);
+    background: rgb(238 236 231 / 0.82);
+    transform: rotate(-6deg);
+    mix-blend-mode: multiply;
+  }
+  .rn-stamp-top,
+  .rn-stamp-no {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .rn-stamp-no {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+  .rn-stamp-big {
+    font-stretch: 125%;
+    font-weight: 800;
+    font-size: 1.875rem;
+    line-height: 1;
+    padding-top: 0.08em;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  @container rn (width >= 30rem) {
+    .rn-stamp-big {
+      font-size: 3rem;
+    }
+    .rn-stamp-in {
+      padding: 1rem 2rem 1.125rem;
+    }
+  }
+</style>

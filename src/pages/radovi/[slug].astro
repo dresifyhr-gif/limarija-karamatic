@@ -1,0 +1,392 @@
+---
+/**
+ * /radovi/[slug] — jedan rad (studija).
+ * Hero: velika fotografija (eager) + presjek profila; H1 = heroTitle ?? title, uvod = note;
+ *       u lijevom stupcu "sastavnica" rada (Vrsta, Materijal, Lokacija*, Godina*, Usluga) — * → <ExampleTag/>.
+ * Zatim: opis rada iz scope[] (papir) → ostale fotografije rada (grafit) → slični radovi (papir) →
+ *        procjena: FinalCta s predodabranom uslugom (grafit+papir).
+ * Fotografije se ne ponavljaju: slični radovi ne koriste naslovnu sliku koja je već na stranici.
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
+import ProjectCard from '@/components/ui/ProjectCard.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import Icon from '@/components/ui/Icon.astro';
+import FinalCta from '@/components/home/FinalCta.astro';
+import Gallery from '../usluge/_parts/Gallery.astro';
+import Scope from '../usluge/_parts/Scope.astro';
+import { altFor, clip, galleryOf, kindProfile, pad } from '../usluge/_parts/media';
+import { projects, projectKinds, serviceBySlug, type Project } from '@/data/site';
+
+export function getStaticPaths() {
+  return projects.map((project, i) => ({ params: { slug: project.slug }, props: { project, i } }));
+}
+
+interface Props {
+  project: Project;
+  i: number;
+}
+const { project, i } = Astro.props;
+const service = serviceBySlug(project.service);
+const kind = projectKinds[project.kind];
+const total = pad(projects.length);
+const num = pad(i + 1);
+const h1 = project.heroTitle ?? project.title;
+
+const crumbs = [homeCrumb, { href: '/radovi', label: 'Radovi' }, { href: `/radovi/${project.slug}`, label: project.title }];
+
+const gallery = galleryOf(project.gallery, project.image).map((src, k) => ({
+  src,
+  alt: altFor(src, `${project.title}, fotografija ${k + 2}`),
+}));
+const used = new Set([project.image, ...gallery.map((g) => g.src)]);
+
+/* slični: ista vrsta → ista usluga → isti materijal → redoslijed iz site.ts; najviše 3,
+   bez radova čija je naslovna fotografija već prikazana na ovoj stranici */
+const base = (m: string) => m.split(' · ')[0];
+const score = (p: Project) =>
+  (p.kind === project.kind ? 3 : 0) + (p.service === project.service ? 2 : 0) + (base(p.material) === base(project.material) ? 1 : 0);
+const similar = projects
+  .filter((p) => p.slug !== project.slug && !used.has(p.image))
+  .map((p, k) => ({ p, s: score(p), k }))
+  .sort((a, b) => b.s - a.s || a.k - b.k)
+  .slice(0, 3)
+  .map((x) => x.p);
+const related = similar.some((p) => p.kind === project.kind || p.service === project.service);
+
+const prev = projects[(i - 1 + projects.length) % projects.length];
+const next = projects[(i + 1) % projects.length];
+
+const rows: { k: string; v: string; href?: string; example?: boolean }[] = [
+  { k: 'Vrsta', v: kind },
+  { k: 'Materijal', v: project.material },
+  { k: 'Lokacija', v: project.location, example: true },
+  { k: 'Godina', v: String(project.year), example: true },
+  ...(service ? [{ k: 'Usluga', v: service.title, href: `/usluge/${service.slug}` }] : []),
+];
+
+/* brojevi sekcija */
+let n = 0;
+const idx = () => pad(++n);
+const iOpis = idx();
+const iGal = gallery.length ? idx() : '';
+const iSl = idx();
+const iProc = idx();
+
+const description = clip(`${h1} — ${kind.toLowerCase()}, ${project.location}. ${project.note}`);
+/* naslov za tražilice ≤ 60 znakova: vrsta rada samo ako stane i ako već nije u nazivu */
+const brand = ' | Limarija Karamatić';
+const withKind = `${project.title} · ${kind}${brand}`;
+const pageTitle =
+  project.title.toLowerCase().includes(kind.toLowerCase()) || withKind.length > 60
+    ? `${project.title}${brand}`
+    : withKind;
+---
+
+<Base
+  title={pageTitle}
+  description={description}
+  image={project.image}
+  imageAlt={project.alt}
+  schema={[breadcrumbSchema(crumbs, Astro.site)]}
+>
+  <PageHero
+    eyebrow={`Rad ${num} / ${total} · ${kind}`}
+    title={h1}
+    lead={project.note}
+    crumbs={crumbs}
+    image={project.image}
+    imageAlt={project.alt}
+    profile={kindProfile[project.kind]}
+    media="large"
+  >
+    <div class="sast">
+      <div class="sast-head">
+        <span>Sastavnica</span>
+        <span class="tabular-nums">List {num} / {total}</span>
+      </div>
+      <table class="sast-table">
+        <caption class="sr-only">Podaci o radu: {project.title}</caption>
+        <tbody>
+          {
+            rows.map((r) => (
+              <tr>
+                <th scope="row">{r.k}</th>
+                <td>
+                  {r.href ? (
+                    <a href={r.href} class="sast-link group/s">
+                      {r.v}
+                      <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/s:translate-x-0.5" />
+                    </a>
+                  ) : (
+                    <span>{r.v}</span>
+                  )}
+                  {r.example && <ExampleTag class="ml-2" />}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </PageHero>
+
+  <!-- Opis rada -->
+  <section id="opis" class="bg-papir py-20 text-tinta sm:py-24 lg:py-28" aria-labelledby="opis-naslov">
+    <div class="wrap grid gap-y-10 lg:grid-cols-12 lg:gap-x-8">
+      <div class="lg:col-span-5">
+        <p class="eyebrow mb-4 flex items-center gap-3 text-tinta/70" data-reveal>
+          <span class="text-redline-dark">{iOpis}</span>
+          <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+          <span>Opis rada</span>
+        </p>
+        <h2 id="opis-naslov" class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
+          Što je izvedeno.
+        </h2>
+        {
+          service && (
+            <div data-reveal>
+              <p class="mt-6 max-w-[30rem] text-lg leading-relaxed text-pretty text-tinta/80">{service.short}</p>
+              <a href={`/usluge/${service.slug}`} class="op-link group/o mt-4">
+                Više o usluzi: {service.title}
+                <Icon name="arrow-right" size={16} class="flex-none transition-transform duration-150 group-hover/o:translate-x-0.5" />
+              </a>
+            </div>
+          )
+        }
+      </div>
+      <div class="lg:col-span-7 lg:pt-2">
+        <Scope items={project.scope} label={`${project.title}: što je izvedeno`} head={['Poz.', 'Stavka', 'Izv.']}>
+          <Fragment slot="foot">
+            <p>{project.material}</p>
+            <a href="/#kako-radimo" class="inc-link group/l">
+              Kako radimo
+              <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/l:translate-x-0.5" />
+            </a>
+          </Fragment>
+        </Scope>
+      </div>
+    </div>
+  </section>
+
+  {
+    gallery.length > 0 && (
+      <Gallery
+        images={gallery}
+        tone="dark"
+        id="galerija"
+        index={iGal}
+        eyebrow="S gradilišta"
+        title={gallery.length === 1 ? 'Još jedan pogled.' : 'Detalji izbliza.'}
+        lead="Spojevi, kutovi i preklopi, onako kako su ostali na krovu."
+      />
+    )
+  }
+
+  <section id="slicni" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32" aria-labelledby="slicni-naslov">
+    <div class="wrap">
+      <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+        <header>
+          <p class="eyebrow mb-4 flex items-center gap-3 text-tinta/70" data-reveal>
+            <span class="text-redline-dark">{iSl}</span>
+            <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
+            <span>{related ? 'Slični radovi' : 'Ostali radovi'}</span>
+          </p>
+          <h2 id="slicni-naslov" class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
+            {related ? 'Isti lim, drugi krovovi.' : 'Ostali radovi.'}
+          </h2>
+        </header>
+        <nav class="pn" aria-label="Prethodni i sljedeći rad" data-reveal>
+          <a href={`/radovi/${prev.slug}`} class="pn-a" aria-label={`Prethodni rad: ${prev.title}`}>
+            <Icon name="arrow-right" size={18} class="rotate-180" />
+          </a>
+          <a href="/radovi" class="pn-all">Svi radovi</a>
+          <a href={`/radovi/${next.slug}`} class="pn-a" aria-label={`Sljedeći rad: ${next.title}`}>
+            <Icon name="arrow-right" size={18} />
+          </a>
+        </nav>
+      </div>
+
+      <ul class="sl-grid mt-12 sm:mt-14" role="list">
+        {
+          similar.map((p) => (
+            <li class="min-w-0">
+              <ProjectCard project={p} sizes="(min-width: 88rem) 26rem, (min-width: 64rem) 30vw, (min-width: 30rem) 46vw, 78vw" />
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <FinalCta index={iProc} preselect={project.service} title="Isti posao, na vašem krovu." />
+</Base>
+
+<style>
+  /* ── sastavnica rada (tamna, u heru) ── */
+  .sast {
+    border: 1px solid rgb(213 219 223 / 0.22);
+    background: rgb(14 16 19 / 0.55);
+  }
+  .sast-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgb(213 219 223 / 0.22);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  .sast-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .sast-table tr + tr {
+    border-top: 1px solid rgb(213 219 223 / 0.1);
+  }
+  .sast-table th {
+    width: 7.5rem;
+    padding: 0.875rem 1rem;
+    border-right: 1px solid rgb(213 219 223 / 0.1);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-align: left;
+    text-transform: uppercase;
+    vertical-align: middle;
+    color: var(--color-celik);
+  }
+  @media (width >= 40rem) {
+    .sast-table th {
+      width: 9.5rem;
+    }
+  }
+  .sast-table td {
+    padding: 0.625rem 1rem;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    color: #fff;
+    vertical-align: middle;
+  }
+  .sast-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    color: #fff;
+    text-decoration: underline;
+    text-decoration-color: rgb(213 219 223 / 0.35);
+    text-underline-offset: 5px;
+    transition: text-decoration-color 150ms var(--ease-press);
+  }
+  .sast-link:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* ── opis rada ── */
+  .op-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+    text-decoration: underline;
+    text-decoration-color: rgb(21 24 27 / 0.3);
+    text-underline-offset: 5px;
+    transition: text-decoration-color 150ms var(--ease-press);
+  }
+  .op-link:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* ── prethodni / sljedeći ── */
+  .pn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .pn-a {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(21 24 27 / 0.25);
+    color: var(--color-tinta);
+    transition:
+      border-color 150ms var(--ease-press),
+      background-color 150ms var(--ease-press),
+      color 150ms var(--ease-press);
+  }
+  .pn-a:hover {
+    border-color: var(--color-tinta);
+    background: var(--color-tinta);
+    color: var(--color-papir);
+  }
+  .pn-all {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-tinta);
+    text-underline-offset: 5px;
+  }
+  .pn-all:hover {
+    text-decoration: underline;
+  }
+
+  /* ── slični radovi ── */
+  .sl-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem 1.25rem;
+  }
+  /* mobitel: vodoravni niz (native scroll-snap), sljedeća kartica viri */
+  @media (width < 30rem) {
+    .sl-grid {
+      grid-template-columns: none;
+      grid-auto-flow: column;
+      grid-auto-columns: 78%;
+      gap: 1rem;
+      margin-inline: -1.25rem;
+      padding-inline: 1.25rem;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: 1.25rem;
+      scrollbar-width: none;
+    }
+    .sl-grid::-webkit-scrollbar {
+      display: none;
+    }
+    .sl-grid > li {
+      scroll-snap-align: start;
+    }
+  }
+  @media (width >= 30rem) {
+    .sl-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .sl-grid > li:nth-child(3) {
+      display: none;
+    }
+  }
+  @media (width >= 64rem) {
+    .sl-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3.5rem 1.5rem;
+    }
+    .sl-grid > li:nth-child(3) {
+      display: block;
+    }
+  }
+</style>

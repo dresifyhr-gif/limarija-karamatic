@@ -1,0 +1,118 @@
+---
+/**
+ * Kartica projekta (rail na naslovnici, /radovi, servisne stranice).
+ *  - 4:5 fotografija (Photo + data-scan otkrivanje; reveal.ts čeka da se slika učita)
+ *  - mono specifikacija: "LIMENI KROV · CRIJEP-LIM · RAL 7016"
+ *  - mjesto · godina + <ExampleTag/> (nepotvrđeno)
+ *  - naslov (h3)
+ * Cijela kartica je jedan link na /radovi/{slug}.
+ * Boja teksta se nasljeđuje (radi na grafitu i na papiru). Prigušeni tekst: --pcard-muted ako ga
+ * roditelj zada (rail na grafitu → čelik), inače 74 % boje teksta (na papiru ≥ tinta/70, AA).
+ * Hover (samo uređaji s mišem): foto 1.03 / 400 ms draft, crveni kutni zarez, strelica se pomakne.
+ * `image`/`alt` (opcionalno): druga fotografija projekta kad je naslovna već prikazana na stranici.
+ */
+import type { ImageMetadata } from 'astro';
+import type { Project } from '@/data/site';
+import { projectKinds } from '@/data/site';
+import Photo from './Photo.astro';
+import Icon from './Icon.astro';
+import ExampleTag from './ExampleTag.astro';
+
+interface Props {
+  project: Project;
+  sizes?: string;
+  class?: string;
+  eager?: boolean;
+  /** zamjenska fotografija (npr. sljedeća iz project.gallery) */
+  image?: ImageMetadata;
+  alt?: string;
+}
+const {
+  project,
+  sizes = '(min-width: 1024px) 26rem, (min-width: 640px) 22rem, 78vw',
+  class: className = '',
+  eager = false,
+  image = project.image,
+  alt = image === project.image ? project.alt : '',
+} = Astro.props;
+
+const kind = projectKinds[project.kind];
+const spec = `${kind} · ${project.material}`;
+const label = `${project.title} — ${kind}, ${project.location}. Pogledajte rad`;
+---
+
+<a
+  href={`/radovi/${project.slug}`}
+  class:list={['pcard group/card block focus-visible:outline-offset-4', className]}
+  aria-label={label}
+>
+  <div class="pcard-media relative aspect-[4/5] overflow-hidden bg-antracit" data-scan>
+    <Photo
+      src={image}
+      alt={alt}
+      sizes={sizes}
+      loading={eager ? 'eager' : 'lazy'}
+      imgClass="h-full w-full object-cover transition-transform duration-[400ms] ease-[var(--ease-draft)] group-hover/card:scale-[1.03]"
+    />
+    <span class="pcard-tick" aria-hidden="true"></span>
+  </div>
+
+  <div class="pt-4">
+    <p class="pcard-muted type-mono min-h-8 text-[0.6875rem] leading-4 tracking-[0.08em] uppercase sm:min-h-0">
+      {spec}
+    </p>
+    <div class="mt-2.5 flex items-start justify-between gap-4">
+      <h3 class="text-[1.125rem] leading-snug font-semibold text-balance sm:text-[1.1875rem]">
+        {project.title}
+      </h3>
+      <Icon
+        name="arrow-up-right"
+        size={18}
+        class="mt-[0.2rem] shrink-0 opacity-60 transition-[transform,opacity] duration-200 ease-[var(--ease-press)] group-hover/card:translate-x-0.5 group-hover/card:-translate-y-0.5 group-hover/card:opacity-100"
+      />
+    </div>
+    <p class="pcard-muted type-mono mt-2 flex items-center gap-2 text-[0.75rem] leading-4">
+      <span>{project.location} · {project.year}</span>
+      <ExampleTag />
+    </p>
+  </div>
+</a>
+
+<style>
+  .pcard {
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* prigušeni tekst: roditelj može zadati token (--pcard-muted, npr. čelik na grafitu);
+     inače 74 % boje teksta — na papiru ≈ tinta/74, oboje AA */
+  .pcard-muted {
+    color: var(--pcard-muted, color-mix(in srgb, currentColor 74%, transparent));
+  }
+  /* crveni kutni zarez — kao oznaka na nacrtu */
+  .pcard-tick {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-top: 2px solid var(--color-redline);
+    border-left: 2px solid var(--color-redline);
+    opacity: 0;
+    transform: translate(4px, 4px);
+    transition:
+      opacity 200ms var(--ease-press),
+      transform 200ms var(--ease-press);
+    pointer-events: none;
+    z-index: 1;
+  }
+  @media (hover: hover) {
+    .pcard:hover .pcard-tick {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .pcard:focus-visible .pcard-tick {
+    opacity: 1;
+    transform: none;
+  }
+</style>

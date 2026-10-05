@@ -1,0 +1,142 @@
+---
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@/styles/global.css';
+import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
+import archivoLatinExt from '@fontsource-variable/archivo/files/archivo-latin-ext-wdth-normal.woff2?url';
+
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
+import UtilityBar from '@/components/layout/UtilityBar.astro';
+import Header from '@/components/layout/Header.astro';
+import Footer from '@/components/layout/Footer.astro';
+import MobileCtaBar from '@/components/layout/MobileCtaBar.astro';
+import { site, areas, PROTOTYPE } from '@/data/site';
+import ogDefault from '@/assets/projects/krov-crijep-lim-zalazak.jpg';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: ImageMetadata;
+  noindex?: boolean;
+  /** dodatni JSON-LD objekti (Service, FAQPage, BreadcrumbList…) */
+  schema?: Record<string, unknown>[];
+  /** skriva mobilnu CTA traku (npr. na /hvala) */
+  hideMobileBar?: boolean;
+  /** opis og:image za dijeljenje */
+  imageAlt?: string;
+}
+const {
+  title,
+  description,
+  image = ogDefault,
+  imageAlt = 'Limeni krov u antracitu — Limarija Karamatić',
+  noindex = false,
+  schema = [],
+  hideMobileBar = false,
+} = Astro.props;
+
+// kanonski URL bez završne kose crte — isto kao svi interni linkovi
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const canonical = new URL(path, Astro.site);
+// landscape 1200×630 za WhatsApp / Facebook / Viber pregled
+const og = await getImage({ src: image, width: 1200, height: 630, fit: 'cover', position: 'center', format: 'jpg', quality: 72 });
+const ogUrl = new URL(og.src, Astro.site).toString();
+
+const business = {
+  '@context': 'https://schema.org',
+  '@type': 'RoofingContractor',
+  '@id': new URL('/#business', Astro.site).toString(),
+  name: site.name,
+  url: Astro.site?.toString(),
+  logo: new URL('/favicon.svg', Astro.site).toString(),
+  telephone: site.phoneE164,
+  email: site.email,
+  image: ogUrl,
+  // TODO: potvrditi radno vrijeme
+  openingHoursSpecification: [
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '07:00', closes: '17:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Saturday', opens: '08:00', closes: '13:00' },
+  ],
+  ...(site.googleReviewsUrl ? { sameAs: [site.googleReviewsUrl] } : {}),
+  address: { '@type': 'PostalAddress', addressLocality: site.city, addressCountry: 'HR' },
+  areaServed: areas.map((a) => ({ '@type': 'City', name: a })),
+  priceRange: '€€',
+};
+---
+
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <link rel="preload" as="font" type="font/woff2" href={archivoLatin} crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href={archivoLatinExt} crossorigin />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0E1013" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="hr_HR" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={imageAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogUrl} />
+
+    <!-- Pokret: uključen samo bez reduced-motion / Save-Data / ručnog isključivanja.
+         Ako JS za animacije ne javi spremnost za 3,5 s, sve se otkriva. -->
+    <script is:inline>
+      (function () {
+        var d = document.documentElement;
+        var off = false;
+        try { off = localStorage.getItem('kr-motion') === 'off'; } catch (e) {}
+        var rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var c = navigator.connection;
+        var sd = c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ''));
+        var lowMem = navigator.deviceMemory && navigator.deviceMemory <= 2;
+        if (off || rm || sd || lowMem) { d.classList.add('motion-off'); }
+        else {
+          d.classList.add('motion');
+          setTimeout(function () { if (!window.__krMotion) { d.classList.remove('motion'); d.classList.add('motion-off'); } }, 3500);
+        }
+      })();
+    </script>
+
+    <script type="application/ld+json" set:html={JSON.stringify([business, ...schema])} />
+  </head>
+  <body class="bg-grafit text-linija antialiased">
+    <a
+      href="#sadrzaj"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-white focus:px-4 focus:py-2 focus:text-tinta"
+      >Preskoči na sadržaj</a
+    >
+    <UtilityBar />
+    <Header />
+    <main id="sadrzaj">
+      <slot />
+    </main>
+    <Footer />
+    {!hideMobileBar && <MobileCtaBar />}
+
+    {
+      PROTOTYPE && (
+        <div class="pointer-events-none fixed right-3 bottom-3 z-[60] hidden rounded-[2px] border border-dashed border-redline/60 bg-grafit/90 px-2 py-0.5 font-mono text-[0.5625rem] tracking-[0.12em] text-redline uppercase lg:block">
+          Prototip · brojke, recenzije i kontakti su primjeri
+        </div>
+      )
+    }
+
+    <script>
+      import '@/lib/reveal';
+    </script>
+  </body>
+</html>

@@ -1,0 +1,294 @@
+---
+/**
+ * Kotna linija (id="dokazi") — četiri brojke postavljene kao lančana kota tehničkog crteža:
+ * pomoćne (odmjerne) linije, kotna linija s kosim crticama, broj iznad, opis ispod.
+ * Desktop (≥ md): jedna neprekinuta kota preko kontejnera.
+ * Mobitel: 2 × 2, svaka ćelija ima svoju malu kotu.
+ * Pokret (jednom): crveni pravac se nacrta ('draft'), crtice "pucnu" ('press').
+ * Odbrojavaju se SAMO cijeli brojevi s "+" (godine, krovovi). Ocjena i jamstvo se samo pojave
+ * s konačnom vrijednošću — ocjena koja "prolazi" kroz 4,1 posadila bi krivi broj.
+ * Bez sekcijskog broja (D1): traka nije sekcija s naslovom nego dokaz ispod heroja.
+ */
+import { stats } from '@/data/site';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+
+interface Props {
+  /** id sekcije (default "dokazi"); drugi id kad se traka koristi izvan naslovnice */
+  id?: string;
+}
+const { id = 'dokazi' } = Astro.props;
+
+const fmt = (n: number, d = 0) => {
+  const [int, dec] = n.toFixed(d).split('.');
+  const grouped = Math.abs(n) >= 10000 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : int;
+  return dec ? `${grouped},${dec}` : grouped;
+};
+// "+" ostaje uz broj; jedinice (" / 5", " god.") idu sitno, monom — kao mjere na crtežu
+const split = (suffix = '') => {
+  const t = suffix.trim();
+  return t === '+' || t === '%' ? { big: t, unit: '' } : { big: '', unit: t };
+};
+// odbrojava se samo cijeli broj s "+" (15+, 600+)
+const counts = (s: (typeof stats)[number]) => !(s.decimals ?? 0) && (s.suffix ?? '').trim() === '+';
+---
+
+<section id={id} class="relative isolate overflow-hidden bg-grafit py-14 md:py-16" data-kotna>
+  <div
+    class="grid-paper pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,transparent,#000_30%,#000_70%,transparent)]"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="wrap">
+    <h2 class="sr-only">Limarija Karamatić u brojkama</h2>
+    <ul class="kotna grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4 md:gap-x-0">
+      {
+        stats.map((s) => {
+          const { big, unit } = split(s.suffix);
+          const full = `${s.prefix ?? ''}${fmt(s.value, s.decimals ?? 0)}${big}${unit ? ' ' + unit : ''}`;
+          return (
+            <li class="seg relative text-center" data-seg>
+              <span class="sr-only">{full}</span>
+              <div class="upper relative pt-1" aria-hidden="true">
+                <span class="ext ext-l" />
+                <span class="ext ext-r" />
+                <p class="num relative inline-flex items-baseline text-white" data-num>
+                  {s.prefix && <span class="type-display">{s.prefix}</span>}
+                  <span class="type-display relative tabular-nums">
+                    <span class="invisible">{fmt(s.value, s.decimals ?? 0)}</span>
+                    <span class="absolute inset-0 pt-[0.06em] text-right" data-count={counts(s) ? s.value : undefined}>
+                      {fmt(s.value, s.decimals ?? 0)}
+                    </span>
+                  </span>
+                  {big && <span class="type-display">{big}</span>}
+                  {unit && <span class="unit type-mono ml-1.5 font-medium text-celik">{unit}</span>}
+                  {!s.confirmed && (
+                    <span class="absolute top-1.5 left-full ml-3 hidden xl:flex">
+                      <ExampleTag />
+                    </span>
+                  )}
+                </p>
+                <div class="dim relative h-[18px]">
+                  <span class="line" data-line />
+                  <svg class="tick tick-l" viewBox="0 0 16 16" data-tick>
+                    <path d="M3 13 13 3" />
+                  </svg>
+                  <svg class="tick tick-r" viewBox="0 0 16 16" data-tick>
+                    <path d="M3 13 13 3" />
+                  </svg>
+                </div>
+              </div>
+              <p class="label mx-auto mt-3.5 max-w-[24ch] px-2 md:max-w-none text-celik">
+                {s.label}
+                {!s.confirmed && (
+                  <span class="mt-2 block xl:hidden">
+                    <ExampleTag />
+                  </span>
+                )}
+              </p>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .num {
+    font-size: 2.5rem;
+  }
+  .num .type-display {
+    line-height: 1;
+  }
+  .unit {
+    font-size: 0.875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  @media (min-width: 48rem) {
+    .num {
+      font-size: 2.875rem;
+    }
+  }
+  @media (min-width: 80rem) {
+    .num {
+      font-size: 3.5rem;
+    }
+    .unit {
+      font-size: 1rem;
+    }
+  }
+
+  .label {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6875rem;
+    line-height: 1.45;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* pomoćne (odmjerne) linije — od vrha broja do malo ispod kote */
+  .ext {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgb(213 219 223 / 0.22);
+  }
+  .ext-l {
+    left: 0;
+  }
+  .ext-r {
+    right: 0;
+  }
+
+  /* kotna linija */
+  .line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 11px;
+    height: 1px;
+    background: var(--color-redline, #ff3b3f);
+    transform-origin: 0 50%;
+  }
+  .tick {
+    position: absolute;
+    top: 3.5px;
+    width: 16px;
+    height: 16px;
+    overflow: visible;
+    fill: none;
+    stroke: var(--color-redline, #ff3b3f);
+    stroke-width: 1.5;
+    stroke-linecap: square;
+  }
+  .tick-l {
+    left: -8px;
+  }
+  .tick-r {
+    right: -8px;
+  }
+
+  @media (min-width: 48rem) {
+    /* lančana kota: susjedne ćelije dijele pomoćnu liniju i crticu */
+    .seg + .seg .ext-l,
+    .seg + .seg .tick-l {
+      display: none;
+    }
+  }
+
+  /* stanje prije animacije — samo dok JS ne preuzme */
+  :global(.motion) [data-kotna]:not([data-kotna-ready]) .line {
+    transform: scaleX(0);
+  }
+  :global(.motion) [data-kotna]:not([data-kotna-ready]) .tick,
+  :global(.motion) [data-kotna]:not([data-kotna-ready]) .num {
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
+
+  const fmt = (n: number, d = 0) => {
+    const [int, dec] = n.toFixed(d).split('.');
+    const grouped = Math.abs(n) >= 10000 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : int;
+    return dec ? `${grouped},${dec}` : grouped;
+  };
+
+  function init() {
+    if (!motionOn()) return;
+    const draft = gsap.parseEase('draft');
+    // vrijeme (0–1) u kojem 'draft' krivulja dosegne zadani udio — da crtica pukne točno kad linija stigne
+    const at = (y: number) => {
+      for (let t = 0; t <= 1; t += 0.005) if (draft(t) >= y) return t;
+      return 1;
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-kotna]:not([data-kotna-ready])').forEach((root) => {
+      const segs = Array.from(root.querySelectorAll<HTMLElement>('[data-seg]'));
+      const lines = segs.map((s) => s.querySelector<HTMLElement>('[data-line]')!);
+      const ticksL = segs.map((s) => s.querySelector<SVGElement>('.tick-l')!);
+      const ticksR = segs.map((s) => s.querySelector<SVGElement>('.tick-r')!);
+      const nums = segs.map((s) => s.querySelector<HTMLElement>('[data-num]')!);
+      const counters = segs.map((s) => s.querySelector<HTMLElement>('[data-count]'));
+      const n = segs.length;
+
+      // broj se pojavi kad ga kota dosegne; odbrojava se samo ako ima data-count (cijeli broj s "+")
+      const count = (tl: gsap.core.Timeline, i: number, t: number) => {
+        tl.to(nums[i], { opacity: 1, duration: 0.2, ease: 'none' }, t);
+        const el = counters[i];
+        if (!el) return;
+        const target = Math.round(parseFloat(el.dataset.count ?? '0'));
+        const o = { v: 0 };
+        tl.to(
+          o,
+          {
+            v: target,
+            duration: 1.1,
+            ease: 'draft',
+            snap: { v: 1 },
+            onStart: () => (el.textContent = fmt(0)),
+            onUpdate: () => (el.textContent = fmt(o.v)),
+            onComplete: () => (el.textContent = fmt(target)),
+          },
+          t,
+        );
+      };
+
+      const mm = gsap.matchMedia();
+
+      // desktop: jedna lančana kota — linija ide s lijeva na desno, crtice na svakom odmjeru
+      mm.add('(min-width: 48rem)', () => {
+        gsap.set(lines, { scaleX: 0 });
+        gsap.set([...ticksL, ...ticksR], { scale: 0, opacity: 1, transformOrigin: '50% 50%' });
+        gsap.set(nums, { opacity: 0 });
+        const D = 0.9;
+        const proxy = { p: 0 };
+        const tl = gsap.timeline({ paused: true });
+        tl.to(
+          proxy,
+          {
+            p: 1,
+            duration: D,
+            ease: 'draft',
+            onUpdate: () => lines.forEach((l, i) => gsap.set(l, { scaleX: gsap.utils.clamp(0, 1, proxy.p * n - i) })),
+          },
+          0,
+        );
+        for (let j = 0; j <= n; j++) {
+          const tick = j === 0 ? ticksL[0] : ticksR[j - 1];
+          tl.to(tick, { scale: 1, duration: 0.22, ease: 'press' }, Math.max(0, D * at(j / n) - 0.03));
+        }
+        for (let i = 0; i < n; i++) count(tl, i, D * at(i / n) + 0.08);
+        ScrollTrigger.create({ trigger: root, start: 'top 80%', once: true, onEnter: () => tl.play() });
+      });
+
+      // mobitel: svaka ćelija svoju malu kotu, u nizu
+      mm.add('(max-width: 47.99rem)', () => {
+        gsap.set(lines, { scaleX: 0 });
+        gsap.set([...ticksL, ...ticksR], { scale: 0, opacity: 1, transformOrigin: '50% 50%' });
+        gsap.set(nums, { opacity: 0 });
+        const tl = gsap.timeline({ paused: true });
+        segs.forEach((_, i) => {
+          const t = i * 0.18;
+          tl.to(ticksL[i], { scale: 1, duration: 0.2, ease: 'press' }, t);
+          tl.to(lines[i], { scaleX: 1, duration: 0.6, ease: 'draft' }, t);
+          tl.to(ticksR[i], { scale: 1, duration: 0.2, ease: 'press' }, t + 0.56);
+          count(tl, i, t + 0.1);
+        });
+        ScrollTrigger.create({ trigger: root, start: 'top 82%', once: true, onEnter: () => tl.play() });
+      });
+
+      root.setAttribute('data-kotna-ready', '');
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+</script>

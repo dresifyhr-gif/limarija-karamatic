@@ -1,0 +1,53 @@
+---
+/**
+ * Crtež kuće iz loga (2,5D) u slojevima koje forma "Radni nalog" otključava korak po korak:
+ *  sloj 1  obris (korak 1)
+ *  sloj 2  položen lim: zabatna traka + 8 traka pokrova sa stojećim falcom (korak 2)
+ *  sloj 3  oluk, vertikala i kapa dimnjaka (korak 3)
+ *  streha  crvena linija strehe — crta se tek na slanje
+ * U HTML-u je crtež u ZAVRŠNOM stanju (bez JS-a vidi se gotova kuća).
+ */
+interface Props {
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+
+// traka pokrova i: od sljemena (74,36)+i·(13;2,5) do strehe (136,96)+i·(13;2,5)
+const strips = Array.from({ length: 8 }, (_, i) => {
+  const x0 = 74 + 13 * i;
+  const y0 = 36 + 2.5 * i;
+  return `M${x0} ${y0}L${x0 + 13} ${y0 + 2.5}L${x0 + 75} ${y0 + 62.5}L${x0 + 62} ${y0 + 60}Z`;
+});
+---
+
+<svg
+  viewBox="0 0 260 180"
+  class={`rn-drawing ${className}`}
+  data-rn-drawing
+  role="img"
+  aria-label="Crtež kuće: obris, limeni pokrov, oluk i kapa dimnjaka"
+>
+  <!-- sloj 2 ide ispod obrisa da linije ostanu oštre -->
+  <g data-layer="2" class="rn-layer">
+    {strips.map((d) => <path class="rn-strip" d={d} />)}
+    <path class="rn-barge" d="M12 96 74 36l62 60h-12L74 48 24 96Z" />
+  </g>
+
+  <g data-layer="1" class="rn-layer rn-outline" fill="none">
+    <path class="rn-ln" d="M12 96 74 36l62 60" />
+    <path class="rn-ln" d="M24 96 74 48l50 48M12 96h12m100 0h12" />
+    <path class="rn-ln" d="M28 96v58h92V96" />
+    <path class="rn-ln" d="M62 104h24v24H62ZM74 104v24M62 116h24" />
+    <path class="rn-ln" d="m74 36 104 20 62 60-104-20" />
+    <path class="rn-ln rn-ln-faint" d="M226 116v58M120 154l106 20" />
+    <path class="rn-ln" d="M34 75V42h14v19.5" />
+  </g>
+
+  <g data-layer="3" class="rn-layer">
+    <path class="rn-cap" d="M30 42h22v-4H30Zm3-4h16v-4H33Z" />
+    <path class="rn-gutter" d="m136 99.5 105 20" />
+    <path class="rn-pipe" d="M237 121v46l-5 6" />
+  </g>
+
+  <path class="rn-eave" d="M27 97 74 52l47 45m17 6.5 100 19.2" />
+</svg>

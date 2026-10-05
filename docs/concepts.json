@@ -1,0 +1,1066 @@
+[
+  {
+    "key": "cinematic-3d",
+    "name": "SLOJ PO SLOJ (Layer by Layer): a cinematic 3D roof assembly",
+    "oneLiner": "A real-time 3D Zagreb house whose anthracite roof builds itself layer by layer as you scroll (rafters, membrane, battens, sheets, flashings, chimney, snow guards, gutters, then a rain test), lit like an Apple product shot, ending in a match-cut to a real Karamatić roof with the line 'Ovo nije render.'",
+    "heroStoryboard": [
+      {
+        "t": "Load 0-0.5 s (autoplay, before any WebGL)",
+        "beat": "The screen is #0B0D0F. The pre-rendered poster of the finished house is already painted as the LCP image, at a 3/4 low angle on a dark studio background. A 1px #D7141A hairline draws left to right along the poster's eave line. It also works as the 3D loader: its scaleX follows drei useProgress, with a 0.6 s minimum."
+      },
+      {
+        "t": "Load 0.5-1.4 s",
+        "beat": "The red hairline lifts at the centre into a Λ, the red A-peak from the KARAMATIĆ logo, and locks onto the house's ridge. The WebGL canvas crossfades in over the poster with pixel-identical framing, so nothing pops. A softbox Lightformer sweeps left to right across the anthracite sheets in 1.2 s (power2.inOut) and drags a long specular streak. Idle state: the camera breathes ±0.6° yaw on an 8 s sine."
+      },
+      {
+        "t": "Load 1.0-2.0 s",
+        "beat": "The H1 'Od letve do sljemena.' (Archivo wdth 125 / wght 850) reveals word by word from under a mask (SplitText, y 105% to 0, stagger 0.08, expo.out). Then the subline 'Limeni krovovi, opšavi, dimnjaci i oluci. Zagreb i okolica.', two CTAs ([Besplatna procjena] red, [Nazovi 09x xxx xxxx] outline) and a trust row (Google rating, number of roofs, years). At the bottom: 'Pomakni dolje i složit ćemo krov pred vama', with a red chevron that drops like a sheet."
+      },
+      {
+        "t": "Scroll 0-8 % of a 640vh pin (0-51vh): ANATOMIJA",
+        "beat": "The pin starts. The headline and CTAs translate up and out, and the CTA morphs (FLIP) into the sticky-header button. The camera rises from 12° to 30° elevation, orbits +20° azimuth, fov 35 to 32. The roof explodes along the roof normal into hovering layers: membrane +0.6 m, battens +1.2 m, sheets +2.0 m, flashings +2.6 m, snow guards +3.0 m. Gutters slide 0.8 m out horizontally, the chimney cladding splits into 4 sheets and the barrel cap rises 1.5 m. power3.inOut, 60 ms stagger, top layer first."
+      },
+      {
+        "t": "8-14 % (51-90vh): hold the exploded view",
+        "beat": "Eight mono labels with SVG leader lines draw in, one per layer: 01 Konstrukcija, 02 Folija, 03 Letve, 04 Pokrov, 05 Opšavi, 06 Dimnjak, 07 Snjegobrani, 08 Oluci. The whole stack keeps turning slowly (6°) so the hold stays alive. Side copy: 'Krov nije jedan sloj. Ovo je osam razloga zašto naš ne prokišnjava.'"
+      },
+      {
+        "t": "14-17 % (90-109vh)",
+        "beat": "Every layer except the structure fades to a ghost: 8% opacity plus drei <Edges> in #8A939B, so the viewer sees what is coming. The camera eases down to a rafter-level 3/4 view. The step counter '01 / 08' appears at the left and works as a jump link."
+      },
+      {
+        "t": "17-26 % (109-166vh): 01 KONSTRUKCIJA + 02 FOLIJA",
+        "beat": "A red scan line travels up the rafters from eave to ridge as an inspection. One rafter flashes red and is swapped from old brown to fresh pine #C9A273, with the copy 'Truli rog ne pokrivamo, mijenjamo ga.' The vapour-permeable membrane then unrolls in strips from the eave upward: a clip-plane reveal along the slope, plus a vertex-sine cloth wobble that damps to 0 and visible overlap seams. Copy: 'Krov diše, voda ne prolazi.'"
+      },
+      {
+        "t": "26-34 % (166-218vh): 03 LETVE I KONTRALETVE",
+        "beat": "Counter-battens drop along each rafter (25 ms stagger). Horizontal battens then cascade bottom to top at the sheet module, with a mono callout 'razmak 350 mm'. Gutter hooks (kuke) clip onto the eave board. Showing them before the roofing is a deliberate craft-accuracy nod."
+      },
+      {
+        "t": "34-50 % (218-320vh): 04 POKROV, the money shot",
+        "beat": "The camera goes low along the eave and looks up the slope. Ghost sheets turn solid and drop column by column from the left gable. Per-instance delays live in the vertex shader. Each sheet falls 40 cm (power3.in), settles with a 1.5 cm overshoot and catches a white specular glint on impact. On 3 hero impacts there is a 0.15° camera shake, and Android gets a 6 ms navigator.vibrate tick on every 4th sheet. Then 600 screw heads pop in as a ripple from eave to ridge (scale 0 to 1, 2 ms stagger). The camera pulls back to show both planes covered. Copy: 'Crijep-lim, falc ili trapez. Antracit RAL 7016 ili boja po želji.'"
+      },
+      {
+        "t": "50-60 % (320-384vh): 05 OPŠAVI",
+        "beat": "A red cut line first traces the ridge, the valley and both verges, and the metal follows it. The ridge cap extrudes end to end (scale.x 0 to 1), the valley flashing slides down the valley, and the verge trims fold 90° over the gable edge on their hinges. The camera dollies along the ridge. Copy: 'Tu krovovi najčešće procure. Zato tu radimo najsporije.'"
+      },
+      {
+        "t": "60-70 % (384-448vh): 06 DIMNJAK",
+        "beat": "Close-up on the chimney, fov 28. Four anthracite sheets fold around the brick chimney like origami (90° hinge rotations, 120 ms stagger) and the step flashing tucks under the sheets. The barrel cap comes down on its 4 legs and settles. Real photo 8 then slides in beside it as a portrait card with a 35° pitch-wipe: 'Isti detalj. Pravi krov, Zagreb.'"
+      },
+      {
+        "t": "70-78 % (448-499vh): 07 SNJEGOBRANI",
+        "beat": "The camera rises to a drone-like, almost top-down view that mirrors photos 5 and 13. Rows of triangular snow guards pop in row by row (back.out 1.4). About 300 snow sprites slide down the steel and stop against the guards. Copy: 'Snijeg ostaje na krovu, a ne na autu ispod.'"
+      },
+      {
+        "t": "78-86 % (499-550vh): 08 OLUCI + RAIN TEST",
+        "beat": "The half-round gutter reveals along the eave from left to right (clip plane). The downpipe extrudes down to the ground and bends into the drain. RAIN TEST: about 1,500 instanced streaks fall. The steel turns wet (roughness 0.38 to 0.12, with a scrolling streak normal), water threads run into the gutter and pour out of the downpipe. A badge reads 'Testirano kišom.'"
+      },
+      {
+        "t": "86-94 % (550-602vh): ZLATNI SAT",
+        "beat": "The rain stops. The procedural environment lerps from cool studio to golden hour: key Lightformer #F2A65A, backdrop gradient #1B2430 to #F2A65A. A long shadow sweeps across the roof, and the camera returns to a higher 3/4 framing whose ridge diagonal matches photo 17."
+      },
+      {
+        "t": "94-100 % (602-640vh): MATCH-CUT",
+        "beat": "A 35° pitch-wipe running along the ridge line replaces the render with real photo 17, full-bleed in the same golden light. Large text: 'Ovo nije render.' Small text: 'Krov u Zagrebu. Napravila ekipa Karamatić.' The pin releases into the stats/projects section. A 'Preskoči animaciju' link stays visible in the corner for the whole pin."
+      }
+    ],
+    "heroMobileFallback": "The device tier is decided before any 3D byte loads. Signals: navigator.connection.saveData and effectiveType, deviceMemory, WebGL2 support, GPU renderer string via detect-gpu (with self-hosted benchmark JSON), and prefers-reduced-motion. TIER B, modern phones (iPhone 12+, Galaxy A54/S21-class): the same scene in 'lite' mode. It uses a portrait camera path that is higher and more drone-like (it mirrors photos 5 and 13), shortens the pin to 380svh and clamps DPR to 1.5. It drops post-processing and camera shake, has no haptics on iOS, and swaps the rain for an animated water line along the gutter. Snow is cut to 80 sprites and the crijep-lim steps become a normal map. Labels move to a bottom sheet with a '04 / 08' counter instead of leader lines. Lenis is off (native touch scroll) and ScrollTrigger uses ignoreMobileResize with svh units. drei PerformanceMonitor steps quality down, and if FPS stays under 30 for 3 s it hot-swaps to Tier C at the same beat. TIER C (low-end Android/Mali, Save-Data, 2G/3G, reduced motion, no WebGL2, context loss, or 3D not ready within 4 s): zero WebGL. The hero is the pre-rendered portrait poster (AVIF ~70 KB) with identical HTML headline and CTAs. Below it, a 'Sloj po sloj' horizontal snap carousel shows 8 pre-rendered stills (AVIF 35-45 KB each, lazy-loaded) with the same captions, a CSS crossfade and a 4% Ken Burns per step. The configurator becomes swatches over 15 pre-rendered images that load on tap. The stills come from the live scene via a Playwright '?still=' route, so all tiers look like one product. A Phase-1 launch can ship Tier C to everyone and switch 3D on later without changing the layout.",
+    "heroTech": "Astro page with exactly one React island: three.js + React Three Fiber + drei, driven by a single GSAP ScrollTrigger master timeline (scrub 0.8) over a pinned section, with Lenis smooth scroll on desktop only. The scene is split in two to solve sourcing and file size. (1) Static parts are modelled in Blender: the house shell (10x8 m Zagreb-suburb house, attic, 35° gable roof plus a cross-gable so a real valley exists), the brick chimney and the barrel chimney cap. AO is baked to vertex colours, so no texture is needed, and the export goes through glTF-Transform CLI (meshopt, quantize, prune, webp) to stay at or under 250 KB. (2) Every animatable roof layer is generated in code, so it costs nothing to download and the profile switcher only has to swap one sheet geometry (crijep-lim / falcani lim / trapez). InstancedMesh covers rafters, counter-battens, battens, gutter hooks, sheets, screws and snow guards. ExtrudeGeometry along roof edges builds the ridge, valley and verge flashings, and TubeGeometry builds the gutter and downpipe. All per-instance motion (drop, settle, fold, pop) runs in the vertex shader via three-custom-shader-material on MeshPhysicalMaterial. Each instance carries aDelay/aAxis attributes and each layer has one uProgress uniform. GSAP tweens about 20 numbers in a ref, with no per-frame React state. Lighting uses no HDR file: a drei <Environment> is built from 3-4 <Lightformer> softbox strips (animated for the light sweep, lerped to golden hour at the end), with AgX/ACES tone mapping and a one-frame baked AccumulativeShadows. Materials: steel MeshPhysical #383E42 (metalness 0.55, roughness 0.38, clearcoat 0.25); walls matte #ECEBE6 like an architect's maquette, which echoes the logo's white house; timber #C9A273. Labels are a DOM overlay positioned by projecting 8 anchor points per frame, so they are crisp, real, indexable HTML. One canvas serves the whole page through drei <View>: the hero, the services mini-roof and the configurator share one WebGL context. Post-processing is desktop only: SMAA, faint bloom on red highlights, vignette. Camera choreography is a set of {pos, target, fov} keyframes on a CatmullRom path, tuned with a dev-only leva 'log camera' panel. The poster and fallback stills are rendered from the same scene by Playwright and encoded with sharp, so the poster-to-canvas swap is pixel-identical. References: Apple's exploded product views, Rivian's configurator colour swaps, and Igloo Inc's scroll-driven 3D.",
+    "homepageSections": [
+      {
+        "name": "Sticky header + mobilna akcijska traka",
+        "content": "A vector redraw of the logo: small tracked 'LIMARIJA' over 'KARAMATIĆ' in Archivo Expanded Black, with the red Λ standing in for the second A. Nav: Usluge, Radovi, Konfigurator, O nama, Kontakt. The phone number is visible on desktop, next to a red 'Besplatna procjena' button. On mobile a 64px bottom bar holds Nazovi | WhatsApp | Viber | Procjena.",
+        "interaction": "The header is transparent over the hero and turns #0B0D0F at 85% with backdrop blur after the anatomy beat. The hero CTA flies into the header button (GSAP Flip). The mobile bar slides up after 1.5 s, hides on fast scroll-down and returns on scroll-up. Every tap is tracked as a conversion event."
+      },
+      {
+        "name": "Hero: Sloj po sloj (3D)",
+        "content": "H1 'Od letve do sljemena.', a subline with services and area, two CTAs, a trust row, the pinned 3D assembly (8 layers plus rain test plus golden hour) and a persistent 'Preskoči animaciju' link.",
+        "interaction": "Scroll-scrubbed assembly as in the storyboard. The '0X / 08' step counter is clickable and jumps to ScrollTrigger labels. Keyboard users get a skip link. Reduced-motion users get stills."
+      },
+      {
+        "name": "Ovo nije render + brojke",
+        "content": "Full-bleed photo 17, landed by the match-cut, with 4 counters: years in business, roofs covered, m² of sheet installed, Google rating (real client numbers only). A 'Pogledaj sve radove' link.",
+        "interaction": "The counters roll like odometer digits in JetBrains Mono when they come into view. The photo has a 6% parallax. The grain overlay matches the render's grain so the cut feels seamless."
+      },
+      {
+        "name": "Usluge: Što radimo",
+        "content": "6 services: Limeni krovovi (crijep-lim, falc, trapez); Popravci i sanacije; Opšavi atika i ravni krovovi; Dimnjaci (obloga i kape); Oluci i vertikale; Snjegobrani i krovna oprema (snow guards, roof hatches, lightning-wire routing). Desktop layout: a sticky 3D mini-house on the left (drei View, same WebGL context) and 6 large numbered rows on the right.",
+        "interaction": "Hovering or focusing a row lights that exact roof part in Karamatić red (an emissive pulse) and rotates the mini-house toward it. The row expands with a portrait photo revealed by the 35° pitch-wipe. On mobile there is no 3D: stacked photo cards that expand on tap, each with a 3-5 s muted craft micro-loop once the client shoots them."
+      },
+      {
+        "name": "Složi svoj krov (konfigurator)",
+        "content": "Choose a profile (Crijep-lim / Falcani lim / Trapezni lim), a colour (RAL 7016 antracit, 9005 crna, 8017 smeđa, 3011 crvena, 9006 srebrna) and extras (snjegobrani on/off, polukružni or četvrtasti oluci). A summary line reads e.g. 'Falcani lim · RAL 7016 · snjegobrani · polukružni oluci'.",
+        "interaction": "A profile change triggers a domino flip: every sheet rotates 180° in a wave and shows the new profile. Choosing falc also slides full timber boarding (daščana oplata) in underneath, a credibility detail. A colour change pours down from the ridge as a shader threshold wipe. 'Zatraži ponudu za ovaj krov' carries the configuration into the form through sessionStorage (no personal data in the URL). Tier C uses pre-rendered images."
+      },
+      {
+        "name": "Radovi: Krovovi koje smo pokrili",
+        "content": "9 portrait project cards (photos 5, 4, 10, 8, 16, 13, 1, 2, 18), each with neighbourhood, type, m² and year. Filters: Kosi krovovi / Ravni krovovi i atike / Dimnjaci / Popravci.",
+        "interaction": "On desktop, a horizontal drag rail with momentum (GSAP Observer/Draggable). On mobile, a native scroll-snap rail. Cards reveal with the pitch-wipe. Tapping opens a case study with a before/after slider where pairs exist."
+      },
+      {
+        "name": "Razlika je u detaljima",
+        "content": "3 macro shots with annotated hotspots: photo 7 (mitered V-corner of the parapet capping), photo 8 (chimney cladding and cap), photo 1 (valley flashing). The craft notes are written with the owner and only include claims he confirms.",
+        "interaction": "Red hotspot dots pulse. Hover or tap opens a mono tooltip, and the photo zooms from 1.0 to 1.15 toward the hotspot (transform-origin set to the hotspot). A 1px red leader line draws from the dot to the tooltip."
+      },
+      {
+        "name": "Kako radimo",
+        "content": "4 steps: 1 Poziv ili poruka, 2 Besplatan izlazak i mjerenje, 3 Pisana ponuda (deadline confirmed by the client), 4 Montaža, čišćenje i jamstvo. Photo 6 (worker at a roof junction) is the human image. A 'Tri dana u 15 sekundi' timelapse is added once it is shot.",
+        "interaction": "A horizontal red progress line fills with scroll and the step numbers tick over. The timelapse autoplays muted only while in view (IntersectionObserver), poster first, preload none."
+      },
+      {
+        "name": "Recenzije i jamstvo",
+        "content": "Real Google reviews pulled at build time, the warranty term, insurance, and supplier logos (with permission).",
+        "interaction": "A slow auto-marquee that pauses on hover or touch, plus a star-rating counter. No arrow carousels."
+      },
+      {
+        "name": "Gdje radimo",
+        "content": "Photo 10 (flat roof with the Zagreb/Medvednica panorama) as the background, with a stylised SVG map of Zagreb and surroundings on top (Sesvete, Dubrava, Velika Gorica, Samobor, Zaprešić, Dugo Selo; the client confirms the area).",
+        "interaction": "An 'Upišite mjesto' input instantly answers whether the place is in the zone, using a client-side list. Outside the zone it says 'Nazovite, dogovorit ćemo se'. No Google Maps embed."
+      },
+      {
+        "name": "Česta pitanja",
+        "content": "6-8 real questions: duration, whether old tiles must come off, rain/winter work, warranty, rough price drivers, permits, noise of a metal roof.",
+        "interaction": "An accordion with an animated height transition, plus FAQPage JSON-LD."
+      },
+      {
+        "name": "Besplatna procjena + footer",
+        "content": "A 3-step form. 1: what is needed (chips: novi krov, popravak, opšavi/atika, dimnjak, oluci, drugo). 2: location plus up to 6 roof photos uploaded from the phone. 3: name, phone, when to call. Big alternatives beside it: Nazovi / WhatsApp / Viber. Footer: company data (OIB, address), working hours, privacy policy.",
+        "interaction": "Steps slide horizontally with the red line as the progress bar. Cloudflare Turnstile runs invisibly. On success, a tiny ridge cap lands on a roof icon and a Telegram message reaches the owner's phone within seconds."
+      }
+    ],
+    "otherPages": [
+      "/usluge/limeni-krovovi: crijep-lim, falcani lim and trapezni lim, each with a small 3D cross-section viewer (a rotating sheet in a drei View), RAL swatches, and a gallery of photos 17, 5, 13, 16, 18",
+      "/usluge/popravak-krova: leak repair and roof rehabilitation, with an urgent CTA 'Prokišnjava? Nazovite odmah' and before/after sliders",
+      "/usluge/opsavi-atika-ravni-krovovi: parapet capping and trapezoidal fields on flat roofs, using photos 4, 10, 2, 3, 7, 19, 20",
+      "/usluge/dimnjaci: chimney cladding and caps, with photo 8 and the chimney beat as a standalone short 3D/MP4 loop",
+      "/usluge/oluci-i-vertikale: gutters and downpipes, half-round vs box profile",
+      "/usluge/snjegobrani-i-krovna-oprema: snow guards, roof hatches/safety hooks, lightning-wire routing",
+      "/radovi, plus /radovi/[slug] case studies managed in Keystatic: problem, solution, material, duration, before/after, timelapse",
+      "/konfigurator: full-screen 'Složi svoj krov' with a shareable config and quote handoff",
+      "/o-nama: owner, crew, workshop, vehicles, roof safety (harnesses), insurance",
+      "/besplatna-procjena: form, phone, WhatsApp/Viber, working hours, service area",
+      "Local landing pages with real projects per area only: /limarija-zagreb, /limarija-velika-gorica, /limarija-samobor",
+      "/pravila-privatnosti (GDPR) and /podaci-o-tvrtki (OIB, court register, VAT)",
+      "404 'Ovdje nema krova': a lone chimney cap swinging gently, with a link home"
+    ],
+    "signatureMoments": [
+      "Crvena linija to Λ: the loader is a 1px red eave line that folds into the red A-peak of the KARAMATIĆ logo and locks onto the 3D ridge. Brand and loader become one gesture.",
+      "Anatomija krova: the finished roof floats apart into 8 labelled layers, an Apple-style exploded view of a Zagreb roof.",
+      "Kaskada lima: sheets drop column by column and settle with a glint, then 600 screw heads pop in a ripple from eave to ridge, with a 6 ms haptic tick on Android.",
+      "Dimnjak origami: four sheets fold around the brick chimney, the barrel cap lands, and real photo 8 slides in beside it ('Isti detalj. Pravi krov.').",
+      "Snijeg ostaje na krovu: snowfall slides down the steel and stops against the snow guards, a funny and instantly understood benefit.",
+      "Testirano kišom: rain wets the steel (roughness drops, sheen streaks) and water runs into the gutter and out of the downpipe.",
+      "Ovo nije render: studio light turns to golden hour, and a 35° pitch-wipe along the ridge match-cuts the render into real photo 17.",
+      "Domino-flip konfigurator: a profile change flips every sheet in a wave, choosing falc slides boarding in underneath, and a RAL change pours down from the ridge. Then 'Zatraži ponudu za ovaj krov' carries the choice into the form.",
+      "Mini-krov u uslugama: hovering a service lights that exact part of the roof in Karamatić red."
+    ],
+    "palette": [
+      {
+        "name": "Noć (studio black)",
+        "hex": "#0B0D0F",
+        "use": "Hero/studio background, dark sections, the 3D backdrop"
+      },
+      {
+        "name": "Grafit",
+        "hex": "#16191C",
+        "use": "Alternate dark sections, cards, mobile action bar, header after scroll"
+      },
+      {
+        "name": "Antracit RAL 7016",
+        "hex": "#383E42",
+        "use": "Base colour of the 3D steel, 1px hairlines on dark, secondary buttons. It is the client's real product colour (Wikipedia's RAL table lists #293133; tune against a physical sample)"
+      },
+      {
+        "name": "Čelik",
+        "hex": "#8A939B",
+        "use": "Secondary text on dark (6.2:1 on Noć), ghost-layer edges, mono labels"
+      },
+      {
+        "name": "Cink",
+        "hex": "#D9DDE0",
+        "use": "Dividers and muted UI on light sections"
+      },
+      {
+        "name": "Vapno (off-white)",
+        "hex": "#F4F3EF",
+        "use": "Light section background and primary text on dark. The 3D house walls use the slightly darker #ECEBE6 (maquette look)"
+      },
+      {
+        "name": "Karamatić crvena",
+        "hex": "#D7141A",
+        "use": "The red line, the Λ, primary CTA background (white text passes AA at 5.2:1), active states, highlighted 3D parts. The only colour that animates"
+      },
+      {
+        "name": "Crvena tamna",
+        "hex": "#A50F14",
+        "use": "CTA hover/pressed and small red text on light backgrounds (7:1 on Vapno)"
+      },
+      {
+        "name": "Zlatni sat",
+        "hex": "#F2A65A",
+        "use": "Outro golden-hour lighting and gradients around photo 17 only. Never used for UI"
+      },
+      {
+        "name": "Bor (pine)",
+        "hex": "#C9A273",
+        "use": "Rafters and battens in the 3D scene only"
+      }
+    ],
+    "typography": "Display: Archivo (Google Fonts, variable, wdth 62-125 and wght 100-900, includes latin-ext). Headlines are set at wdth 125, wght 800-900, sentence case, tracking -0.02em, leading 0.95, fluid H1 clamp(2.75rem, 7vw + 1rem, 7.5rem). The wide, heavy cut matches the logo's 'KARAMATIĆ', so the logo redraw can be built from Archivo itself plus the red Λ, unifying brand and site. Body/UI: Inter (variable, latin-ext), 16-18px, leading 1.55. Technical labels: JetBrains Mono (latin-ext) for layer labels, the '04 / 08' counters, dimensions ('razmak 350 mm'), RAL codes and the counters' odometer digits. This mono layer is what makes the page read 'engineered' rather than 'brochure'. Load: self-host via Fontsource (@fontsource-variable/archivo with the wdth+wght file, @fontsource-variable/inter, @fontsource/jetbrains-mono). Always load the latin AND latin-ext subsets, or subset one file with pyftsubset covering U+0000-00FF plus U+0106-0107 (Ćć), U+010C-010D (Čč), U+0110-0111 (Đđ), U+0160-0161 (Šš), U+017D-017E (Žž). Preload only the two above-the-fold woff2 files, use font-display swap with size-adjusted fallbacks to avoid CLS, and test 'Ć' and 'Đ' at wdth 125 / wght 900 before sign-off.",
+    "texturesAndMotion": "The material language is the client's actual product: anthracite coated steel against a black studio, with one red line. The 3D look is 'architect's maquette meets product shot': a matte off-white house, physically based anthracite steel with a soft clearcoat, pine timber, and no attempt at photoreal grass, trees or sky (that looks cheap and is heavy). The 3-4 procedural softbox strips mean every camera move drags a long specular streak across the sheets, and that streak is where the premium feeling comes from. UI textures: (1) a 'falc' seam pattern, vertical lines every 48px at 4% white on dark sections (CSS repeating-linear-gradient); (2) static 3% film grain (a 128px tiled PNG) over both photos and renders, so phone photos and CG live in one world; (3) 1px #383E42 hairlines. No brushed-metal gradients, bevels or glassmorphism, even though the logo has them. Motion rules: metal has mass. Heavy things fall (power3.in) and settle with at most 2% overshoot, and nothing is springy. UI enters with expo.out over 0.7-0.9 s. Text reveals by masked words or lines (SplitText), never letter scrambles. Every image reveal uses the same 35° 'pitch-wipe' clip-path as the 3D roof pitch; this is the site-wide signature. The red line is the only animated colour: it draws section dividers, form progress and hotspot leaders. Durations: micro 150-200 ms, UI 600-900 ms, 3D beats scroll-scrubbed (scrub 0.8). Scroll: Lenis lerp 0.09 on desktop, native scrolling on touch. prefers-reduced-motion: no pin, no smooth scroll, stills plus opacity fades only.",
+    "croatianHeadlines": [
+      "Od letve do sljemena.",
+      "Krov se ne radi odoka.",
+      "Vani pljušti. Kod vas suho.",
+      "Svaki šaraf na svom mjestu.",
+      "Sloj po sloj. Ni kap ne prolazi."
+    ],
+    "photoPlan": "REALITY CHECK: all 19 photos are WhatsApp exports (1200x1600 or 900x1600, 170-510 KB). They are fine for cards but too small and too compressed for full-bleed desktop. Before anything else, ask for the phone originals through a Google Photos or iCloud 'original quality' link, not WhatsApp or Viber. PLACEMENT: 17 (golden hour, snow guards) is the 'Ovo nije render' match-cut full-bleed, the OG/social image and the hero of the Limeni krovovi page. 1 (valley flashing, worker on the ridge) is the 'uvala' hotspot in Detalji and the Popravak page image. 8 (clad chimney with barrel cap) is the inset card in the hero chimney beat, the Dimnjaci page image and a Detalji hotspot. 10 (flat roof with Zagreb/Medvednica panorama) is the 'Gdje radimo' background and the Opšavi/ravni krovovi card. 4 (trapez field inside the capping, street) is the Opšavi page hero and appears in Radovi. 5 (snow guards, crisp sky) is the Snjegobrani card and the configurator's 'real example'. 7 (mitered V-corner) is the Detalji craft close-up, cropped tight and darkened at the edges to hide the messy yard. 13 and 12 go in Radovi. 16 and 18 (standing seam) go on the Falcani lim card/page; 16 keeps the drill as 'work in progress' authenticity. 6 (worker at a junction) is the human shot in 'Kako radimo'. 2, 3, 11, 19 and 20 are for case studies and the 'Montaža' step (tools on gravel reads as honest). 14 and 15: do not use (finger and shadow). 9: redraw as a vector. TREATMENT: one Lightroom preset for every photo (neutral-cool white balance, +shadows, -highlights, light clarity, no HDR look). Crop to 4:5 for cards and 9:16 for mobile/stories. Heal protective-film residue and fingerprints only; never retouch the workmanship itself. EXTRA SHOOT (one day with a photographer and a licensed drone operator, or spread over the next 2-3 jobs): (a) Drone at golden hour over one finished pitched roof and one flat-roof job: top-down rise, slow 180° orbit, and a pull-back from the ridge to the neighbourhood with Medvednica, in 4K60, both 16:9 and 9:16. The operator must be registered with the HACZ and respect the Zagreb airport control zones and the neighbours' privacy. (b) A timelapse of one full roof replacement from a fixed high point (old phone or GoPro on a clamp, 1 frame every 5-10 s, across all days). This becomes 'Tri dana u 15 sekundi' and proves the 3D story is real. (c) Before/after pairs taken from the exact same marked spot, for repair work. (d) Craft macro clips, 3-5 s at 60/120 fps: a sheet in the bending brake (savijačica), a seamer closing a falc, a screw with its EPDM washer biting in, a cap being riveted. These become muted micro-loops in the service cards. (e) A team portrait in workwear by the van, one shot on a roof in harnesses (safety sells), and an owner portrait for O nama. (f) A flat sample of their actual RAL 7016 sheet photographed in sun and in overcast, as the reference for matching the 3D steel material. RULES: peel the protective film before final shots, clean the lens, shoot every hero view in both landscape and portrait, no 0.5x ultra-wide for heroes, and shoot at golden hour or in bright overcast.",
+    "stack": [
+      "Astro (static output, islands) + TypeScript: the rest of the site ships close to 0 KB JS",
+      "@astrojs/react: a single React island for the 3D canvas",
+      "three.js + @react-three/fiber + @react-three/drei (View, Environment + Lightformer, PerformanceMonitor, AdaptiveDpr, Edges, AccumulativeShadows, useGLTF with meshopt)",
+      "three-custom-shader-material (per-instance GPU animation on MeshPhysicalMaterial)",
+      "@react-three/postprocessing, desktop tier only (SMAA, Bloom, Vignette)",
+      "GSAP + ScrollTrigger + SplitText + Flip + Observer (all GSAP plugins are free since 2025)",
+      "Lenis smooth scroll (desktop only, synced to the ScrollTrigger ticker)",
+      "detect-gpu with self-hosted benchmark JSON, plus the Network Information API and deviceMemory for tiering",
+      "Blender (house shell, chimney, barrel cap; AO baked to vertex colours) + glTF-Transform CLI (meshopt, quantize, prune, webp)",
+      "leva + r3f-perf, dev only (camera keyframe logger, triangle and draw-call budgets)",
+      "Playwright + sharp: render the poster and Tier C stills from the live scene via a ?still= route, encoded to AVIF/WebP",
+      "Tailwind CSS v4 + Fontsource (Archivo variable, Inter variable, JetBrains Mono; latin + latin-ext)",
+      "Keystatic (git-based CMS, Astro integration) so the client can add projects and photos",
+      "Astro Actions or a single serverless function: Resend email + Telegram bot push to the owner, Cloudflare Turnstile, roof-photo uploads to Cloudflare R2",
+      "Plausible or Umami (cookieless, GDPR-friendly) with call/WhatsApp/Viber/form events",
+      "Hosting on Cloudflare Pages or Vercel; JSON-LD RoofingContractor + FAQPage schema; Lighthouse CI on deploy"
+    ],
+    "performancePlan": "RULE: the 3D is a progressive enhancement that never touches LCP. BUDGETS (mobile, 4G, Moto G/Galaxy A class): LCP ≤ 2.0 s, CLS ≤ 0.05, INP ≤ 200 ms. Critical path ≤ 180 KB: HTML, inlined critical CSS, 2 preloaded woff2 subsets, and the hero poster AVIF (~70 KB portrait / ~90 KB landscape, art-directed <picture>, fetchpriority=high). The poster is rendered from the same scene, so the canvas crossfades in pixel-identically once its first frame has rendered. 3D LOADING: only Tier A/B ever download 3D, through a dynamic import after window load + requestIdleCallback or after the first scroll/touch, whichever comes first. 3D payload ≤ 700 KB total. JS ≤ 260 KB gzip (three tree-shaken, R3F, only the drei modules used, CSM); postprocessing is a separate chunk for desktop only. GLB ≤ 250 KB with meshopt + quantization (the meshopt decoder is tiny, unlike Draco's WASM). At most 2 WebP textures, ≤ 150 KB (membrane print, step/screw normal map). No HDR file: the environment is procedural Lightformers. RUNTIME: ≤ 40 draw calls, because everything repeated is an InstancedMesh. ≤ 250k triangles on desktop and ≤ 70k on mobile, where the crijep-lim steps become a normal map. Shadows are baked once (frames=1) and there are no realtime shadow maps. DPR clamped to [1, 1.75] on desktop and [1, 1.5] on mobile. PerformanceMonitor + AdaptiveDpr degrade quality, with automatic fallback to stills under 30 fps. frameloop='demand' plus IntersectionObserver stop rendering once the hero and configurator are off-screen. During scroll, GSAP writes only to refs and uniforms, never to React state. A webglcontextlost handler swaps to the poster. Use svh units and ignoreMobileResize so the iOS address bar can't break the pin. REST OF SITE: static Astro HTML with zero JS by default. Images through <Picture> as AVIF/WebP with srcset, lazy below the fold, with blur placeholders. Video loops ≤ 1.2 MB (H.264 + AV1), poster first, preload=none, playing only in view. No Google Maps embed (static SVG map), no chat widgets, no cookie-based trackers, so there is no consent wall. QA on real devices: iPhone 12 Safari, Galaxy A54, a Redmi Note with a Mali GPU, and an old Intel UHD laptop. Lighthouse CI budgets fail the build if they regress.",
+    "risks": [
+      "Scope: polishing the scroll choreography can eat weeks. Lock the storyboard in week 1, build the Tier C stills hero first so the site is always shippable, and timebox the 3D to about 12 dev days. Strongly consider launching Phase 1 with the stills hero and turning the 3D on in Phase 2 behind the same poster.",
+      "Mid-range Android GPUs (Mali) and thermal throttling can make a long pin janky and hot. Mitigate with device tiers, lite mode, PerformanceMonitor auto-fallback and the shorter 380svh mobile pin.",
+      "iOS Safari quirks: address-bar resizes break pins, the WebGL context is lost when the tab is backgrounded, and memory is capped. Mitigate with svh units, ignoreMobileResize, a context-loss handler and tiny textures.",
+      "Cheap-looking 3D destroys the premium impression faster than having no 3D. Don't attempt photorealism. Spend the time on lighting and materials, match the steel against a real sheet sample, and get the client to approve one still frame before animating anything.",
+      "Craft accuracy: roofers and informed homeowners will spot a wrong build order. For example, falc needs full boarding plus a separating layer, and batten spacing follows the sheet manufacturer. The owner must sign off on the layer stack and on every caption.",
+      "A long pinned intro is a problem for people who only want to call. Keep the sticky call/WhatsApp/Viber CTAs visible throughout, plus 'Preskoči animaciju', step-counter jump links, and a total pin of at most 640vh on desktop.",
+      "SEO and accessibility: text inside a canvas is invisible. All headlines and captions must be real HTML, the canvas aria-hidden, a keyboard skip link provided, and the reduced-motion path fully usable.",
+      "Weak source assets: WhatsApp-compressed photos with protective film and scratches, and an AI-generated raster logo with brushed-metal effects. The logo needs a vector redraw, and its ownability should be checked.",
+      "Content truth: years in business, number of roofs, warranty and reviews must come from the client. Placeholder numbers must not ship.",
+      "Drone footage in Zagreb needs a registered operator, airport control-zone clearance (Pleso/Lučko) and respect for neighbours' privacy.",
+      "Library churn (R3F/drei major versions, React versions). Pin exact versions and keep all 3D isolated in one island so it can be swapped or switched off."
+    ],
+    "effortDaysOneDev": 30
+  },
+  {
+    "key": "blueprint-to-steel",
+    "name": "NACRT → LIM (Blueprint → Steel): 'Mjera do milimetra'",
+    "oneLiner": "The whole site works like a technical drawing that comes to life. Every roof starts as a dimensioned redline sketch on millimetre paper. A virtual abkant press bends it into anthracite steel, and then it turns into a real Karamatić job. Most Croatian roofers say 'kvalitetno i povoljno'. This brand instead sells one loud, provable idea in the American style: MJERA DO MILIMETRA. My opinion: the drawing language is the hook, and the real photos, a phone number visible at all times and plain Croatian copy do the selling.",
+    "heroStoryboard": [
+      {
+        "t": "Layout (desktop ≥1024px)",
+        "beat": "12-col grid on graphite #0E1013 with a CSS millimetre grid (no images). The left 5 columns hold the mono eyebrow 'LIMARSKI RADOVI · ZAGREB I OKOLICA', the H1 'SEDAM PUTA MJERIMO. JEDNOM SAVIJEMO.', a subline, a red CTA 'Besplatna procjena', an outline CTA 'Pošalji slike na WhatsApp' and a mono trust row ('★ [4,9] Google · [600]+ krovova · jamstvo [10] god.', placeholders until the client confirms). The right 7 columns hold a 'drawing sheet' (inline SVG, viewBox 0 0 1200 900) that bleeds off the right edge, with a sastavnica (title block) in its bottom-right corner. A vertical mm scroll-ruler runs down the far right edge. The H1 is already painted at t=0 and is NEVER animated from opacity 0, so it counts as the LCP element."
+      },
+      {
+        "t": "0.00–0.40s",
+        "beat": "The sheet frame draws clockwise from the top-left (DrawSVG 0→100%, power2.inOut). Corner registration crosshairs scale 0→1 (0.2s, stagger 0.05). Title-block cells rule in, and mono fields type in with SplitText chars (stagger 0.012): 'LIMARIJA KARAMATIĆ · CRTEŽ 001 · MJERILO 1:50 · LIST 1/1 · STATUS: —'."
+      },
+      {
+        "t": "0.30–1.40s",
+        "beat": "Construction and house linework. Dashed axes sweep in: the ground line left→right, then the symmetry axis bottom→top (0.5s). Then walls, the main gable, the window cross, the chimney and the second gable (the same oblique 2.5D house as the logo) draw with DrawSVG: stroke #D5DBDF, 1.25px non-scaling-stroke, stagger 0.06, power1.inOut. A 6px red pen-dot rides the leading edge of each path like a plotter head (position from getPointAtLength in onUpdate)."
+      },
+      {
+        "t": "1.10–2.00s",
+        "beat": "Redline dimensioning. Three dimension lines grow from their midpoints (scaleX 0→1, 0.45s, power3.out) with 45° tick ends popping in, and extension lines drop down. Values count up in IBM Plex Mono #FF3B3F with tabular-nums: '12 450', '7 800'. A pitch arc draws, followed by '35°'. Leader lines with circled ①–④ draw out to the snjegobran, sljeme, opšav dimnjaka and oluk positions, and their labels type in."
+      },
+      {
+        "t": "1.90–2.30s",
+        "beat": "Flat sheet. Above the walls, a flat parallelogram sheet draws in outline, labelled 'RAZVIJENA ŠIRINA 6 240 mm', with a dashed red fold line on its centre and 'PREGIB · 2× 35°'. It slides down 24px onto the fold axis (0.3s, power2.out)."
+      },
+      {
+        "t": "2.30–2.75s: ABKANT HIT (signature)",
+        "beat": "The press beam drops from above the frame along two guide rails: y −260→0 in 0.16s, power4.in. The beam is a black upper tool whose die tip is the red Λ taken from the 'A' in KARAMATIĆ. On contact, the sheet MorphSVGs from flat to Λ: the two halves rotate about the ridge in 0.22s with CustomEase 'press' (fast in, hard stop, 2% recoil). A 1px white flash line runs along the ridge (opacity 1→0, 0.15s). The whole sheet group recoils y +2→0 (0.12s). The beam then retracts (0.35s, power2.out) and fades, and a red mono tick '✓ 35° · ±0,5 mm' blips beside the ridge for 0.8s."
+      },
+      {
+        "t": "2.75–3.30s",
+        "beat": "The folded Λ drops 40px onto the walls with the press ease. Roof faces then fill with brushed anthracite (a <pattern> tile) via a clipPath rect sweeping eave→ridge (0.35s, stagger 0.1). The front plane is #2B3034 and the side plane #383E42, which sells the 2.5D. Standing-seam lines draw ridge→eave (DrawSVG, stagger 0.015). Linework under the steel darkens from #D5DBDF to #1A1D20, so the drawing becomes an object."
+      },
+      {
+        "t": "3.30–3.90s",
+        "beat": "Trim. The red brand stripe under the eaves draws in (DrawSVG, #D7141A, 3px), exactly as in the logo. The gutter extrudes (scaleX from the left) and the downpipe drops (scaleY, 0.25s). The chimney cladding fills and its cap mini-folds (MorphSVG, 0.18s press). Snow guards pop in row by row (scale 0→1, stagger 0.03)."
+      },
+      {
+        "t": "3.90–4.50s",
+        "beat": "Glint and stamp. One specular band (linearGradient #E8ECEF at 0→22%→0 opacity) sweeps diagonally across all steel faces via gradientTransform (0.6s, power2.inOut). Dimensions and callouts dim to 40%, so they stay as a ghost overlay. A red 'IZVEDENO' rubber stamp lands in the title block: scale 1.4→1, rotate −6°, 0.14s, with a 1px ink double-offset."
+      },
+      {
+        "t": "4.50s → idle",
+        "beat": "Pointer parallax applies only on desktop with pointer:fine: grid ±3px, linework ±6px, steel ±10px and callouts ±14px, each via gsap.quickTo (0.6s). Over the drawing only, the cursor becomes a crosshair with a live mono X/Y readout. A '↻ PONOVI CRTEŽ' mono button in the title block replays the intro. The intro never blocks scroll: if the user scrolls before 4.5s, the timeline jumps to progress(1) over 0.3s."
+      },
+      {
+        "t": "Scroll 0–40% (desktop: hero pinned +=120%, ScrollTrigger scrub 0.6)",
+        "beat": "Reality bleeds in. Photo 17 (golden hour, AVIF, fetched after window load) fades in inside an SVG <mask> made of the same roof-face polygons. The steel texture under it fades out (1→0), and the linework turns white at 70%. The drawing now IS the real roof."
+      },
+      {
+        "t": "Scroll 40–80%",
+        "beat": "The mask path MorphSVGs from the roof shape to the full drawing-sheet rectangle, and the photo counter-zooms 1.12→1. Callouts ① and ③ re-target their leader-line endpoints onto real features in 17: the snow guards at about (83%, 62%) and the brick chimney at about (49%, 17%). The title block updates to 'STATUS: IZVEDENO · ZAGREB · 2025' (placeholder)."
+      },
+      {
+        "t": "Scroll 80–100%",
+        "beat": "Hand-off. The H1 column moves y −12vh and opacity 1→0.25. The scroll-ruler readout reaches '1 200 mm'. The next section's dimension chain starts drawing at the bottom edge, then the hero unpins."
+      }
+    ],
+    "heroMobileFallback": "This mode applies below 1024px or with pointer:coarse, switched via gsap.matchMedia. Layout order: a 56px header, then the drawing panel at 100vw × 46svh (the SVG viewBox switches to a centred 900×900 crop of the house), then the eyebrow, H1, subline and two CTAs. On a 360×740 screen all of that is visible at first paint. A sticky bottom bar (Nazovi / WhatsApp / Ponuda, 64px, safe-area aware) is present from t=0 and is never animated in. The 'short' intro takes 3.2s: frame 0–0.25s → house linework 0.2–1.0s (no construction axes, no pen-dot) → 2 dimensions + 2 callouts 0.9–1.4s → abkant hit 1.4–1.75s (kept: it is the signature and costs almost nothing) → steel fill + seams 1.75–2.5s → red stripe + glint + IZVEDENO stamp 2.5–3.2s. There is no pin, no scrub, no pointer parallax, no custom cursor and no photo inside the hero, which saves about 80KB. The next block is the 'Iz nacrta na krov' card instead: photo 17 (800w AVIF) with the same white linework and callouts, which wipe in once on enter (clip-path, 0.6s). Tapping the drawing replays it. The intro is skipped and the finished frame is shown when any of these is true: prefers-reduced-motion, navigator.connection.saveData, deviceMemory ≤ 2, hardwareConcurrency ≤ 4, or the intro has already played this session (sessionStorage). Without JS, the finished drawing is the default markup, so nothing breaks.",
+    "heroTech": "One inline SVG (viewBox 0 0 1200 900, about 35KB raw / 10KB gzip) authored in Figma or Illustrator from the vector redraw of the logo house. It uses an oblique 2.5D view: chimney on the left, main gable, standing-seam plane, second gable on the right, gutter and downpipe. The hero is literally the logo being built.\n\nLayer groups with IDs: #grid, #frame, #titleblock, #construct, #house-lines, #dims, #callouts, #flat-sheet (two polygons, halfL/halfR), #press-beam (bar + guide rails + red Λ die), #roof-faces, #seams, #trim (red stripe, gutter, downpipe, chimney cladding/cap), #snowguards, #glint, #stamp and #photo-mask. In #roof-faces each polygon is filled with a <pattern> holding one 512px brushed-anthracite AVIF tile, plus a per-face shade overlay. #glint is a <linearGradient> animated via gradientTransform. #photo-mask is a <mask> that reuses the roof-face paths, with an <image> whose href is set to 17.avif after load. All strokes use vector-effect: non-scaling-stroke.\n\nThe markup ships in the FINISHED state. An inline head script adds html.js-anim, and gsap.set() rewinds the layers to empty before the SVG becomes visible. [data-anim] hides it until then, with a 300ms failsafe.\n\nLibraries: GSAP 3.13+ (all plugins free since the 2025 Webflow change): core, DrawSVGPlugin (strokes), MorphSVGPlugin (flat sheet → Λ roof, chimney cap, roof mask → rect), SplitText (title block and labels), CustomEase ('press' = M0,0 C0.5,0 0.62,0.98 0.8,1.02 0.9,1.03 0.95,1 1,1), ScrollTrigger (desktop pin + scrub only) and gsap.quickTo (parallax). The pen-dot uses getPointAtLength, so MotionPathPlugin is not needed. A single buildIntro(mode) function returns one master timeline in 'full' (4.5s), 'short' (3.2s) or 'none' mode. Own code is vanilla TypeScript, about 8KB, with no React. No WebGL and no canvas. A canvas glint is an optional fallback only if Safari stutters on the gradient animation.",
+    "homepageSections": [
+      {
+        "name": "Header + scroll ruler (+ storm alert ribbon)",
+        "content": "Vector logo (line version; on scroll it compresses to the red-Λ 'K' monogram). Nav: Usluge, Radovi, Proces, O nama, Kontakt. Phone number in Plex Mono and a red 'Besplatna procjena' button. Optional red ribbon 'Šteta od nevremena? Hitne intervencije — nazovite', switched on from the CMS after storms (Zagreb July 2023-type events are when roof demand spikes).",
+        "interaction": "Past 80px of scroll, the header shrinks 72→56px and the logo swaps to the monogram. On nav hover, a dimension line with 45° tick ends grows under the link (scaleX 0→1, 0.25s), and the active page gets a red tick. Desktop only: a right-edge vertical millimetre ruler with a red marker and a live mono readout ('↓ 3 480 mm'). Section names are ruler labels, and clicking one jumps to that section."
+      },
+      {
+        "name": "Hero: Nacrt → Lim",
+        "content": "See heroStoryboard. H1 'Sedam puta mjerimo. Jednom savijemo.' Subline: 'Limeni krovovi, popravci, opšavi atika i dimnjaka, oluci i snjegobrani. Dođemo, izmjerimo i pošaljemo ponudu — besplatno.'",
+        "interaction": "Load-triggered abkant intro (4.5s desktop / 3.2s mobile). On desktop, a pinned scroll then turns the steel into photo 17 through the roof mask. Mobile has no pin."
+      },
+      {
+        "name": "Iz nacrta na krov (mobile only)",
+        "content": "A full-width card with photo 17 and the hero's white linework and callouts (snjegobrani, sljeme, dimnjak), so mobile users get the drawing-to-reality payoff without a pinned hero.",
+        "interaction": "A clip-path wipe from the bottom with a 1px red scanline at the edge (0.6s, once). The callouts' leader lines then draw to the real features."
+      },
+      {
+        "name": "Kotna linija (proof strip)",
+        "content": "One viewport-wide dimension chain split into 4 segments: '[20]+ godina', '[600]+ izvedenih krovova', '[4,9] ★ Google ([120] recenzija)', '[10] god. jamstva'. All are placeholders until the client confirms them; no invented numbers ship.",
+        "interaction": "On enter, the chain draws left→right (scaleX). Ticks pop in, and numbers count up over 1.2s (power2.out, tabular-nums). The rating segment links to the reviews section."
+      },
+      {
+        "name": "Usluge: 'Detalji' (detail-drawing cards)",
+        "content": "Six cards on a paper #EEECE7 sheet: Limeni krovovi (crijep-lim, trapez), Falcani krovovi, Popravci i sanacije, Ravni krovovi i opšavi atika, Dimnjaci (opšav i kape), Oluci i snjegobrani. Each card has a 'DETALJ 0X · M 1:5' mono label and a real sheet-metal cross-section drawing (Z-profile with okapnica, double-lock falc, crijep wave, half-round oluk, chimney cap, triangular snjegobran). It also has a title, a one-line benefit in plain Croatian, an optional 'od [X] €/m²' and an arrow.",
+        "interaction": "On desktop hover, or on mobile when a row reaches 60% of the viewport, the profile MorphSVGs from a flat line into its bent shape with the 'press' ease (0.35s). A red dimension then appears ('25 mm', 'R 62'). The card background sweeps to brushed anthracite and the text inverts. The whole card is a link. On mobile the grid becomes one column of compact rows with the profile on the left."
+      },
+      {
+        "name": "Nacrt ↔ Izvedeno (caliper slider)",
+        "content": "Four real jobs (photos 4, 7, 8, 10), each paired with a hand-traced perspective line drawing of the exact same frame: white lines on graphite with red dimensions. Tabs: 'Ravni krov', 'Kut atike', 'Dimnjak', 'Pogled na Medvednicu'. Later the same component gets a 'Prije ↔ Poslije' mode once the client delivers before photos.",
+        "interaction": "A draggable divider shaped like a vernier caliper (pomično mjerilo) jaw, with a live mono mm readout ('412,5 mm'). It uses role=slider and works with arrow keys. On first view it auto-sweeps 20%→80%→50% once to teach the gesture. Pointer events give touch drag."
+      },
+      {
+        "name": "Anatomija krova (exploded view)",
+        "content": "The hero house in the same oblique view, exploded into 6 layers: konstrukcija i letve → paropropusna folija → lim → opšavi (sljeme, uvala, rubni) → oluci → snjegobrani + opšav dimnjaka. Each layer explains what it is and why it matters for leaks and price, and shows a real crop (1 uvala, 6 spoj ploha, 5 snjegobrani, 8 dimnjak).",
+        "interaction": "Desktop: pinned for +=200%. Scroll pulls the layers apart vertically, one is highlighted at a time (the rest drop to 25%), and the callout and photo slide in on the right. Mobile: no pin; a vertical list of layer cards whose mini drawing lifts out on enter, with tap to open the photo. This is phase 2 if time is short."
+      },
+      {
+        "name": "Izvedeni radovi",
+        "content": "The 8 best photos (17, 10, 4, 1, 5, 8, 7, 16) in an asymmetric 'drawing sheet' grid. Mono captions read 'PROJEKT 017 · TREŠNJEVKA · CRIJEP-LIM · RAL 7016 · 2025' (placeholder data). Filter chips: Sve / Kosi krovovi / Ravni krovovi / Dimnjaci / Oluci / Popravci. A 'Svi radovi' link follows.",
+        "interaction": "Tiles do a scan reveal: clip-path inset from the bottom with a red scanline (0.7s, stagger 0.08). On hover, corner crop marks and a dimension frame appear, the tile zooms to 1.03 and goes from 15% desaturated to full colour. Filters use GSAP Flip. Tapping opens a PhotoSwipe lightbox with a spec panel. On mobile this becomes a horizontal snap carousel of native 3:4 portrait cards."
+      },
+      {
+        "name": "Brza procjena preko WhatsAppa (CTA band)",
+        "content": "A red band: 'Pošaljite 3 slike krova — okvirna cijena isti dan' (the promise needs client confirmation), with WhatsApp and Viber buttons and a pre-filled message ('Pozdrav, zanima me procjena za krov u …').",
+        "interaction": "Three small photo thumbnails slide into a chat-bubble outline with the press ease, once. The buttons depress 2px on :active."
+      },
+      {
+        "name": "Proces: Od mjere do montaže",
+        "content": "Five steps: 01 Poziv ili slike na WhatsApp → 02 Izlazak i izmjera (besplatno) → 03 Nacrt i ponuda u [48 h] → 04 Izrada na abkantu u našoj radionici (confirm they have one) → 05 Montaža, čišćenje, jamstvo. Step 04 carries the slow-motion abkant clip once it is shot.",
+        "interaction": "Desktop: a pinned horizontal track (ScrollTrigger containerAnimation), with a dimension line under the steps measuring progress in days ('Dan 0 → Dan [14]'). The video plays only when centred. Mobile: a vertical timeline whose connector line draws with scroll (scrubbed DrawSVG), and the video becomes a poster with tap-to-play."
+      },
+      {
+        "name": "Standard izvedbe (spec table)",
+        "content": "A sastavnica-style table. Materijal: lim 0,5–0,7 mm, RAL 7016 and other tones. Spojevi: falc, preklopi, vijci s EPDM brtvom. Odvodnja: dimenzionirani oluci. Gradilište: daily cleaning and waste removal. Jamstvo: [X] godina na radove + manufacturer warranty. Everything is to be confirmed by the client.",
+        "interaction": "Rows rule in with 1px lines (scaleX) and values type in. A red hand-drawn redline ellipse draws around the Jamstvo row for emphasis (DrawSVG)."
+      },
+      {
+        "name": "Recenzije",
+        "content": "6 real Google reviews, fetched at build time via the Places API and never written by us, shown as 'napomene' notes with red margin markers. The aggregate rating and a link 'Sve recenzije na Googleu' sit alongside.",
+        "interaction": "Drag/snap carousel. A red redline underline draws beneath the key phrase of each review on enter."
+      },
+      {
+        "name": "Područje rada",
+        "content": "A line-art map of Zagreb and Zagrebačka županija traced from OpenStreetMap (ODbL attribution), with places as real SEO text (Novi Zagreb, Trešnjevka, Dubrava, Sesvete, Velika Gorica, Samobor, Zaprešić…). Next to it, photo 10 in a panel titled 'Pogled s našeg krova'.",
+        "interaction": "A compass (šestar) arc draws the service radius ('R = [40] km'), and project dots pop in. Hover or tap a dot for a mini project card. There is no Google Maps iframe."
+      },
+      {
+        "name": "Česta pitanja",
+        "content": "Five questions: Koliko košta limeni krov po m²? Je li limeni krov bučan na kiši? Koliko traje montaža? Radite li hitne popravke nakon nevremena? Treba li dozvola za zamjenu krova? Includes FAQPage JSON-LD.",
+        "interaction": "Accordion where the '+' crosshair rotates 45° to '×' and the panel opens with the press ease (0.25s)."
+      },
+      {
+        "name": "Radni nalog (quote form)",
+        "content": "Headline: 'Pošaljite mjere — ili samo slike.' The form is styled as a work order with a title block: Ime, Telefon, Mjesto, Vrsta posla (chips), Površina (ruler slider 10–500 m², plus 'ne znam'), Slike (up to 5, compressed in the browser), Poruka, and a GDPR checkbox. The side panel has a large tel: link, WhatsApp, Viber, working hours and 'Javljamo se isti dan' (to be confirmed).",
+        "interaction": "The ruler slider snaps to 5 m² with a mono readout. On submit, a red 'PRIMLJENO' stamp lands on the form and a ticket number appears ('NALOG #2026-0142'), then the page redirects to /hvala for conversion tracking."
+      },
+      {
+        "name": "Footer: Sastavnica",
+        "content": "A full-width title-block grid: Naziv, OIB, adresa, telefon, e-mail, radno vrijeme, social links, 'Mjerilo 1:1', 'List 1/1', 'Datum: [build date]', plus legal links. A giant 'KARAMATIĆ' in Archivo wdth 125 / 900 bleeds off the bottom, with the red Λ.",
+        "interaction": "The wordmark rises 20%→0 as the footer enters (scrub). Hovering a cell highlights its rules in red."
+      },
+      {
+        "name": "Mobile sticky action bar",
+        "content": "Three buttons: Nazovi (tel:) · WhatsApp (wa.me with pre-filled text) · Ponuda (anchor to the form).",
+        "interaction": "Visible from t=0 with no entrance animation. It hides while the form is in view and respects env(safe-area-inset-bottom). Each tap fires a Plausible event."
+      }
+    ],
+    "otherPages": [
+      "/usluge: services hub with all 6 detail-profile cards in large format",
+      "/usluge/limeni-krovovi (crijep-lim, trapezni lim): animated profile hero, photo 1, problem→solution copy, gallery, spec table, price range 'od [X] €/m²', FAQ with schema, CTA",
+      "/usluge/falcani-krovovi: standing-seam detail drawing; photos 16 and 18",
+      "/usluge/popravak-krova: repair and sanacija, with an emergency/nevrijeme block and a call-first CTA; photo 6",
+      "/usluge/ravni-krovovi-opsav-atike: photos 4, 2, 3, 11, 19, 20 and 7 as the precision macro",
+      "/usluge/dimnjaci-opsav-i-kape: photo 8 and an exploded chimney-cap drawing",
+      "/usluge/oluci-i-snjegobrani: photo 5 and a gutter-sizing explainer",
+      "/radovi: full filterable portfolio grid (Flip filters, lightbox)",
+      "/radovi/[slug]: 'projektni list' case-study template with plan drawing + photos + spec table (lokacija/kvart, m², materijal, RAL, trajanje) + optional Nacrt↔Izvedeno slider",
+      "/o-nama: owner story, crew portrait, the workshop and abkant machine, vans, insurance and certificates ('Mi smo limari, ne preprodavači')",
+      "/proces: deeper version of the 5-step timeline with the timelapse scroll-scrub",
+      "/kontakt: Radni nalog form, map, hours, WhatsApp/Viber, company data",
+      "/cesta-pitanja: full FAQ with FAQPage schema",
+      "/hitni-popravak: storm-season landing page for Google Ads (call-only above the fold)",
+      "/podrucje/[mjesto]: optional local pages for Velika Gorica, Samobor, Zaprešić and Sesvete, built only with real local projects to avoid thin content",
+      "/savjeti: phase-2 blog for SEO ('Lim ili crijep?', 'Kako prepoznati da krov prokišnjava', 'Što napraviti nakon nevremena')",
+      "/hvala: thank-you page for conversion tracking",
+      "/privatnost and company/legal info as required by the Zakon o elektroničkoj trgovini (naziv, OIB, sjedište)",
+      "404 'Nije po mjeri': a sheet folded the wrong way with a red correction mark and 'Vrati se na početnu'"
+    ],
+    "signatureMoments": [
+      "ABKANT UDARAC: the press beam with the red Λ die drops and bends the flat sheet into a roof in 0.22s with a 2px recoil. This is the one-second moment people will screen-record and share.",
+      "NACRT → STVARNOST: the steel roof becomes a window onto real photo 17, and the callouts re-lock onto the actual snow guards and chimney in the photo (desktop scroll).",
+      "The red Λ as a brand glyph: the triangular 'A' from KARAMATIĆ serves as the abkant die tip, list bullet, loader, scroll-ruler marker and favicon. One shape ties logo, roof peak and machine together.",
+      "Rubber stamps: 'IZVEDENO' lands in the hero title block when the drawing finishes, and 'PRIMLJENO' + 'NALOG #…' lands on the form when a quote request is sent.",
+      "Pomično mjerilo slider: the 'Nacrt ↔ Izvedeno' (later 'Prije ↔ Poslije') divider is a vernier-caliper jaw with a live mm readout.",
+      "Profile-fold service cards: each service icon is a real sheet-metal cross-section that bends from a flat line, with the press ease and a red dimension.",
+      "Scroll ruler: a right-edge millimetre ruler with a live '↓ 3 480 mm' readout and section names as tick labels (desktop).",
+      "Sastavnica footer: the entire footer is a technical-drawing title block, with a giant 'KARAMATIĆ' bleeding off the bottom edge.",
+      "Anatomija krova: an exploded view that pulls the roof apart into layers, each tied to a real Karamatić job photo.",
+      "Millimetre paper: graphite and paper sheets with a mm grid. Every Croatian who did tehničko crtanje in school recognises it, so it reads as local and precise rather than generic 'tech'."
+    ],
+    "palette": [
+      {
+        "name": "Grafit (noćni list)",
+        "hex": "#0E1013",
+        "use": "Primary dark background: hero, header, footer and dark 'drawing sheets'"
+      },
+      {
+        "name": "Grafit podloga",
+        "hex": "#171A1E",
+        "use": "Cards, panels and form fields on dark"
+      },
+      {
+        "name": "Antracit RAL 7016",
+        "hex": "#383E42",
+        "use": "Steel fills, roof faces, borders on paper and secondary surfaces. It matches the real material in every photo, so the website and the jobs share one colour."
+      },
+      {
+        "name": "Čelik",
+        "hex": "#8A949B",
+        "use": "Muted text and extension lines on dark (≈6:1 on Grafit)"
+      },
+      {
+        "name": "Linija",
+        "hex": "#D5DBDF",
+        "use": "Linework and body text on dark (≈13:1 on Grafit)"
+      },
+      {
+        "name": "Papir",
+        "hex": "#EEECE7",
+        "use": "Light 'drafting paper' section background"
+      },
+      {
+        "name": "Milimetar",
+        "hex": "#D8D3C8",
+        "use": "Millimetre grid and table rules on paper"
+      },
+      {
+        "name": "Tinta",
+        "hex": "#15181B",
+        "use": "Text on paper"
+      },
+      {
+        "name": "Signal crvena (brand)",
+        "hex": "#D7141A",
+        "use": "Logo red: primary CTA background (white text ≈5:1), eave stripe, stamps, Λ glyph. Used as redline only, never as decoration."
+      },
+      {
+        "name": "Redline svijetla",
+        "hex": "#FF3B3F",
+        "use": "Small red text and dimension numerals on dark (≈5.4:1)"
+      },
+      {
+        "name": "Redline tamna",
+        "hex": "#B80F15",
+        "use": "Small red text and dimensions on paper (≈5.7:1); CTA hover/pressed state"
+      },
+      {
+        "name": "Cink odsjaj",
+        "hex": "#E8ECEF",
+        "use": "Specular glint on steel, used at 0–22% opacity only"
+      }
+    ],
+    "typography": "Two fonts, both free, self-hosted, and supporting latin-ext, so č ć ž š đ and Č Ć Ž Š Đ are fully covered.\n\n1) ARCHIVO (Google Fonts / Fontsource variable, axes wght 100–900 + wdth 62–125) for everything human:\n- H1: wdth 125 / wght 800, UPPERCASE, clamp(2.4rem, 7.2vw, 6.75rem), line-height 0.9, tracking −0.01em. It echoes the wide, heavy 'KARAMATIĆ' wordmark. Below 400px, use wdth 110 so 'SAVIJEMO.' fits.\n- H2: wdth 115 / 700, sentence case, clamp(1.9rem, 4vw, 3.5rem).\n- Body: wdth 100 / 400, 17–18px, line-height 1.55.\n- Buttons: wdth 112 / 700, uppercase, 15px, tracking 0.04em.\n\n2) IBM PLEX MONO (Google Fonts, latin-ext; 400 + 500) for the technical layer: dimensions, callouts, eyebrows ('02 — USLUGE'), title blocks, prices and the phone number. Set at 11–13px, uppercase, tracking 0.08em, font-variant-numeric: tabular-nums slashed-zero.\n\nCroatian technical conventions: decimal comma (0,6 mm), thin-space thousands (12 450 mm), „ “ quotes, and '45 €/m²' with a space.\n\nDeliberately avoid Montserrat, Poppins and Open Sans: that is what every Croatian contractor site already uses.",
+    "texturesAndMotion": "SURFACES. Sections alternate between graphite night sheets (#0E1013 with a mm grid: 8px minor lines at 4%, 40px major at 8%, via repeating-linear-gradient, no images) and paper sheets (#EEECE7 with a #D8D3C8 grid). Scrolling feels like leafing through a project folder. Section boundaries are 35° diagonal 'fold' edges (clip-path polygon), the same pitch as the hero roof, with + registration crosshairs at the corners.\n\nBrushed anthracite (one pre-rendered 512px AVIF tile, about 15KB, horizontal streaks) appears ONLY where something has been 'built': the hero roof faces, hovered service cards and the primary button hover. It is never a page background, because that reads as 2008-cheap. Red is redline only: dimensions, callout numbers, stamps and CTAs. No grain, no glassmorphism, no gradients except the steel glint. The look is crisp vector, like a plotter output.\n\nMOTION GRAMMAR: 'measure, then cut'.\n(1) Everything first appears as a 1px line (DrawSVG, or scaleX on rules).\n(2) Only then does it fill.\n\nThere are only two eases:\n- 'draft' = power2.inOut, 0.6–0.9s, for lines.\n- 'press' = a CustomEase with a fast entry, hard stop and about 2% recoil, 0.18–0.3s, for every fill, fold, snap and stamp.\n\nOther rules:\n- H2s use SplitText line masks (yPercent 105→0, 0.7s, stagger 0.08). The H1 is never animated.\n- Numbers count up with tabular-nums.\n- Photos use the scan reveal (clip-path with a red scanline leading edge), at most 6% parallax, and no Ken Burns.\n- Links get dimension-line underlines with tick ends.\n- Buttons physically depress on :active (translateY 2px, shadow collapses).\n- The crosshair cursor with an X/Y readout appears only over drawings and only with pointer:fine.\n- No scroll-jacking on touch devices.\n- prefers-reduced-motion renders every SVG in its final state, keeping only ≤150ms opacity fades.",
+    "croatianHeadlines": [
+      "Sedam puta mjerimo. Jednom savijemo. (main pick: a twist on the proverb „Sedam puta mjeri, jednom reži”)",
+      "Krov po mjeri. Do milimetra.",
+      "Lim se savija. Mi ne.",
+      "Od nacrta do zadnjeg vijka.",
+      "Krov o kojem više nećete brinuti."
+    ],
+    "photoPlan": "GET THE ORIGINALS FIRST. The supplied files are 1200×1600 WhatsApp copies, and all are portrait except 15. Ask for full-resolution originals via Google Drive or WeTransfer. They should be the iPhone 3024×4032 or larger files.\n\nEDITING. Use one Lightroom preset, 'Antracit': neutral white balance around 5600K, highlights −30, shadows +15, clarity +8, upright and lens correction. Keep the neighbours' red tiles saturated, because they are the perfect complement to the anthracite and the brand red. Heal protective-film residue, scuffs and swarf on the sheets (visible in 7, 17, 4 and 1), since homeowners read them as dirty or scratched work. Remove fingers and the photographer's shadow. Never fake workmanship or replace skies.\n\nPLACEMENT:\n- 17: hero photo inside the roof mask (desktop scroll) and the mobile 'Iz nacrta na krov' card. Also the OG/social image, cropped 1200×630 at y≈420–1050.\n- 4: Nacrt↔Izvedeno slider #1 (the geometric flat roof is the easiest to trace) and the hero of the 'Ravni krovovi i opšavi atika' page.\n- 7: slider #2 and the 'mjera do milimetra' precision macro. The mitered V corner is the proof shot. Crop tight to the sheet and lose the messy garden.\n- 8: slider #3, the 'Dimnjaci' service, and the anatomy layer 'opšav dimnjaka i kapa'.\n- 10: the 'Područje rada' panel 'Pogled s krova na Medvednicu' (4:3 crop at y≈250–1150), slider #4, and O nama.\n- 1: hero of the 'Limeni krovovi' service page (the worker on the ridge gives human scale) and the anatomy layer 'uvala'. Crop the bottom 12% to remove the shadow.\n- 5: anatomy 'snjegobrani', the 'Oluci i snjegobrani' service, and the radovi grid.\n- 6: anatomy 'spoj krovnih ploha' and the 'Popravci' page.\n- 16 and 18: 'Falcani krovovi'. In 16 the drill and roof hook show honest work in progress.\n- 2, 3, 11, 19, 20: gallery on the atika page. Use 20 (tools on gravel) for Proces step 05.\n- 12, 13: radovi grid filler.\n- 14, 15: do not use (finger, shadow).\n- 9: only a reference for the vector logo redraw.\n\nSHOT LIST FOR THE CLIENT (about 1 golden-hour day, a half-day in the workshop, and 1 drone day):\n1) Drone, flown by a licensed operator. Nadir (straight-down 90°) shots of 4–6 finished roofs: these map 1:1 onto plan-view line drawings, which gives perfect Nacrt↔Izvedeno overlays and a possible future plan-view hero variant. Also slow 45° orbits (4K, 10–15s) and one rising reveal with Medvednica behind.\n2) Workshop. The abkant press bending RAL 7016 sheet: 4K at 120fps slow motion, side-on and die close-up, 5–10s clips. Also the sheet sliding out and stacks of finished profiles. These feed Proces step 04, O nama and Reels/TikTok.\n3) Timelapse of one complete roof (GoPro on a neighbouring roof or tripod, 1 frame every 5–10s across the whole job). It becomes a 90-frame scroll-scrub sequence on desktop and an 8s MP4 on mobile.\n4) Before/after pairs from the same marked spot on every job from now on. These feed the caliper slider's 'Prije ↔ Poslije' mode.\n5) Detail macros after peeling the film: falc seam, okapnica, rivets, snjegobran, gutter bracket, chimney cap. Shoot side-lit at golden hour so the folds read.\n6) People. An owner portrait and the crew in branded workwear (graphite with a red stripe) in front of the van. Also a hands shot with a tape measure or laser meter on a sheet, which carries the 'mjera' story.\n7) Rule for every hero-worthy angle: shoot it twice, once in landscape 4:3 and once in portrait 3:4, with the 1× lens. The 0.5× ultra-wide used in 4 and 10 bends the parapets.",
+    "stack": [
+      "Astro 5 with static output and TypeScript. It ships zero JS by default; only the hero, sliders and form are islands. Next.js static export is an acceptable alternative if the dev insists on React, using @gsap/react's useGSAP.",
+      "Tailwind CSS v4 with CSS-first @theme tokens mapped to the palette and the mm-grid utilities",
+      "GSAP 3.13+: core, ScrollTrigger, DrawSVGPlugin, MorphSVGPlugin, SplitText, CustomEase and Flip (all plugins free since 2025), plus gsap.matchMedia() for desktop, mobile and reduced-motion branches",
+      "Lenis smooth scroll, optional and desktop + pointer:fine only, synced to ScrollTrigger. Never on touch.",
+      "Figma or Adobe Illustrator for the logo redraw, hero house, flat-sheet geometry, 6 profile details, traced 'nacrt' overlays and the anatomy layers. SVGO configured to preserve IDs and groups (cleanupIds: false).",
+      "Astro Assets with sharp, producing AVIF + WebP srcsets at 480/800/1200w; Lightroom for the retouch preset",
+      "Fontsource self-hosting: @fontsource-variable/archivo (wdth + wght axes) and @fontsource/ibm-plex-mono 400/500, custom-subset with pyftsubset or glyphhanger; fontaine for a metric-matched fallback",
+      "Keystatic, a git-based free CMS, for Radovi entries, reviews, FAQ, the storm-alert ribbon toggle and section visibility flags",
+      "PhotoSwipe 5 lightbox",
+      "Form handling via an Astro Action or Cloudflare Pages Function → Resend email to the owner (plus an optional Telegram bot ping), browser-image-compression for photo uploads, and Cloudflare Turnstile anti-spam loaded on form focus",
+      "Hosting on Cloudflare Pages (Netlify or Vercel also fine)",
+      "Plausible or Umami cookieless analytics, so no consent banner is needed, with events for tel:, WhatsApp, Viber and form submits",
+      "schema.org RoofingContractor + FAQPage + BreadcrumbList JSON-LD, plus a linked and optimised Google Business Profile",
+      "Lighthouse CI with budget.json on every deploy, and WebPageTest before launch"
+    ],
+    "performancePlan": "BUDGETS. Measured with the Lighthouse mobile Moto G Power/4G profile plus a real Samsung A-series phone:\n- LCP ≤ 2.0s, CLS ≤ 0.05, INP ≤ 150ms, TBT ≤ 150ms.\n- Home JS ≤ 85KB gzip: GSAP core ~27 + ScrollTrigger ~12 + DrawSVG ~2 + MorphSVG ~9 + SplitText ~6 + CustomEase ~2 + Flip ~5, plus about 8KB of own code.\n- Hero SVG ≤ 12KB gzip, inlined.\n- Mobile first-load transfer ≤ 700KB.\n\nLCP. The LCP element is the text H1, painted immediately and never faded in from opacity 0. The hero has NO raster image at first paint.\n\nFONTS. One custom subset per family: Basic Latin + ČčĆćĐđŠšŽž + € „ “ – —. That gives Archivo variable at about 40KB and Plex Mono at 2 × ~15KB. Preload Archivo only. Use font-display: swap with a fontaine size-adjusted fallback, so there is no CLS.\n\nSCRIPT LOADING. GSAP is a deferred module. The intro starts on requestAnimationFrame after DOMContentLoaded and does not wait for fonts (300ms cap).\n\nANIMATION COST.\n- Animate only transform, opacity, stroke-dashoffset and the attributes of small SVG elements.\n- No animated SVG filters (feTurbulence was rejected in favour of the pre-rendered texture tile).\n- will-change is set only during tweens.\n- Pins exist only under gsap.matchMedia('(min-width:1024px) and (pointer:fine)').\n- ScrollTrigger.config({ignoreMobileResize:true}), with svh/dvh units.\n\nIMAGES. Astro <Picture> with AVIF + WebP at 480/800/1200w, explicit width/height, loading=lazy and decoding=async, and an anthracite dominant-colour placeholder. The hero photo 17 (about 90KB AVIF) is requested after window load with fetchpriority=low.\n\nVIDEO. The abkant slow-mo and the timelapse never appear in the hero. They use preload=none, play/pause via IntersectionObserver, are 720p H.264 + WebM at ≤ 2MB, and have AVIF posters. The 90-frame timelapse scrub is desktop-only and lazy (about 3MB WebP total).\n\nTHIRD PARTIES. Nothing render-blocking:\n- No Google Maps iframe: a static SVG map plus a deep link instead.\n- Reviews are fetched at build time.\n- Analytics are cookieless.\n- Turnstile loads only when the form gets focus.\n\nLITE MODE. When saveData, deviceMemory ≤ 2 or hardwareConcurrency ≤ 4 is detected: skip the intro, disable parallax, the ruler and the cursor, and cap images at 800w.\n\nQA. Lighthouse CI budgets on every deploy. WebPageTest 'Moto G4 – 4G – Frankfurt' before launch. A day-2 spike to test iOS Safari SVG <mask> + MorphSVG and the gradient glint before anything else is built.",
+    "risks": [
+      "Photo resolution and orientation: every supplied shot is 1200×1600 (WhatsApp-compressed) and portrait, so they cannot carry full-bleed 16:9 desktop panels. This direction deliberately frames photos in portrait/4:5 panels ≤ 1200px wide and makes the SVG drawing the hero. Still, get the originals and book a landscape/drone shoot.",
+      "The custom SVG work is the critical path: the hero house, fold geometry, 6 profile details, 4 traced 'nacrt' overlays and the exploded anatomy add up to about 6–7 days of drawing. If the dev isn't fluent in Illustrator or Figma vectors, hire an illustrator for 2–3 days or push the anatomy section to phase 2.",
+      "A 2D MorphSVG fold can look cheap and flat if it is unlit. Do a one-day spike first (flat sheet → Λ with per-face shading, the glint and the press ease) and show the client a screen recording before building the rest.",
+      "The blueprint aesthetic can feel cold or 'architect-y' to older homeowners. Balance it with plain Croatian copy, real faces (crew photo), the warm golden-hour photo 17, a phone number that is always visible, and price ranges and guarantees. The drawing is the hook, not the content.",
+      "Over-animation can cost conversions and accessibility. CTAs must be visible at t=0, the intro must be ≤ 4.5s and interruptible, there must be no scroll-jacking on touch, plus a full prefers-reduced-motion path, visible focus states and a keyboard-operable caliper slider. Older users on cheap Androids are a real segment.",
+      "The logo is a glossy, AI-style raster with 3D effects. It clashes with the crisp linework and will not scale to a favicon or a van. It needs a vector redraw: a flat lockup, a line version and the Λ monogram. The client may be attached to the gloss, so pitch it as 'the same logo, made for web, van and workwear'. Also check that the AI logo is not a near-copy of a stock design.",
+      "Every number on the site is a placeholder until the client confirms it: years, roof count, Google rating, warranty, prices, the 48h/same-day promises and whether they own an abkant workshop. Never ship invented numbers or reviews. Sections hide via CMS flags until the facts are real.",
+      "Safari/iOS: an SVG <mask> with an <image> inside a scrubbed MorphSVG can drop frames or flash. Fall back to a simple crossfade over the drawing on WebKit if testing shows under 50fps.",
+      "Content depends on client shoots: the before/after mode, abkant video and timelapse all need them. Launch must not wait for those assets, so the caliper ships first in 'Nacrt ↔ Izvedeno' mode using traced drawings of the existing photos.",
+      "Drone legality: operators in Croatia must register with HACZ (the civil aviation agency), and much of Zagreb is near the controlled airspace around Zagreb Airport (Pleso). Hire a licensed local operator.",
+      "Scope: the full direction is about 32 dev-days. A realistic MVP launch takes about 22 days: hero, core home sections, 6 service pages, the radovi grid and the quote form. The anatomy explode, the process timelapse scrub, case-study pages and the blog become phase 2.",
+      "Contrast on dark UI read outdoors in sunlight: keep body text ≥ 7:1 (#D5DBDF on #0E1013). Small red text must use #FF3B3F on dark or #B80F15 on paper. Use the brand #D7141A only for buttons with white text and for large elements."
+    ],
+    "effortDaysOneDev": 32
+  },
+  {
+    "key": "conversion-premium",
+    "name": "ANTRACIT PRO: \"Krov za 60 sekundi\", the quote-first contractor playbook",
+    "oneLiner": "A US-grade lead machine in Karamatić's own anthracite and red. An illustrated roof builds itself layer by layer, then turns into a real Zagreb roof (photo 17). Every screen offers a 60-second price range, one-tap Call/WhatsApp and hard proof: real reviews, a written warranty and real projects. My opinion: what makes it look ultra-premium is restraint, speed and authentic work, not heavy 3D. Croatian contractor sites lose on trust and friction, not on effects. Animations here exist only to make the work look precise and to pull people into the quote.",
+    "heroStoryboard": [
+      {
+        "t": "0.00 s (first paint)",
+        "beat": "Server-rendered split hero on a 12-col grid. LEFT (5 cols, ink #0E1012 bg): eyebrow 'LIMARIJA · ZAGREB I OKOLICA' (Archivo wdth 125, tracking 0.18em, echoes the spaced LIMARIJA wordmark). Static H1 'Krov kao nacrtan.' with no load animation, because it is the LCP element. Sub-line, an address input 'Upišite adresu objekta' with a red button 'Okvirna cijena za 60 s', secondary links 'Nazovi 0xx xxx xxxx' and 'WhatsApp', and 3 trust chips (Google rating, 'Pisana garancija', 'Odgovor isti dan'). Everything is clickable at t=0. RIGHT (7 cols, graphite stage #121416 with faint standing-seam hairline pattern): only the house body is visible. Off-white planes in the logo silhouette (main gable, chimney, side gable, window), with the empty roof outline at 20% opacity."
+      },
+      {
+        "t": "0.15–0.75 s",
+        "beat": "12 rafters (#8A9299, 1.5px) draw eave to ridge with DrawSVG, stagger 0.04, power2.out. In the copy column, the only motion is a 4px red underline (#D7141A) under 'nacrtan' (scaleX 0→1, 0.6s). Trust chips rise 8px and fade in, stagger 0.06."
+      },
+      {
+        "t": "0.70–1.20 s",
+        "beat": "Membrane: a pale grey sheet unrolls down each roof plane from the ridge (scaleY 0→1, transform-origin top, power3.out), with a faint diagonal sheen gliding across it."
+      },
+      {
+        "t": "1.10–1.55 s",
+        "beat": "Battens: 9 horizontal laths snap in bottom-up, stagger 0.035, back.out(2) with a 2px overshoot. This gives the carpentry rhythm."
+      },
+      {
+        "t": "1.50–2.70 s",
+        "beat": "Metal panels: 6 tile-profile strips (fill #383E42, wave strokes #2A2F33, 1px highlight #5A6268) drop from y:-48px, opacity 0→1, stagger 0.14, power3.out with a 2px settle. When a strip lands, its screw dots ripple in (scale 0→1, 0.01s stagger). The side gable fills with standing-seam panels (vertical seams), a nod to falcani lim."
+      },
+      {
+        "t": "2.60–3.10 s",
+        "beat": "The ridge cap (sljemenjak) runs along the ridge left to right (scaleX). The valley flashing between the two roof bodies draws on (DrawSVG)."
+      },
+      {
+        "t": "3.00–3.45 s",
+        "beat": "Chimney: anthracite cladding wipes up over the brick (clip-path inset, bottom-up), then the metal chimney cap drops 20px with back.out(3). Three rows of snow guards pop in, stagger 0.05."
+      },
+      {
+        "t": "3.40–3.85 s",
+        "beat": "The gutter draws along both eaves and the downpipe extends down (scaleY 0→1). Then the logo's red eave stripe (#D7141A, 4px) draws along the eaves. This is the brand signature beat."
+      },
+      {
+        "t": "3.85–4.60 s",
+        "beat": "One specular sheen sweeps across the finished roof: a white-to-transparent linear gradient at 18% opacity and -20°, translateX -100%→200%, 0.75s, power2.inOut. It reads as new coated steel catching the sun."
+      },
+      {
+        "t": "4.60–5.60 s",
+        "beat": "ILLUSTRATION-TO-REALITY REVEAL. The roof polygon becomes a CSS clip-path window. Photo 17 (golden-hour crijep-lim with snow guards, AVIF) fades in inside the roof shape at scale 1.08→1 while the illustration fades out. Then the clip-path polygon morphs from the roof shape to the full stage rectangle (radius 20px), power4.inOut 0.9s. A caption chip slides in bottom-left: 'Ovo nije ilustracija. · Zagreb · crijep-lim RAL 7016 · 4 dana', with 'Pogledaj projekt →'."
+      },
+      {
+        "t": "5.60 s → idle",
+        "beat": "Slow Ken Burns on the photo (scale 1→1.04 over 14s, yoyo). 3 hotspot dots fade in (sljeme, snjegobrani, opšav); tap or hover shows a tooltip linking to that service. A CMS-driven availability chip '● 3 slobodna termina za izmjeru ovaj tjedan' pulses once. It is hidden if the field is empty, so it is never fake."
+      },
+      {
+        "t": "Any time (interrupt rule)",
+        "beat": "Focus or click on the address field or any CTA calls timeline.progress(1), which jumps to the final photo state, and opens estimator step 2 inline. A buyer never waits for an animation. A visually hidden 'Preskoči animaciju' button serves keyboard users. With prefers-reduced-motion, the final state renders immediately."
+      },
+      {
+        "t": "Scroll 0–100vh (NOT pinned, no scroll-jacking)",
+        "beat": "At 80px the header goes from transparent to solid #0E1012 at 90% with backdrop-blur. The stage photo parallaxes y 0→-6% (ScrollTrigger scrub 0.5). The proof bar (Google rating, years, finished roofs, supplier logos) rises 48px over the hero's bottom edge. At 60vh a floating 'Besplatna procjena' pill appears bottom-right (desktop only)."
+      }
+    ],
+    "heroMobileFallback": "Below 768px the hero is text-first, so LCP is the H1 text and lands in about 1.5s on 4G.\n- 56px header: flat vector logo, phone icon (tel:), menu.\n- Eyebrow, then the H1 'Krov kao nacrtan.' (Archivo 800, wdth 112, 40–44px, line-height 1.0), then one sub-line.\n- Horizontally scrollable trust chips.\n- Full-width red 56px button 'Okvirna cijena za 60 s'. It opens the estimator as a full-screen bottom sheet, not a new page.\n- A row of two outline buttons: 'Nazovi' and 'WhatsApp' (wa.me link with prefilled text 'Pozdrav, trebam procjenu krova na adresi: ').\n- Below the CTAs, a compact build stage (100% width x 220px inline SVG) runs a compressed 2.4s timeline. It skips membrane and battens: rafters, 4 panel strips, ridge, gutter, red eave line, sheen. Then it crossfades to photo 17 at 4:3 (750w AVIF, about 70KB), loaded after first input or 2.5s idle.\n- Low-end guard: if prefers-reduced-motion, navigator.connection.saveData, or hardwareConcurrency ≤ 4, render the final static SVG plus photo with no animation.\n- After 300px of scroll, a sticky bottom action bar (64px incl. safe-area) appears: [Nazovi] [WhatsApp] [Procjena]. The middle Procjena button is red. The bar hides while the estimator sheet or the keyboard is open, and reappears on scroll-up.\n- No parallax, no Lenis and no hover hotspots on touch. Hotspots become a tappable 'Što vidite na slici?' list under the photo.",
+    "heroTech": "Inline SVG isometric house, hand-built in Figma or Illustrator as a vector redraw of the logo house. Layers are grouped with IDs: #walls #rafters #membrane #battens #panels > .strip #screws #ridge #valley #chimney-clad #chimney-cap #snowguards #gutter #downpipe #eave-red #sheen. About 30–40KB gzipped, inlined in the HTML so it costs no extra request.\n\nIt is animated by one GSAP 3 timeline. GSAP and all its plugins are free since 2025; this uses DrawSVGPlugin for rafters, valley, gutter and the red line, and MorphSVGPlugin for the roof-pitch morph reused in the estimator. Only transform, opacity, stroke-dashoffset and clip-path are animated, so there is no layout thrash.\n\nThe reveal is a CSS clip-path: polygon() on the photo wrapper, tweened by GSAP from the roof-polygon points to the stage rectangle. Photo 17 is served through Astro <Picture> (AVIF/WebP, fetchpriority=low, decoded after LCP).\n\nThe same SVG component is reused as the estimator's progress visual, so it is built once and used twice. No WebGL, no Three.js and no video in v1.\n\nv2, once the client films it: swap the reveal target for a 6s muted drone or timelapse loop of a real roof replacement. Encode AV1/HEVC with an H.264 fallback, ≤1.2MB, with photo 17 as poster. The illustration intro stays.",
+    "homepageSections": [
+      {
+        "name": "Utility bar + sticky header",
+        "content": "Desktop 36px utility bar on ink #0E1012: 'Zagreb i Zagrebačka županija · Pon–Sub 7–19 h · Odgovor isti dan', with the phone number on the right. A CMS 'storm mode' toggle replaces it with a red bar 'Nevrijeme? Hitna sanacija krovova — zovite odmah'. Header: flat vector logo (no 3D gloss), nav (Usluge, Radovi, Kako radimo, Recenzije, Upravitelji zgrada, Kontakt), the visible phone number in Archivo 600, and a red 'Besplatna procjena' button.",
+        "interaction": "The header shrinks from 80 to 64px and turns solid after 80px. The CTA button has a metal-sheen hover: a pseudo-element gradient sweeps across in 0.5s. The phone icon does a subtle 2-shake 'ring' every 10s while the page is idle. Every tel: and wa.me click fires a conversion event."
+      },
+      {
+        "name": "Hero: 'Krov kao nacrtan.'",
+        "content": "Split hero. Copy, address input, Call/WhatsApp and trust chips sit on the left. The isometric roof build, the reveal into photo 17 and the caption chip linking to that real project sit on the right.",
+        "interaction": "See the storyboard. Focusing the address field skips the animation and opens the estimator inline with the address prefilled."
+      },
+      {
+        "name": "Proof bar",
+        "content": "Google rating (real number plus review count, linking to the Google Business Profile), 'X godina iskustva', 'X+ izvedenih krovova' (counted from invoices, never invented), and 'Pisana garancija na izvedbu'. Below it, a grayscale strip of the material suppliers' logos the client actually uses (confirm each with the client; typical candidates in Croatia are Lindab, Ruukki, Bilka, Wetterbest, Pruszyński). Add memberships such as HOK obrtnička komora if applicable.",
+        "interaction": "Numbers count up once on viewport enter (0.9s, tabular-nums). Logos run in a CSS-only marquee at 40s per loop that pauses on hover; no JS."
+      },
+      {
+        "name": "Instant estimator: 'Okvirna cijena za 60 sekundi'",
+        "content": "Full-width section on Vapno #F4F3F0, with the estimator card on the left and a live roof-build SVG on the right.\n\nSteps:\n1. Što trebate? Novi metalni krov / Sanacija ili popravak / Ravni krov i opšav atike / Oluci / Dimnjak / Hitni popravak.\n2. Gdje? Address autocomplete, then a satellite tile (Leaflet + DGU Geoportal orthophoto WMS, falling back to Esri World Imagery). The user taps the roof corners and Turf.js computes the footprint area. Fallback presets: 'Kuća do 100 m² / 100–200 / 200+ / Ne znam'.\n3. Pokrov: crijep-lim / falcani lim / trapezni lim / 'Preporučite mi'. Choice cards use material flat-lays, or crops of photos 5, 16 and 4 until those exist.\n4. Nagib: blagi / srednji / strmi, with roof-area factors 1.04 / 1.16 / 1.41.\n5. Kada? Odmah / 1–3 mjeseca / Samo istražujem.\n\nResult: an animated range such as 'Okvirno 9.800 – 12.400 € s PDV-om', with a breakdown (m², material, duration 'Izvedba 3–5 dana'). Disclaimer: 'Okvirna procjena nije ponuda — točnu cijenu dobivate nakon besplatne izmjere.'\n\nThe contact gate before the full breakdown asks for Ime, Mobitel and optional photos. After submit: book a measuring slot (Cal.com embed) or 'Pošalji sažetak na WhatsApp', a wa.me link with the summary prefilled.\n\nPrice-per-m² ranges live in a CMS JSON edited by the client.",
+        "interaction": "Each answer adds layers to the roof illustration: step 1 walls and rafters, step 2 membrane and battens, step 3 panels in the chosen profile (SVG symbol swap), step 4 a pitch MorphSVG, step 5 gutters and snow guards. Submit draws the red eave line, runs the sheen and shows 'Vaš krov je na redu.' A progress bar shaped like a ridge line fills left to right. Answers persist in sessionStorage. Deep links like ?usluga=dimnjak preselect step 1."
+      },
+      {
+        "name": "Usluge (bento grid)",
+        "content": "6 cards in an asymmetric bento: Metalni krovovi (photo 5, large), Sanacija i popravci krovova (photo 1), Ravni krovovi i opšavi atika (photo 4), Oblaganje dimnjaka i kape (photo 8, tall), Snjegobrani (photo 13), Oluci i odvodnja (placeholder until gutter photos are shot). Each card shows a one-line benefit, a spec label in mono ('RAL 7016 · 0,5 mm'), and 'Procijeni →'.",
+        "interaction": "Hover (desktop): the image scales to 1.04, a 3px red line draws along the bottom edge, and the card lifts 4px with a shadow. Tap (mobile): the whole card is a link. 'Procijeni →' deep-links into the estimator with the service preselected, so every service card is a conversion entry."
+      },
+      {
+        "name": "Odabrani projekti (case-study rail)",
+        "content": "A horizontal rail of 6 project cards: hero photo, neighborhood ('Zagreb – Dubrava'), type, m², duration, and a one-line client quote. Lead with photo 10 (flat roof with the Medvednica panorama), then 17, 1, 4, 8, 16.",
+        "interaction": "Embla carousel with drag or swipe and arrow buttons. On hover, each card crossfades between 2–3 shots of the same job (wide, then detail). The 'Svi radovi' link goes to /radovi."
+      },
+      {
+        "name": "Prije / Poslije",
+        "content": "3–6 before/after pairs shot from identical angles. These do not exist yet, so the section ships hidden until the client supplies at least 3 pairs.",
+        "interaction": "img-comparison-slider web component with a red handle carrying a small roof-peak triangle (the 'A' from the logo). On viewport enter the handle auto-nudges from 50% to 35% to 50% once to teach the gesture. Keyboard arrows work."
+      },
+      {
+        "name": "Kako radimo (process timeline)",
+        "content": "5 steps:\n1. Javite se (odgovor isti dan).\n2. Besplatna izmjera na terenu (u roku 48 h).\n3. Pisana ponuda s fiksnom cijenom.\n4. Izvedba i čišćenje gradilišta.\n5. Garancija i fotodokumentacija.\nSide photos: 20 (tools and level, for measuring), 6 (crew at the roof junction, for execution), 7 (mitered corner, for quality control).",
+        "interaction": "A vertical line draws with scroll (ScrollTrigger scrub, transform scaleY only). Each step's node turns from steel grey to red when its midpoint crosses 60% of the viewport, and the step's photo crossfades in a sticky column (desktop). On mobile the same line draws with photos inline."
+      },
+      {
+        "name": "Jamstvo Karamatić (guarantee plate)",
+        "content": "Dark graphite section with a large brushed-metal 'plate' card in the style of an embossed nameplate. Contents: 'Pisana garancija X godina na izvedbu', 'Proizvođačko jamstvo na materijal do X godina' (supplier-specific; verify), 'Fiksna cijena — bez naknadnih iznenađenja', 'Čisto gradilište, odvoz otpada uključen', 'Osigurani radovi'. Background: photo 7 cropped tight on the mitered V corner at 25% opacity.",
+        "interaction": "On enter the plate tilts from rotateX 8° to 0, and one sheen sweep crosses it. 4 rivet dots at the corners pop in sequence. A 'Preuzmi primjer jamstvenog lista (PDF)' link offers a real document as proof."
+      },
+      {
+        "name": "Recenzije",
+        "content": "Large aggregate (Google rating plus count) and 6–9 real Google reviews: first name and initial, neighborhood, date, service tag. Plus 2–3 vertical 20s phone video testimonials once the client shoots them. Link 'Sve recenzije na Googleu'.",
+        "interaction": "Embla autoplay at 6s that pauses on hover or touch. Video cards play muted inline on tap with captions burned in. Stars are drawn in Zlatni sat #F2B65A and fill left to right on enter."
+      },
+      {
+        "name": "Za upravitelje zgrada i izvođače (B2B split)",
+        "content": "Two side-by-side panels. 'Upravitelji zgrada': plaćanje iz pričuve, R1 račun, ponuda za suvlasnike, fotodokumentacija, rokovi. 'Izvođači': limarski radovi kao podizvođač, kapaciteti, poštivanje rokova. Each panel links to its own landing page.",
+        "interaction": "The panels expand on hover (flex-grow 1 to 1.3). Each has its own CTA ('Zatražite ponudu za zgradu') feeding a B2B-tagged lead form."
+      },
+      {
+        "name": "Područje rada (service area)",
+        "content": "Stylized SVG map of Zagreb and the surrounding towns: Sesvete, Velika Gorica, Samobor, Zaprešić, Dugo Selo, Sveta Nedelja (confirm with the client). Real project locations are shown as dots. Photo 10 (Medvednica panorama) is the section background, heavily darkened.",
+        "interaction": "Dots pulse in a stagger on enter, and a hover tooltip shows 'Dubrava · 3 projekta'. Checker input 'Dolazimo li do vas?': type a place and get an instant 'Da — izmjera besplatna' or 'Javite se, dogovorit ćemo'. Each town links to its local SEO page."
+      },
+      {
+        "name": "Plaćanje bez stresa",
+        "content": "Payment terms ('Avans X %, ostatak po završetku'), card installments if the client's POS or bank supports them, building payments from pričuva, R1 invoices for companies. A note on help with paperwork for energy-renovation co-financing (FZOEU) if the client does insulated roofs. Verify every item with the client.",
+        "interaction": "Static cards with icons. One mini calculator: 'Iznos ÷ broj rata' (only if installments are real)."
+      },
+      {
+        "name": "Česta pitanja (FAQ)",
+        "content": "8 objection-killers: 'Je li limeni krov bučan na kiši?', 'Može li lim preko starog crijepa?', 'Koliko traje zamjena krova?', 'Koliko košta m² limenog krova?', 'Trebam li dozvolu za zamjenu pokrova?' (verify the legal answer), 'Radite li zimi?', 'Što ako krov počne prokišnjavati nakon radova?', 'Koliko traje lim RAL 7016?'.",
+        "interaction": "Accessible accordion (details/summary, animated height via the grid-template-rows trick). FAQPage JSON-LD. Each answer ends with a contextual CTA."
+      },
+      {
+        "name": "Završni CTA band",
+        "content": "Full-bleed photo 1 (worker on the ridge, blue sky) under a 70% ink gradient. Headline 'Ne čekajte da počne kapati.' Big phone number in Archivo 800, plus WhatsApp, Viber and 'Okvirna cijena za 60 s' buttons. The callback mini-form 'Nazvat ćemo vas u 15 minuta' is shown only during working hours, read from the CMS hours field.",
+        "interaction": "The red eave line draws across the full width on enter. The callback form submits inline with optimistic UI ('Zovemo vas uskoro, Marko.')."
+      },
+      {
+        "name": "Footer + sticky mobile action bar",
+        "content": "Footer: name, address, phone, OIB, working hours, service-area links, services, social, Google profile, Privatnost and Kolačići. The mobile sticky bar [Nazovi] [WhatsApp] [Procjena] persists site-wide.",
+        "interaction": "The bar hides on scroll-down inside long content and reappears on scroll-up. It is always visible on the last screen. Each button is tracked separately."
+      }
+    ],
+    "otherPages": [
+      "/usluge/metalni-krovovi: crijep-lim, falcani lim, trapezni lim, compared side by side (looks, price band, lifespan, noise), with an embedded estimator preset",
+      "/usluge/sanacija-krovova: popravci, prokišnjavanje, hitne intervencije; the Google Ads landing page, with 'Krov više neće puštati.' as H1",
+      "/usluge/ravni-krovovi-opsavi-atika: flat roofs, parapet capping, trapezoid fields (photos 2, 3, 4, 10, 11, 19, 20)",
+      "/usluge/dimnjaci: chimney cladding and caps (photo 8)",
+      "/usluge/oluci-i-odvodnja: gutters and downpipes (needs new photos)",
+      "/usluge/snjegobrani: snow guards (photos 5, 12, 13, 17)",
+      "/radovi: filterable portfolio (Kosi krov / Ravni krov / Dimnjaci / Detalji) with PhotoSwipe lightbox",
+      "/radovi/[slug]: case-study template covering Problem, Rješenje, Materijal, Trajanje, gallery, client quote and CTA",
+      "/procjena: standalone full-screen estimator for ads and QR codes on vans",
+      "/upravitelji-zgrada: B2B landing (pričuva, R1, suvlasnici, reference zgrada, a downloadable ponuda template)",
+      "/za-izvodace: subcontractor page for general contractors",
+      "/jamstvo: warranty terms in plain Croatian plus a sample warranty PDF",
+      "/recenzije: all reviews plus video testimonials",
+      "/o-nama: the Karamatić story, team portraits, workshop and bending machine, vans",
+      "/podrucje-rada plus local pages (/limar-zagreb, /limarija-velika-gorica, /limarija-samobor, /krovovi-sesvete…). Each page needs real projects from that town, not thin doorway pages.",
+      "/savjeti (blog): 'Lim ili crijep?', 'Cijena limenog krova po m² u 2026.', 'Je li limeni krov bučan?', 'Kako prepoznati da krov treba sanaciju' (SEO content)",
+      "/kontakt: form, map, hours, phone, WhatsApp, Viber",
+      "/hvala: thank-you page with a 3-step 'Što slijedi', conversion tracking and a Google review CTA for past clients",
+      "/privatnost and /kolacici (GDPR)"
+    ],
+    "signatureMoments": [
+      "Illustration-to-reality reveal: the drawn roof finishes, then becomes a clip-path window into a real Karamatić roof (photo 17) with the line 'Ovo nije ilustracija.' The H1 'Krov kao nacrtan.' pays it off: their real roofs look as clean as a drawing.",
+      "'The roof builds as you quote': in the estimator, every answer adds a construction layer to the same SVG house (rafters, membrane, battens, chosen panel profile, pitch morph, gutters, snow guards). Submitting draws the red logo eave line and runs the sheen: 'Vaš krov je na redu.' The progress bar is a ridge line. Animation directly rewards finishing the form.",
+      "Coated-steel sheen as UI language: one specular highlight sweeps across anthracite surfaces (hero roof, CTA buttons on hover, the guarantee plate) at most once per element. The page feels made of the same RAL 7016 steel they install, without WebGL.",
+      "Storm mode: one CMS toggle swaps the utility bar, hero headline and sub to emergency copy ('Nevrijeme? Hitna sanacija — dolazimo') and pins the phone CTA. This is the American storm-response playbook adapted to Zagreb's summer hail and storms.",
+      "Real, live scarcity: a CMS-driven chip '● 3 slobodna termina za izmjeru ovaj tjedan', updated weekly by the client and auto-hidden when empty. It is the honest version of US urgency, compliant with EU unfair-practice rules.",
+      "Before/after slider with a red roof-peak handle (the triangular 'A' from the KARAMATIĆ wordmark) that auto-nudges once to teach the gesture."
+    ],
+    "palette": [
+      {
+        "name": "Ink",
+        "hex": "#0E1012",
+        "use": "Hero and estimator stage background, header when solid, body text on light sections"
+      },
+      {
+        "name": "Grafit",
+        "hex": "#1A1D20",
+        "use": "Dark sections (guarantee, B2B, footer), sticky mobile action bar"
+      },
+      {
+        "name": "Antracit 7016",
+        "hex": "#383E42",
+        "use": "The brand material: roof panels in the illustration, cards on dark, input borders on dark, icon fills"
+      },
+      {
+        "name": "Čelik",
+        "hex": "#8A9299",
+        "use": "Secondary text on dark, rafters and hairlines in the SVG, inactive timeline nodes"
+      },
+      {
+        "name": "Aluminij",
+        "hex": "#D9DDE0",
+        "use": "Hairlines and dividers on light, input borders on light, standing-seam background pattern"
+      },
+      {
+        "name": "Vapno",
+        "hex": "#F4F3F0",
+        "use": "Light section background (warm off-white, less sterile than pure white)"
+      },
+      {
+        "name": "Bijela",
+        "hex": "#FFFFFF",
+        "use": "Cards on light, text on red buttons"
+      },
+      {
+        "name": "Karamatić crvena",
+        "hex": "#D7141A",
+        "use": "Primary CTAs (white text, 5.2:1 AA), red eave line, active states, slider handle. Never for body text on dark."
+      },
+      {
+        "name": "Crvena tamna",
+        "hex": "#A80F14",
+        "use": "CTA hover and pressed state, storm-mode bar"
+      },
+      {
+        "name": "Zlatni sat",
+        "hex": "#F2B65A",
+        "use": "Review stars and the golden-hour caption accent only (sampled from the photo 17 sky)"
+      },
+      {
+        "name": "WhatsApp zelena",
+        "hex": "#25D366",
+        "use": "WhatsApp button only, with ink #0E1012 text for contrast"
+      }
+    ],
+    "typography": "DISPLAY: Archivo, a Google Font variable font with wght 100–900 and a wdth 62–125 axis. Load the latin + latin-ext subsets, which give full Č Ć Ž Š Đ / č ć ž š đ.\n- The wide, heavy cut matches the logo's 'KARAMATIĆ' and has the bold American contractor feel without a paid font.\n- H1: wght 800, wdth 115, letter-spacing -0.02em, line-height 0.95, clamp(40px, 6.2vw, 96px), sentence case for readability.\n- Eyebrows and labels: UPPERCASE, wdth 125, wght 600, tracking 0.18em, 12–13px. This echoes the spaced 'L I M A R I J A'. Leave line-height ≥ 1.1 on uppercase so Č and Ć accents don't clip.\n- Prices and stats: wght 700 with font-variant-numeric: tabular-nums. Croatian number format '12.400 €' and decimal comma '0,5 mm'.\n\nBODY / UI: Inter variable (latin-ext). 16px/1.6 on mobile, 17px on desktop, weights 400/500/600; buttons 600 at 16px.\n\nSPEC LABELS: IBM Plex Mono 500 (latin-ext), 12px uppercase, used sparingly for material specs ('RAL 7016 · 0,5 MM · 4 DANA').\n\nSelf-host all three via Fontsource (@fontsource-variable/archivo, @fontsource-variable/inter, @fontsource/ibm-plex-mono) instead of the Google Fonts CDN. That avoids the EU/GDPR Google Fonts IP issue. Subset to latin + latin-ext woff2, preload only Archivo, font-display: swap, and use metric-matched Arial fallbacks via fontaine or capsize so the swap causes zero CLS.",
+    "texturesAndMotion": "TEXTURES, all real roofing geometry rather than generic decoration:\n1. Standing-seam hairline pattern: repeating-linear-gradient with a 1px Aluminij line every 56px at 6–8% opacity, on dark stages.\n2. Tile-profile wave divider: the silhouette of a crijep-lim sheet edge as an SVG section divider between light and dark sections.\n3. Brushed metal: one pre-rendered 512px WebP noise and horizontal-streak tile (made once with an feTurbulence baseFrequency '0.002 0.6' filter and exported). Used at 5–8% opacity on the guarantee plate and footer. Never a live SVG filter on mobile.\n4. The red eave line: a 3–4px #D7141A rule that draws under key headings, the brand device lifted from the logo.\n\nMOTION SYSTEM:\n- Easing: one custom curve, cubic-bezier(0.22,1,0.36,1), plus power3.out for entrances.\n- Durations: 0.4–0.8s; stagger 0.04–0.08; entrance distance 16–24px max.\n- Reveals fire once (ScrollTrigger once:true or IntersectionObserver).\n- One hero sequence only. No scroll-jacking or pinned storytelling: conversion pages must let users reach the phone number instantly.\n- Lenis smooth scroll on desktop only and optional; off on touch.\n- Count-ups only on real numbers.\n- Animate only transform, opacity, stroke-dashoffset and clip-path.\n- prefers-reduced-motion renders final states. Every animation can be skipped by interacting.\n\nRULE: if a motion doesn't (a) make the work look precise, (b) explain the process, or (c) pull toward the quote or call, it gets cut.",
+    "croatianHeadlines": [
+      "Krov kao nacrtan. ('A roof like a drawing.' The idiom 'kao nacrtano' means flawless; it pays off the illustration-to-photo reveal. Recommended homepage H1.)",
+      "Krov više neće puštati. (Colloquial Zagreb 'krov pušta' = the roof leaks. Use as H1 for the sanacija and repair Google Ads landing page.)",
+      "Precizno do zadnjeg vijka. (Craft and detail; good with photos 7 and 8.)",
+      "Lim je naš zanat. (Short and proud. 'Zanat' carries a strong tradesman connotation in Croatian. Works as the O nama or proof-section headline.)",
+      "Novi krov. Fiksna cijena. Pisana garancija. (The American triple promise in natural Croatian; use as a sub-headline or the guarantee section H2.)"
+    ],
+    "photoPlan": "PLACEMENT:\n- Hero reveal: 17 (golden-hour crijep-lim with snow guards); it is the emotional best.\n- Services: 5 for Metalni krovovi (large bento card), 1 for Sanacija (worker on the ridge, valley flashing), 4 for Ravni krovovi i atike, 8 for Dimnjaci (tall card), 13 or 12 for Snjegobrani, 16 or 18 for falcani lim on the metal-roofs page.\n- Case-study rail: 10 leads (Medvednica panorama), then 17, 1, 4, 8, 16.\n- Process timeline: 20 for izmjera/priprema, 6 for izvedba (crew at the junction), 7 for kontrola kvalitete (mitered corner).\n- Guarantee plate background: 7, tight crop.\n- Service-area background: 10, darkened.\n- Final CTA: 1, full-bleed.\n- Portfolio: 2, 3, 11, 19 (parapet capping); 12, 13 (snow guards); 18 (standing seam).\n- Drop 14 and 15 (finger and shadow in frame). 15 can only be used as a heavily cropped thumbnail.\n\nRETOUCH: in Lightroom, build one 'Karamatić 7016' preset:\n- +10 contrast, slightly cool shadows, warm highlights, +8 sky saturation.\n- Keep anthracite neutral; never shift it blue. The consistent RAL 7016 is the brand.\n- Heal protective-film residue and smudges on 7, 17 and 4 with the healing or generative-remove tool. Remove only dirt, never fake the work. Straighten verticals.\n- Export AVIF and WebP at 480, 750, 1080, 1440 and 1920w.\n\nSHOT LIST for the client, ordered by impact:\n1. Drone (licensed operator, HACZ-registered; check the Pleso and Lučko CTR restrictions in Zagreb): top-down orbit and street-to-roof rise on 3 finished roofs at golden hour.\n2. Timelapse of one full roof replacement, either from the drone at a fixed GPS hover point each day or a GoPro on a pole or neighboring roof, 1 frame every 10s. This becomes the v2 hero video: a real roof being built.\n3. Before/after pairs: before every job, shoot 3 fixed angles (street, roof plane, detail) and repeat the exact angles after.\n4. Workshop: the bending machine (abkant/savijačica) folding anthracite sheet in 120fps slow-mo, seaming tool closing a falc, close-ups of riveting.\n5. Team: the owner plus crew in branded anthracite workwear with a red stripe, vans with the logo, faces visible. Trust needs people.\n6. Gutters and downpipes, which are currently missing entirely.\n7. Rain beading and running off a finished roof into the gutter, in slow-mo, for the 'bučan na kiši?' FAQ and the CTA band.\n8. Product flat-lays on dark: crijep-lim, falc and trapezoid sheet samples, a snow guard and a chimney cap, for the estimator choice cards.\n9. 2–3 vertical 20s client video testimonials.\n\nBudget about one professional photo + drone day (roughly €600–1,000), plus an ongoing 'shoot before and after on every job' habit. Never use AI-generated roofs: authenticity is the conversion asset.",
+    "stack": [
+      "Astro 5: static-first, zero JS by default, islands for the estimator. Deploy on Vercel, Netlify or Cloudflare Pages.",
+      "Tailwind CSS v4 (@tailwindcss/vite), with the palette as CSS custom properties",
+      "Preact island for the estimator (much smaller than React), with state in a tiny store and answers persisted in sessionStorage",
+      "GSAP 3 with ScrollTrigger, DrawSVGPlugin, MorphSVGPlugin and SplitText (all free since 2025), tree-shaken and loaded per page",
+      "Lenis (desktop only, optional)",
+      "Leaflet with DGU Geoportal orthophoto (DOF) WMS, falling back to Esri World Imagery, plus @turf/area for roof footprint. Loaded only at estimator step 2.",
+      "Address autocomplete: Google Places Autocomplete (New) with session tokens, or Photon (komoot) as a free alternative. Optionally test Google Solar API buildingInsights coverage for Zagreb to auto-measure roof area and pitch.",
+      "img-comparison-slider (web component) for before/after",
+      "Embla Carousel for reviews and the case-study rail",
+      "PhotoSwipe 5 for the portfolio lightbox",
+      "Sanity (free tier) as headless CMS: projects, reviews, price matrix JSON, availability chip, storm-mode toggle, working hours. The client can upload from a phone.",
+      "Astro <Picture> with sharp for the AVIF/WebP pipeline and blur placeholders",
+      "Lead pipeline: Astro Actions or a serverless function, then (1) Resend email to the owner, (2) Infobip SMS push to the owner's phone (Croatian company), (3) a row in Google Sheets or Airtable as a mini-CRM, plus wa.me and viber:// deep links with a prefilled summary",
+      "Cal.com (free) embed for booking a free measuring slot after the estimate",
+      "Analytics: Plausible (cookieless) by default. GA4 + Google Ads conversions only behind consent (CookieConsent v3 by orestbida, Consent Mode v2). Events: tel_click, whatsapp_click, viber_click, estimator_step_n, lead_submit.",
+      "Schema.org JSON-LD: RoofingContractor (LocalBusiness), Service, FAQPage, BreadcrumbList",
+      "Fontsource self-hosted fonts (Archivo, Inter, IBM Plex Mono) with fontaine fallback metrics",
+      "Logo: a vector redraw in Figma or Illustrator. A flat header version, a mono version, and a favicon using the red roof-peak 'A' triangle."
+    ],
+    "performancePlan": "TARGETS, measured on a mid-range Android (Moto G Power class) over 4G:\n- LCP < 2.0s, CLS < 0.05, INP < 200ms\n- Lighthouse mobile ≥ 95\n- Homepage transfer < 600KB on first view\n\nHOW:\n1. The LCP element is the static H1 text, not an image, on both desktop and mobile.\n2. The hero SVG (about 35KB gz) is inlined in the HTML. Photo 17 loads after LCP with fetchpriority=low, AVIF about 90KB on desktop and 70KB on mobile.\n3. JS budget about 90KB gz:\n   - GSAP core + ScrollTrigger + DrawSVG + MorphSVG ≈ 45KB, deferred until after first paint.\n   - The estimator island hydrates with client:visible or on first interaction (≈ 25KB).\n   - Leaflet (≈ 40KB) and the Places script load only when step 2 opens.\n4. Fonts: 2 preloaded woff2 files subset to latin + latin-ext, swap with metric-matched fallbacks.\n5. Images: explicit width and height, responsive srcset/sizes, loading=lazy below the fold, blur LQIP.\n6. No third-party scripts before consent. No chat widget (WhatsApp deep link instead). No Google Maps iframe (static SVG map instead). No reviews widget (curated JSON synced from Google). CSS-only logo marquee.\n7. Animations use only transform, opacity, dashoffset and clip-path. GSAP's will-change is removed after tweens.\n8. Device guard: if saveData, hardwareConcurrency ≤ 4 or prefers-reduced-motion, render the final states.\n9. Static CDN hosting with immutable hashed assets and HTML at the edge.\n10. Verify with WebPageTest (Frankfurt, Moto G4 profile, 4G), Chrome DevTools CPU 4x throttle, and a real-device check on a cheap Samsung A-series. Add a Lighthouse CI budget in GitHub Actions so regressions fail the build.",
+    "risks": [
+      "The client may refuse to show prices; Croatian trades often do. Fallback: the estimator shows m², recommended material, duration ('Izvedba 3–5 dana') and books a free izmjera with no price. Or show ranges only for repairs, opšav and oluci. Either way, the client must supply a realistic €/m² matrix, and every result carries 'Okvirna procjena nije ponuda'.",
+      "Social proof must be real. If the Google profile has few reviews, run a review campaign before launch (QR card left after each job plus an SMS or WhatsApp link to the review form). Never invent counts like '500+ krovova'. Note that self-hosted review stars generally won't show as rich results for LocalBusiness.",
+      "The before/after section needs photos that don't exist yet. Ship it hidden and start the 'shoot before and after on every job' habit now.",
+      "The current logo is an AI-looking raster 3D render. It won't hold up at header or favicon sizes and will look cheap next to a premium UI. Budget 1–2 days for a vector redraw (flat and mono versions).",
+      "US-style pressure tactics (pop-ups, countdown timers, fake 'only today' scarcity) backfire with Croatian buyers and can breach EU unfair-commercial-practice rules. Scarcity must be CMS-driven and true, otherwise hidden.",
+      "GDPR and ePrivacy: a consent banner is needed for GA4, Ads and Clarity. The lead form needs a privacy notice. Addresses, phone numbers and uploaded roof photos are personal data, so set a retention policy and use EU-region storage where possible.",
+      "Satellite roof drawing is fiddly on small phones, and orthophoto age and parallax reduce accuracy. Always offer house-size presets, and treat area as an estimate. The DGU WMS terms and attribution must be checked.",
+      "Photo quality: phone shots with film residue, smudges and fingers. Without one professional photo + drone day and consistent grading, the 'ultra-premium' promise fails no matter how good the code is.",
+      "Drone filming in Zagreb is regulated (HACZ registration, airport CTR zones, flying over people). Use a licensed operator.",
+      "Over-animation can hurt INP and battery on low-end Android and slow down buyers. The device guard, skip-on-interaction and the single hero sequence rule are mandatory, not optional polish.",
+      "Claims must match reality: warranty years, manufacturer warranties (often conditional), supplier logos (only brands actually used and permitted), response times ('odgovor isti dan', '48 h izmjera'), service area. Lightning-protection wiring is licensed electrical work, so only list it if they are licensed.",
+      "Content maintenance: if the owner never adds projects, the site goes stale. The CMS must allow phone upload in under 2 minutes per project, or the freelancer should sell a monthly content retainer."
+    ],
+    "effortDaysOneDev": 22
+  },
+  {
+    "key": "editorial-kinetic",
+    "name": "PREGIB (The Fold): editorial kinetic direction for Limarija Karamatić",
+    "oneLiner": "A confident, fashion-magazine kinetic site where everything moves the way sheet metal moves. It is never soft, bouncy or floaty: it is bent, laid and pressed. The flat line of the preloader bends into the red roof peak from the logo. The hero photo is laid in strip by strip like standing-seam panels. The giant headline gets squeezed as if in a press brake. Underneath all of it sits a calm, call-first mobile layer, so a 55-year-old homeowner on a Samsung A-series can still find the phone number in one second. My honest opinion is to build \"two sites in one\": the Awwwards layer for desktop and for the client's pride, and a fast, plain-spoken phone layer, because that is where 70%+ of the calls will come from.",
+    "heroStoryboard": [
+      {
+        "t": "PRELOADER 0.00-0.25s (desktop, first visit only)",
+        "beat": "The screen is #0E0F11. A 1px steel-gradient horizontal line (#8A9096 to #C9CDD1 to #8A9096) draws outward from the centre to 60vw. This is a flat sheet seen edge-on. A JetBrains Mono caption sits bottom-left: '0,6 mm · RAL 7016'. Bottom-right shows a real asset-load counter, 000 to 100."
+      },
+      {
+        "t": "PRELOADER 0.25-0.85s",
+        "beat": "The line bends at two points into a roof peak (Λ), a two-path tween with MorphSVG. It uses a custom 'springback' ease: it overshoots about 3 degrees and settles back, the way real sheet does after an abkant bend. A thin white specular highlight runs along each bend line."
+      },
+      {
+        "t": "PRELOADER 0.85-1.10s",
+        "beat": "The Λ fills with #D7141A from the apex down (clip-path). The letters of KARAMATIĆ rise from a mask around it (SplitText chars, 25ms stagger), so the red Λ becomes the second A, exactly as in the logo. The masks have 0.2em of top padding so the háček on Ć is not clipped."
+      },
+      {
+        "t": "PRELOADER 1.10-1.50s",
+        "beat": "The whole preloader plate folds up and away: rotateX 0 to -90deg around its top edge with perspective 1400px. The plate darkens as it turns, like a sheet bent upward in a press. At the same moment the red Λ does a GSAP Flip into the header logo slot (top-left, 28px). Click or any key skips. A sessionStorage flag means it never plays twice in a session. It never runs on touch devices or with reduced motion."
+      },
+      {
+        "t": "HERO LOAD +0.00s (t=0 for repeat visitors)",
+        "beat": "The headline is already painted at its final position: 'POKRIVAMO / ZAGREB.' in Archivo wght 900 / wdth 125, clamp(56px, 15vw, 260px), uppercase, line-height 0.9, bottom-left aligned. This text is the LCP element, so it gets no opacity or clip entrance. Each A is an inline-SVG red triangle with aria-hidden; the real text sits in a visually-hidden span. The top utility row shows the phone number, 'Pon–Sub 7–19' and a WhatsApp icon."
+      },
+      {
+        "t": "HERO LOAD +0.00-0.90s",
+        "beat": "A 3:4 frame in columns 8-12 receives photo 17 (golden-hour tile-profile roof) as 8 vertical 'standing-seam' strips. Each strip drops from translateY(-105%) to 0, left to right, with a 70ms stagger and the springback ease. A 2px #C9CDD1 seam line on each strip edge flashes to 100% on landing, then rests at 15%."
+      },
+      {
+        "t": "HERO LOAD +0.60-1.30s",
+        "beat": "A one-time sun glint (a 20deg diagonal white gradient at 18% opacity, mix-blend: overlay) sweeps across the laid strips: the 'new roof shine'. It is compositor-only (transform: translateX)."
+      },
+      {
+        "t": "HERO LOAD +0.80-1.25s",
+        "beat": "The headline's wdth axis settles from 125 to 112, as if pressed into shape. The subline fades up 12px: 'Metalni krovovi, opšavi, oluci i popravci — Zagreb i okolica. Besplatna procjena.' Then the CTAs appear: a solid red [Nazovite 09x xxx xxxx] and an outline [WhatsApp]. Idle state: strips parallax ±4px to the cursor at different depths, so the frame reads as corrugated. The scroll cue is a small tile-profile wave with 'Skrolajte'."
+      },
+      {
+        "t": "SCROLL 0-30% of a 150vh pin (desktop, scrub 0.6, Lenis)",
+        "beat": "Opposed drift: line 1 'POKRIVAMO' moves x -12vw and line 2 'ZAGREB.' moves x +8vw. The photo frame's clip-path inset opens from the 3:4 frame (inset 0 0 0 58%) toward full viewport. The strips widen and the seam lines stay visible, so the whole screen becomes a metal roof."
+      },
+      {
+        "t": "SCROLL 30-60%",
+        "beat": "The 8 strips fold up one at a time: rotateX 0 to 90deg, transform-origin at the bottom, staggered across the scrub. Their back faces show #B9BEC2, the grey primer side of real coated sheet. This lifts the 'old roof' to reveal scene 2 underneath: photo 10 (flat roof, trapezoid field, Medvednica on the horizon). A mono caption types in: 'RAVNI KROV · TRAPEZNI LIM + OPŠAV ATIKE · ZAGREB'."
+      },
+      {
+        "t": "SCROLL 60-85%",
+        "beat": "The headline compresses from wdth 112 to 62, the press-brake squeeze, and translates up and shrinks into a header-sized label. Three stat plates slide in from the right with a 90ms stagger: 'XXX+ krovova', 'XX godina iskustva', 'X godina jamstva'. These are real numbers from the client only; never ship placeholders."
+      },
+      {
+        "t": "SCROLL 85-100%",
+        "beat": "The pin releases. The next section (light paper #F2F1EE) rides up over the hero with a tile-profile (crijep-lim) SVG wave as its top edge, overlapping the dark hero the way roof sheets overlap. The motion and the meaning are the same."
+      }
+    ],
+    "heroMobileFallback": "Below 1024px, on touch (pointer: coarse), with reduced motion or on low-end devices (deviceMemory < 4 or hardwareConcurrency <= 4) there is no preloader overlay, no pin, no Lenis, no scrub and no WebGL.\n\nThe mobile hero is 100svh and portrait. That suits these photos, because every one was shot vertically on a phone. Photo 17 fills the screen with a bottom-up #0E0F11 gradient behind the text. It lands as 4 strips, not 8, in a pure CSS @keyframes animation (900ms, 60ms stagger, started on first paint, no JS dependency). The glint sweep runs once. The tiny red Λ in the header logo does a 500ms fold as the brand moment, in place of the full preloader.\n\nThe headline is 2 lines at clamp(44px, 13vw, 72px), wdth 112, line-height 0.92, and is never animated. It is followed by an 18px subline and two full-width 56px buttons: [Nazovite] (tel:) and [WhatsApp] (wa.me link with a prefilled message 'Pozdrav, trebam procjenu za krov…'). A text link 'Besplatna procjena →' goes to the short form. The phone number is visible without scrolling.\n\nAfter the hero leaves the viewport, a sticky bottom action bar appears: Nazovi | WhatsApp | Procjena, three equal 56px targets on #1A1D20. The A-triangle glyph stays, since it is just SVG. The section-by-section fold reveals become one-shot IntersectionObserver CSS transitions (opacity plus a 24px rise or a 12deg rotateX). With reduced motion, everything is static and the strips are pre-assembled.",
+    "heroTech": "Astro page with a single GSAP 3 bundle: core, ScrollTrigger, SplitText, CustomEase, Flip and MorphSVG. All of these plugins have been free since the Webflow acquisition, so there are no licence costs.\n\nConditions are wrapped in gsap.matchMedia() ({isDesktop: '(min-width:1024px) and (pointer:fine)', reduce: '(prefers-reduced-motion: reduce)'}), so everything auto-reverts on resize.\n\n**Strips**\n- 8 absolutely positioned copies of the same <img> (same srcset/sizes, so the browser decodes once), each clipped to its column with clip-path: inset(0 calc(100% - (i+1)*12.5%) 0 calc(i*12.5%)).\n- This keeps object-fit: cover and AVIF srcset working. Slicing with background-position breaks responsive images, so avoid it.\n- The fold uses a parent with perspective: 1400px. Each strip has transform-style: preserve-3d and a ::after back face in #B9BEC2 with backface-visibility: hidden.\n\n**Springback ease**\n`CustomEase.create('springback','M0,0 C0.55,0 0.62,1.035 0.78,1.03 0.9,1.02 1,1')`.\n\n**Headline**\n- Archivo variable.\n- `@property --wdth { syntax: '<number>'; inherits: true; initial-value: 125 }` and `font-variation-settings: 'wdth' var(--wdth), 'wght' 900`, tweened by GSAP.\n- Limit it to the 2-line headline, because animating the width axis re-lays-out text every frame.\n- Red A triangles are inline SVG inside the text with width: 0.72em, so they scale with the font.\n\n**Preloader**\n- Inline SVG in the HTML: a flat path and a Λ path with matching node counts, MorphSVG between them.\n- A CSS-only fallback keeps the screen from going blank if JS fails.\n- Fail-safe: the overlay removes itself after 2.5s no matter what.\n\n**Scroll**\n- Lenis on desktop only (`syncTouch: false`), driven by gsap.ticker: `lenis.on('scroll', ScrollTrigger.update); gsap.ticker.add(t => lenis.raf(t*1000)); gsap.ticker.lagSmoothing(0)`.\n- ScrollTrigger: `pin: true, end: '+=150%', scrub: 0.6, anticipatePin: 1`.\n- `ScrollTrigger.config({ ignoreMobileResize: true })`.\n- Call `ScrollTrigger.refresh()` after `document.fonts.ready` and after the hero image decode().\n\n**Glint**\nA pseudo-element with a linear-gradient, animated with transform only.\n\n**Phase 2** (once the timelapse exists)\nSwap photo 17 for a single 6-8s muted, playsinline, looping <video> (720p H.264 plus AV1/HEVC, under 1.5MB). Clip it with an SVG <clipPath> of 8 <rect>s whose y/height GSAP animates. That means one decoder, not 8.\n\n**Not in the hero**\nNo WebGL and no three.js. WebGL (OGL) appears only in the gallery hover and is lazy-loaded.",
+    "homepageSections": [
+      {
+        "name": "Persistent: header + mobile action bar",
+        "content": "Header on desktop: the flat vector logo (wordmark plus red Λ), nav (Usluge, Radovi, O nama, Kontakt), the phone number in mono, and a red [Besplatna procjena] button. It hides on scroll-down and returns on scroll-up.\n\nMobile: logo, a 'Nazovi' icon, and a burger that opens a full-screen menu with giant Archivo links.\n\nInside the menu sits an 'Animacije: uključene / isključene' toggle. It is persisted in localStorage and overrides motion, for older users who get dizzy.\n\nThe mobile sticky bottom bar reads Nazovi | WhatsApp | Procjena and appears after the hero.",
+        "interaction": "Desktop: the custom cursor is a 10px red triangle that points in the direction of travel (angle from pointer delta, lerped). Over links it grows into a 56px ring; over the gallery it shows 'POVUCI'. The native cursor is never hidden over form fields.\n\nThe menu opens with 5 horizontal anthracite sheets folding down (rotateX -90 to 0, 50ms stagger). The links rise from masks."
+      },
+      {
+        "name": "00 Preloader 'Abkant'",
+        "content": "A flat line bends into the red Λ, KARAMATIĆ assembles around it, and the plate folds away (see the storyboard). The total is 1.5s or less.",
+        "interaction": "Desktop, first visit only. Click or a key skips it. Never on touch or with reduced motion. Removes itself after 2.5s even if something fails."
+      },
+      {
+        "name": "01 Hero 'Pokrivamo Zagreb.'",
+        "content": "Kinetic headline, photo 17 laid in standing-seam strips, a plain subline, two CTAs, phone and working hours. Scene 2 on scroll is photo 10 with a mono caption.\n\nThree real stat plates: number of roofs, years in business, warranty.",
+        "interaction": "Desktop: a 150vh scrubbed pin with opposed type drift, the frame opening to full-bleed, strips folding up to reveal scene 2, and the width-axis squeeze.\n\nMobile: a static layout with a one-shot CSS strip landing."
+      },
+      {
+        "name": "02 Ticker usluga",
+        "content": "An infinite double marquee in Archivo wdth 125 wght 800, 8vw, set in brushed-metal text (background-clip: text with an SVG feTurbulence brushed texture).\n\nText: 'CRIJEP-LIM · FALCANI LIM · TRAPEZNI LIM · OPŠAVI ATIKA · OLUCI · DIMNJACI · SNJEGOBRANI · SANACIJA KROVOVA ·'. A red Λ separates the items. The second row runs in reverse in outline type, -webkit-text-stroke 1px #383E42.",
+        "interaction": "Speed follows Lenis velocity, base 40px/s up to about 4x when scrolling fast. Direction flips with scroll direction.\n\nOn mobile it runs at constant speed in pure CSS. With reduced motion it is a static, wrapped list."
+      },
+      {
+        "name": "03 Manifest",
+        "content": "Light #F2F1EE section, editorial 2-column layout.\n\nLeft: a giant statement in Archivo 900: 'Ne radimo sve. Radimo lim — i radimo ga *do milimetra*.' The last words are in Instrument Serif Italic.\n\nRight: a portrait crop of photo 1 (worker on the ridge, diagonal valley flashing) and a 3-line mono spec block: 'Lim 0,5–0,7 mm · Boja RAL 7016 i po želji · Vlastita izrada opšava'. Verify the specs with the client.",
+        "interaction": "Words light up from 12% to 100% opacity as you scroll (SplitText words, scrub). Photo 1 has slow parallax (yPercent -8) on desktop.\n\nMobile: words are already lit, and the photo fades in once."
+      },
+      {
+        "name": "04 Usluge — index",
+        "content": "A magazine-style index of 6 full-width rows separated by 1px #383E42 hairlines. Each row has a big numeral (01–06), the service name at 6vw, a one-line plain description and an arrow.\n\n1. Metalni krovovi: photo 5\n2. Falcani lim: photo 16\n3. Ravni krovovi i opšavi atika: photo 4\n4. Dimnjaci (oblaganje i kape): photo 8\n5. Oluci i odvodnja: needs a new photo\n6. Sanacija i popravci: photo 6\n\nSnow guards (snjegobrani) go into row 1. Lightning protection (gromobran) is shown only if they actually install it themselves.",
+        "interaction": "Desktop: hovering a row slides the row text 2vw to the right. A 3:4 photo follows the cursor (GSAP quickTo, lerp 0.15) and gets revealed by a 4-strip clip. The cursor turns into 'OTVORI'. Rows link to /usluge/[slug].\n\nMobile: tapping expands an accordion with the photo inline, 3 bullet points and 'Saznaj više'. There is no hover dependency anywhere."
+      },
+      {
+        "name": "05 Kako nastaje krov",
+        "content": "This is the second 'roof being built' act: a stack of 5 sheets.\n\n01 Izlazak i izmjera (besplatno)\n02 Ponuda u 48 h\n03 Priprema i demontaža\n04 Montaža lima\n05 Opšavi, oluci, završna kontrola i jamstvo\n\nEach sheet is a #1A1D20 card with a brushed texture, a giant outline numeral, 2 sentences and a photo: 3 (ladder), 6 (worker), 1 (seam work), 20 (tools on the parapet), 17 (finished).\n\nConfirm the timings and warranty with the client.",
+        "interaction": "Desktop: pinned for 250vh. Each card folds down onto the stack from rotateX 90deg (origin top) with springback. The cards below darken and shift 8px up, so the result reads as layered roofing. A progress rail on the left fills red, step by step.\n\nMobile: a normal vertical list. Each card does a one-shot 12deg rotateX settle on entering the viewport."
+      },
+      {
+        "name": "06 Radovi — horizontal gallery",
+        "content": "12 portrait project cards, 3:4 at 62vh tall: 17, 5, 10, 4, 1, 8, 7, 13, 16, 18, 2, 12. Never 14 or 15.\n\nEach card has a mono caption with type, neighbourhood, material, m² and year, a giant counter '07 / 12' and a final card 'Svi radovi →'.",
+        "interaction": "Desktop: vertical scroll drives a horizontal translate (pinned, end = total track width), with the 'POVUCI' cursor and drag support.\n\nOn hover, an OGL WebGL plane runs a 'sheet flex' shader: a low-frequency sine displacement along x, as if the metal flexes. It also adds an anisotropic brushed specular streak that follows the cursor. Lazy-loaded only on desktop with a capable GPU.\n\nMobile: native overflow-x with scroll-snap-type: x mandatory. Cards are 78vw wide so the next one visibly peeks, with a 'Povucite →' hint and prev/next buttons. No hijacking."
+      },
+      {
+        "name": "07 Detalj je potpis",
+        "content": "Photo 7 (the mitred V parapet corner) cropped tight to the metal, on #0E0F11, with the headline 'Detalj je potpis.' and 3 annotation hairlines pointing to the mitre, the screws and the overlap, each with a mono label.\n\nThis is the craft proof that clients actually judge.",
+        "interaction": "Desktop: a circular 180px loupe follows the cursor at 2.2x zoom (a second image layer with clip-path: circle()) and shows the joint precision.\n\nMobile: the annotations draw in on enter (SVG stroke-dashoffset), with a slow 1.05x Ken Burns zoom. With reduced motion it is static."
+      },
+      {
+        "name": "08 Prije / poslije",
+        "content": "2–3 before/after pairs shot from the same position. Hide this section until the client delivers the shots; it is the highest-converting proof for homeowners.",
+        "interaction": "Drag slider: the divider is a vertical standing-seam line with a red Λ handle. Keyboard accessible (arrow keys) and touch-friendly, with a 44px or larger handle."
+      },
+      {
+        "name": "09 Recenzije",
+        "content": "Real Google reviews, 3 to 5 of them, pulled manually. One giant quote at a time in Instrument Serif Italic at 4vw, with name, neighbourhood and star rating. Links to the Google Business Profile ('Pogledajte sve recenzije na Googleu').",
+        "interaction": "Desktop: autoplay is off. Arrows, plus a red Λ progress tick. Quotes swap with a line-mask rise.\n\nMobile: native swipe."
+      },
+      {
+        "name": "10 Gdje radimo",
+        "content": "A giant vertical word cycler: 'Radimo u: Zagreb / Sesvete / Dubrava / Novi Zagreb / Velika Gorica / Zaprešić / Samobor'. Confirm the list with the client.\n\nBeside it: a static, styled SVG map of the Zagreb area with Medvednica outlined, and photo 10's skyline strip. This also supports local SEO.",
+        "interaction": "The words roll like a slot (yPercent stepping, every 1.6s, pausable, aria-live off). The map dots light up in sync. On mobile the list is shown static."
+      },
+      {
+        "name": "11 Finale CTA + kratka forma",
+        "content": "Dark section with the headline 'Javite se prije prve kiše.' The phone number is set at 9vw in Archivo 900 and is itself a tel: link. Beside it, a WhatsApp button.\n\nShort form: Ime, Telefon, Mjesto, chips for 'Što trebate?' (Novi krov / Popravak / Opšav / Oluci / Dimnjak / Ostalo), optional photo upload ('Pošaljite slike krova — brže procijenimo') and a message. Submit button: [Pošaljite upit].\n\nPromise line: 'Javljamo se isti ili sljedeći radni dan.' Confirm this with the client.",
+        "interaction": "Hovering the giant number runs a brushed-metal sheen across it (background-position tween). The chips are big 48px toggles.\n\nSubmit shows success as a fold: the form folds away and reveals 'Hvala! Zvat ćemo vas uskoro.' Validation is inline and clear, in Croatian."
+      },
+      {
+        "name": "Footer",
+        "content": "The full KARAMATIĆ wordmark at 100% viewport width as the closing graphic, with the red Λ. Address, OIB, working hours, a services list, legal links and the motion toggle.",
+        "interaction": "The wordmark's wdth goes from 62 to 125 as the footer scrolls into view: it 'unfolds' to full width. On mobile it renders at final width."
+      }
+    ],
+    "otherPages": [
+      "/usluge: an overview index (the same row design as the homepage) linking to one SEO page per service.",
+      "/usluge/metalni-krovovi: crijep-lim, falcani lim and trapezni lim compared in a 3-column spec table (look, minimum pitch, lifespan, price class), a gallery, an FAQ and a CTA.",
+      "/usluge/sanacija-krovova: repairs and emergency leaks ('prokišnjavanje'). This page puts the phone number first, because urgent visitors land here.",
+      "/usluge/opsavi-atika-ravni-krovovi: parapet capping and flat roofs, with photos 2, 3, 4, 7, 10, 19 and 20.",
+      "/usluge/dimnjaci: chimney cladding and caps, photo 8.",
+      "/usluge/oluci: gutters and downpipes. Blocked until new photos are shot.",
+      "/usluge/snjegobrani: snow guards, photos 5, 12 and 13, plus a short 'why they matter in Zagreb winters' text.",
+      "/radovi: the full project index with filter chips (Krovovi, Ravni krovovi, Dimnjaci, Oluci, Popravci) and a grid/list toggle. In list mode, hover reveals a photo (desktop).",
+      "/radovi/[slug]: case-study template. Full-height cover, a spec block (lokacija, vrsta, materijal, površina m², trajanje), a 6-12 photo editorial gallery with mixed 3:4 and 9:16 crops, an optional before/after, a client quote and the next project as a giant link with a fold transition.",
+      "/o-nama: the Karamatić story, team portraits, workshop and press brake (macro video loop), van, years in business, what they guarantee.",
+      "/procjena: a 3-step quote form (1. what you need, 2. where and how big, plus photo upload, 3. contact). A progress bar fills red. It works without JS as a plain form post.",
+      "/kontakt: phone, WhatsApp, email, address, hours, and a static map image linking out to Google Maps (no embed, for GDPR and performance).",
+      "/cesta-pitanja: FAQ in Croatian, e.g. 'Koliko košta metalni krov po m²?', 'Može li lim preko starog crijepa?', 'Koliko traje montaža?', 'Je li metalni krov bučan po kiši?', 'Kakvo je jamstvo?'. It carries FAQPage schema.",
+      "/privatnost and /kolacici: GDPR pages. With cookieless analytics no consent banner is needed.",
+      "404: 'Ovdje nema krova.' A flat line that tries to bend into the Λ and droops, plus a link home."
+    ],
+    "signatureMoments": [
+      "'Abkant' preloader (desktop, first visit): a flat steel line bends into the red roof peak with real-metal springback, KARAMATIĆ assembles around it as the logo's second A, and the whole screen folds away like a sheet in a press brake.",
+      "Panel-lay hero: photo 17 arrives as 8 standing-seam strips dropping in left to right, each seam flashing as it lands, then one sun-glint sweep across the new roof.",
+      "Re-roofing on scroll: the hero strips fold up one by one, showing the grey primer back face of real coated sheet, and reveal a second finished roof (photo 10 with Medvednica).",
+      "Press-brake typography: the headline's variable width axis is squeezed from 125 to 62 on scroll, and the footer wordmark unfolds from 62 to 125. The same font and the same physics as the metal.",
+      "The red Λ as the only colour: the logo's triangle A recurs as the cursor, the A-glyphs in headlines, list separators, the slider handle, the progress tick and the favicon. The rule is one red element per screen, so it always shouts.",
+      "Tile-profile section edges: every light section rides over the previous one with a crijep-lim wave silhouette, overlapping like roof sheets.",
+      "Sheet-flex WebGL hover in the horizontal project gallery: images bend like flexing metal, with a brushed specular streak that follows the cursor.",
+      "The 'Detalj je potpis' loupe: a 2.2x magnifier over the mitred parapet corner (photo 7). It proves craft in a way stock-photo competitors cannot.",
+      "Fold page transitions: native cross-document View Transitions. The outgoing page folds up from the bottom edge (rotateX) over 450ms while the red Λ in the header stays put as the anchor."
+    ],
+    "palette": [
+      {
+        "name": "Noć",
+        "hex": "#0E0F11",
+        "use": "Primary dark background (hero, gallery, finale, footer). Near-black but not pure black, so the anthracite photos still separate from it."
+      },
+      {
+        "name": "Grafit",
+        "hex": "#1A1D20",
+        "use": "Dark surfaces: process cards, mobile action bar, menu sheets, form fields on dark."
+      },
+      {
+        "name": "Antracit 7016",
+        "hex": "#383E42",
+        "use": "The material colour as a UI colour (approximation of RAL 7016): hairlines, outline type strokes, strip backgrounds, dividers. Ties the UI to the actual product in every photo."
+      },
+      {
+        "name": "Čelik",
+        "hex": "#8A9096",
+        "use": "Secondary text and mono captions on dark (about 6:1 on #0E0F11, passes AA)."
+      },
+      {
+        "name": "Cink",
+        "hex": "#C9CDD1",
+        "use": "Brushed-metal highlights, seam lines, glint, specular streaks, icons on dark."
+      },
+      {
+        "name": "Temeljna boja",
+        "hex": "#B9BEC2",
+        "use": "Back face of folding strips and sheets: the grey primer reverse side of real coated sheet. Only seen during folds."
+      },
+      {
+        "name": "Papir",
+        "hex": "#F2F1EE",
+        "use": "Light editorial sections (manifest, services index, reviews, inner-page body), for magazine light/dark rhythm and long-read legibility."
+      },
+      {
+        "name": "Tinta",
+        "hex": "#111214",
+        "use": "Body and display text on Papir."
+      },
+      {
+        "name": "Karamatić crvena",
+        "hex": "#D7141A",
+        "use": "The single accent, taken from the logo: the red Λ, primary CTA, active and progress states, cursor. White text on it is about 5.2:1 (AA). Max one red element per screen."
+      },
+      {
+        "name": "Crvena pritisnuto",
+        "hex": "#A80F14",
+        "use": "Hover and pressed state of red buttons, and the focus ring outline on light backgrounds."
+      }
+    ],
+    "typography": "**Archivo (variable)**\nArchivo is on Google Fonts with a wdth 62–125 axis and a wght 100–900 axis. Its latin-ext subset covers U+0100–02BA, which includes Č č Ć ć Ž ž Š š Đ đ; I checked this against the Google Fonts CSS API.\n- Display headlines: wght 900, wdth 112–125, uppercase, tracking -0.02em, line-height 0.9 (not tighter, see below), clamp(56px, 15vw, 260px).\n- H2: clamp(40px, 7vw, 120px), wght 800, wdth 100–112.\n- Body: wght 400, wdth 100. 18/28px on mobile, 19/30px on desktop. Never below 16px, including captions on mobile.\n- The width axis is the kinetic device: press-brake squeezes and unfolds.\n\n**Instrument Serif Italic** (Google Fonts, latin-ext)\nUse it for at most one accent word or phrase per section, e.g. 'Krov koji *ne pušta*.', 'do *milimetra*'. It gives the fashion-editorial contrast against the heavy grotesk. Size it about 1.1x the surrounding grotesk to match x-heights.\n\n**JetBrains Mono** (Google Fonts, latin-ext)\nFor spec captions, counters, labels and the phone number in the header. 12–14px, uppercase, tracking +0.08em. Example: '0,6 MM · RAL 7016 · 142 M² · 2025'.\n\n**Self-hosting**\nSelf-host all fonts with Fontsource or google-webfonts-helper. Do not hotlink Google Fonts: a German court ruled that remote Google Fonts loading leaks IP addresses under GDPR. Keep only the latin and latin-ext subsets, use font-display: swap, and preload only the Archivo woff2 that carries both axes.\n\n**Croatian-specific gotchas**\n- Uppercase háčeks and acute accents (Č Ć Š Ž) get clipped by line-height under 0.9 and by SplitText overflow masks. Give masks padding-top 0.2em with an equal negative margin.\n- Never let a single 'i' or 'u' end a headline line; join them with a non-breaking space ('u&nbsp;Zagrebu').\n- Use the Croatian decimal comma ('0,6 mm') and spaced thousands ('1 200 m²').\n- Set hyphenation with lang='hr', and turn hyphens off on display type.",
+    "texturesAndMotion": "**Textures** (all cheap, no video backgrounds)\n- **Brushed metal:** an SVG feTurbulence with anisotropic baseFrequency='0.002 0.6' (long horizontal streaks). Render it once to a 512px AVIF tile at build time and use it as a 6-10% overlay on Grafit surfaces and as a background-clip: text fill for the ticker and the footer wordmark.\n- **Film grain:** a static 256px noise PNG at 3-4% opacity on dark sections only. Never an animated canvas grain on mobile.\n- **Standing-seam rhythm:** repeating-linear-gradient hairlines (1px #383E42 every 48px) as faint backgrounds behind section titles.\n- **Crijep-lim wave:** an SVG path of the tile-profile silhouette used as section edges and as the scroll-cue icon.\n- **Screw-head bullets:** a 6px dot with a 1px ring, like an EPDM washer, as list bullets.\n- **Photo grade:** photos get one unified grade and a subtle 2% grain so the phone shots sit together.\n\n**Motion language: 'Lim se savija, ne skakuće'** (metal bends, it does not bounce)\n- Only three moves are allowed:\n  - **Lay:** vertical drop into place, for strips and cards.\n  - **Fold:** rotateX around a horizontal edge with a perspective of 1200-1400px. Back faces are #B9BEC2.\n  - **Press:** the variable-font width squeeze.\n- No elastic or bubbly easing, no rotateZ spins, no blob morphs, no parallax stacks deeper than two layers.\n- **Easing:** a 'springback' CustomEase with a 3% overshoot and a hard settle, used on every landing and fold. Use expo.out for UI and linear for scrubs.\n- **Durations:** micro 160-200ms (buttons, cursor), UI 300ms, fold 650-750ms, hero sequence at most 1.3s, page transition 450ms.\n- **Staggers:** 50-70ms, always left to right or top to bottom, the order sheets are laid.\n- **Scroll:** Lenis on desktop only (lerp 0.1). Native scroll on all touch devices.\n\n**Motion safety**\n- prefers-reduced-motion and the in-menu 'Animacije isključene' toggle both switch to opacity-only fades, no pins and no WebGL.\n- Nothing flashes more than 3 times per second.\n- Every scroll-driven section must make sense as a plain stacked layout first, built that way in the HTML. Animation is a layer added on top.",
+    "croatianHeadlines": [
+      "Pokrivamo Zagreb. (subline: 'Krov po krov.' The double meaning works naturally in Croatian: 'pokrivati' means both to cover an area and to roof a house.)",
+      "Krov koji ne pušta. ('pušta' is how people actually say a roof leaks. Instrument Serif Italic on 'ne pušta'.)",
+      "Svaki pregib. Svaki spoj. Svaki krov. (a three-beat line for kinetic type; each beat lands on a scroll step)",
+      "Precizno do zadnjeg vijka.",
+      "Lim je naš zanat."
+    ],
+    "photoPlan": "**Placement of existing photos** (folder .../images)\n- **Hero, scene 1:** 17 (golden-hour tile-profile roof with snow guards). This is the emotional anchor; the anthracite against the terracotta neighbours is the brand story in one frame.\n- **Hero, scene 2 and 'Gdje radimo' skyline strip:** 10 (flat roof, Zagreb, Medvednica).\n- **Manifest:** 1 (worker on the ridge, strong diagonal valley flashing). Crop out the shadow at bottom-left.\n- **Services index:**\n  - Metalni krovovi: 5\n  - Falcani lim: 16 (crop the drill out, or keep it as a work-in-progress cue)\n  - Ravni krovovi/atika: 4\n  - Dimnjaci: 8 (crop the stray metal tab)\n  - Sanacija: 6 (worker plus junction flashing)\n  - Snow guards: 12 or 13\n- **Process stack:** 3 (ladder / start), 6 (montaža), 1 (seams), 20 (tools on the parapet / opšav), 17 (finished).\n- **Detail loupe:** 7 (mitred V corner). Crop to the metal and the gravel only, losing the messy garden.\n- **Gallery:** 17, 5, 10, 4, 1, 8, 7, 13, 16, 18, 2, 12.\n- **Weaker, inner pages only:** 11, 19, 3.\n- **Never use:** 14 and 15 (finger and photographer shadow).\n- **Logo:** 9.webp is an AI-looking glossy 3D raster. Redraw it as a flat vector SVG for the web: a two-weight wordmark plus the red Λ, with a mono-line roof mark. Keep the glossy render for the van and social media. The red Λ alone becomes the favicon and app icon.\n\n**Hard requirement**\nEvery file is a WhatsApp export (1200×1600 or 900×1600, about 200-500KB). That is fine for portrait cards and mobile, but too soft for a full-bleed desktop hero. Ask the client to send the original-quality files from their phones (AirDrop, Google Photos 'original', or a USB cable), which are probably 12-48MP.\n\n**Retouch and grade**\n- Remove protective-film residue, scuffs and smudges with generative remove (Lightroom or Photoshop). It is heavy on 7 and 17 and visible on 1, 4 and 5.\n- Neutralise the blue sky cast on the anthracite so it reads as neutral graphite, not navy.\n- Apply one shared Lightroom preset: highlights -15, shadows +10, a slight cool split-tone in the shadows, clarity +5.\n- Export 2400px on the long edge, then let Astro generate AVIF and WebP.\n- If the originals are lost, upscale only the hero (17) with Topaz Photo AI and hide the softness with grain.\n\n**New shoot list** (one or two days, ideally on the next 2-3 jobs)\n1. **Timelapse** of one complete roof install. Use a GoPro or an old phone on a clamp or mast on a neighbouring roof or scaffold, one frame every 5s for a full day, locked exposure. This is the real 'roof being built' hero video for phase 2 and the process section.\n2. **Drone, golden hour,** over a finished roof among red-tile neighbours: a top-down pull-up reveal and a slow orbit. Use a sub-250g C0 class drone such as a DJI Mini. First check the Croatian drone rules and the Zagreb airport (Pleso) controlled zones on the official drone map.\n3. **Workshop macro slow-motion** at 120-240fps: the abkant/press brake folding a sheet (this is literally the PREGIB concept and feeds the preloader), sheet unrolling off the coil, the seaming tool closing a standing seam, a screw with an EPDM washer biting in, gutter hooks being bent.\n4. **Team portraits:** 2-4 people in matching black workwear with the red logo, shot on the roof and against an anthracite sheet at 35-50mm in natural light, plus one hero portrait of the owner for /o-nama.\n5. **Missing services:** gutters and downpipes in close-up, chimney caps and snow guards from a low angle with sky.\n6. **Before/after pairs** shot from the identical position (mark the spot or use a tripod), 3 or more.\n7. **The van** with branding, in the street and in front of a job.\n8. **A 6-8s seamless loop** of sun glint moving across a standing-seam roof, as a backup hero loop.\n\nShoot everything in portrait and landscape: the site needs both.",
+    "stack": [
+      "Astro (static output, multi-page app, zero JS by default; content collections for projects, services, reviews and FAQ)",
+      "TypeScript",
+      "Tailwind CSS v4 (design tokens as CSS custom properties: colours, the fluid type scale, motion durations)",
+      "GSAP 3 core + ScrollTrigger + SplitText + CustomEase + Flip + MorphSVG (all free) through gsap.matchMedia() for desktop, mobile and reduced-motion tiers",
+      "Lenis (smooth scroll, desktop and fine pointer only, synced to gsap.ticker)",
+      "OGL (small WebGL library) for the gallery 'sheet flex' hover shader, dynamically imported only on capable desktops",
+      "Native cross-document View Transitions (@view-transition { navigation: auto }) for the fold page transitions. They degrade gracefully in Firefox; avoid SPA routers, so GSAP needs no re-init on each page.",
+      "Fontsource / self-hosted woff2: Archivo variable (wdth + wght), Instrument Serif, JetBrains Mono (latin + latin-ext only)",
+      "Astro Assets / sharp for AVIF + WebP responsive images; Lightroom + Photoshop generative remove for retouch; Topaz Photo AI only if the originals are missing",
+      "Figma for design and the flat vector logo redraw (SVG)",
+      "Keystatic (git-based CMS) so the client or developer can add projects, photos and reviews without touching animated layouts",
+      "Forms: an Astro server endpoint (Vercel or Netlify function) sending email through Resend, with photo uploads to Cloudinary or Uploadcare; Cloudflare Turnstile against spam (invisible, no puzzle); a plain HTML POST fallback",
+      "Hosting: Vercel, Netlify or Cloudflare Pages (free tier is enough), with a .hr domain",
+      "Plausible or Umami cookieless analytics (no consent banner needed), with tracked events for tel: clicks, WhatsApp clicks and form submits",
+      "Schema.org JSON-LD: RoofingContractor (a LocalBusiness subtype) with areaServed, FAQPage, and a Google Business Profile link",
+      "QA: Lighthouse CI, WebPageTest (Moto G Power, 4G), a real mid-range Samsung A-series phone, Safari on iOS, VoiceOver and TalkBack checks"
+    ],
+    "performancePlan": "**Three tiers, decided before any animation code loads**\n- **Full:** min-width 1024px, pointer: fine, no reduced motion, deviceMemory 4 or more and hardwareConcurrency more than 4. Gets the preloader, Lenis, pins, scrub and OGL.\n- **Lite:** touch or mid-range. Gets CSS keyframes and IntersectionObserver one-shots, and GSAP core only if needed.\n- **Static:** reduced motion, the 'Animacije isključene' toggle, or Save-Data. Gets fades only.\n\n**Budgets**\n- Initial JS on mobile under 60KB gzip (the lite tier is mostly CSS).\n- Desktop: GSAP and plugins about 70KB, Lenis about 4KB, OGL about 25KB lazy-loaded when the gallery is within 1 viewport.\n- CSS under 30KB.\n- Fonts: one Archivo woff2 (both axes, latin + latin-ext) about 70-90KB preloaded; Instrument Serif and Mono loaded lazily (font-display: swap).\n- Hero image AVIF: about 90-130KB on mobile at 828w and about 250KB on desktop at 1600-2400w, with fetchpriority='high' and loading='eager'. Everything else is lazy, with explicit width and height for CLS 0.\n\n**LCP strategy**\n- The LCP element is the headline text, painted immediately at its final position. Only its width axis animates; there is no opacity or clip entrance.\n- The strip clones reuse one decoded image.\n- The preloader is desktop-only, first visit, 1.5s or less, skippable, and removes itself after 2.5s. Verify with a WebPageTest filmstrip that the content behind it is already painted.\n\n**Avoid**\n- No video in the first viewport on mobile. Once the timelapse exists, mobile gets the poster image, and the video starts only on Wi-Fi or a good effective connection type.\n- No Google Maps embed (static image plus a link), no chat widgets, no Facebook pixel by default.\n\n**Runtime**\n- Animate only transform, opacity and clip-path, plus the width axis on 2 lines of text.\n- Use will-change only during active tweens.\n- Kill ScrollTriggers via matchMedia on resize. Call ScrollTrigger.refresh() after fonts.ready and after image decode.\n- Use svh/dvh units, and set ignoreMobileResize so the iOS address bar does not make pins jump.\n\n**Targets** (field p75)\n- LCP under 2.0s on mobile 4G, INP under 200ms, CLS under 0.05.\n- Lighthouse mobile 90 or above for Performance, 100 for Accessibility, Best Practices and SEO.\n- Check monthly in Vercel Speed Insights or CrUX.",
+    "risks": [
+      "Award-site tropes can read as 'an agency showing off' instead of 'a tradesman I trust with my house'. A 55-year-old homeowner may not see where to call. Mitigation: the phone number and WhatsApp are visible in the first mobile viewport, a sticky Nazovi | WhatsApp | Procjena bar, every kinetic headline is followed by a plain-language subline, and phone and WhatsApp clicks are tracked so performance is judged on calls, not on Awwwards.",
+      "Scroll-jacking and pinned or horizontal sections feel 'stuck' or broken on Android and confuse older users. Mitigation: no Lenis, no pins and no horizontal hijack on touch. The gallery is a native scroll-snap carousel with a visible next card, arrows and a 'Povucite →' hint. The in-menu 'Animacije isključene' toggle and prefers-reduced-motion are honoured everywhere.",
+      "The custom cursor and hover-only reveals do nothing on touch, and a custom cursor can make desktop elderly users lose the pointer. Mitigation: the native cursor is never hidden over fields or buttons, no information is hover-only, and everything has a tap or accordion equivalent.",
+      "The source photos are 1200px WhatsApp exports. A full-bleed desktop hero will look soft and undermine the 'ultra premium' promise. Mitigation: get the originals from the client's phones now and schedule the timelapse and drone shoot. Until then, keep large images in 3:4 frames rather than full-bleed, with grain, and upscale only the hero if necessary.",
+      "Animating the variable-font width axis and SplitText masks can clip Croatian diacritics (Č Ć Š Ž) and cause layout jank. Mitigation: line-height 0.9 or more, mask padding, width-axis animation limited to the 2-line headline, and tests with real Croatian copy (not lorem ipsum).",
+      "The glossy AI-rendered raster logo clashes with a flat editorial system and blurs at small sizes. The client may be attached to it. Mitigation: present the flat vector redraw as 'the same logo, made for screens', and keep the glossy version for the van and social media.",
+      "Real trust content is missing: years in business, number of roofs, warranty terms, Google reviews, OIB, before/after shots. Kinetic counters with invented numbers would be dishonest and legally risky. Mitigation: a content checklist signed off before build. Sections stay hidden until their data exists.",
+      "GSAP + Lenis + View Transitions integration bugs (stale ScrollTrigger positions after fonts or images load, iOS Safari address-bar resize, back-button scroll restoration). Mitigation: a multi-page app (no SPA router), refresh hooks, and testing on a real iPhone and Samsung early, not in the last week.",
+      "Scope creep. WebGL, the preloader, the loupe and the fold transitions are each a day or more. Mitigation: a pre-agreed cut list. If the schedule slips, drop OGL first (use a CSS hover zoom), then the loupe, then the preloader. The panel-lay hero and the mobile layer are non-negotiable.",
+      "Maintenance: the client cannot safely edit the animated layouts. Mitigation: Keystatic edits only projects, reviews, FAQ and contact data. Layouts are code.",
+      "GDPR and compliance: remote Google Fonts, map embeds, form data with photos. Mitigation: self-hosted fonts, a static map, cookieless analytics, a privacy page, and form data retention stated. WCAG 2.2 AA as the standard even though a microenterprise is likely exempt from the European Accessibility Act."
+    ],
+    "effortDaysOneDev": 25
+  }
+]

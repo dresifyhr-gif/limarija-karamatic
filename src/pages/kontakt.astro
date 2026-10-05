@@ -1,0 +1,43 @@
+---
+/**
+ * /kontakt — prvi ekran ima sve radnje na dodir (ContactSheet u heru: telefon, WhatsApp, Viber, e-pošta,
+ * radno vrijeme), zatim područje rada i podaci o tvrtki (papir) i forma za procjenu (FinalCta, #procjena).
+ */
+import Base from '@/layouts/Base.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
+import FinalCta from '@/components/home/FinalCta.astro';
+import ContactSheet from '@/components/pages/kontakt/ContactSheet.astro';
+import ContactRows from '@/components/pages/kontakt/ContactRows.astro';
+import HeroFacts from '@/components/pages/HeroFacts.astro';
+
+const crumbs = [homeCrumb, { href: '/kontakt', label: 'Kontakt' }];
+---
+
+<Base
+  title="Kontakt — telefon, WhatsApp, Viber | Limarija Karamatić"
+  description="Nazovite ili pošaljite slike krova na WhatsApp ili Viber. Besplatna procjena krova u Zagrebu i okolici. Radno vrijeme, područje rada i podaci o tvrtki."
+  schema={[breadcrumbSchema(crumbs, Astro.site)]}
+>
+  <PageHero
+    eyebrow="Kontakt · Zagreb i okolica"
+    title="Javite se. Dolazimo izmjeriti."
+    lead="Najbrže je telefonom ili porukom."
+    crumbs={crumbs}
+    cta={false}
+  >
+    <ContactSheet slot="aside" />
+    <HeroFacts
+      items={[
+        { k: 'Procjena', v: 'Besplatno, na terenu' },
+        { k: 'Ponuda', v: 'Pisana, stavku po stavku' },
+        { k: 'Slike krova', v: 'WhatsApp ili Viber' },
+      ]}
+    />
+  </PageHero>
+  <ContactRows index="01" />
+  <FinalCta
+    index="02"
+    title="Ili pošaljite upit."
+    lead="Tri kratka koraka. Javljamo se, dogovorimo izlazak i dobivate pisanu ponudu."
+  />
+</Base>

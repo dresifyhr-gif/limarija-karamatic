@@ -1,0 +1,592 @@
+---
+/**
+ * Zaglavlje: sticky, 64 px (56 na mobitelu). Na vrhu je poluprozirno (grafit/80 + blur);
+ * nakon ~40 px skrola postaje puni grafit s donjom linijom, malo se stisne, a gornji red loga
+ * ("LIMARIJA") se presavije pa ostaje samo KARAMATIĆ (compact).
+ *
+ * Vanjska kutija ima stalnu visinu (nema pomaka sadržaja); smanjuje se samo unutarnja traka.
+ * Telefon je u zaglavlju od lg (1024) naviše; ispod lg je ikona + donja CTA traka.
+ * Mobilni izbornik: dijalog preko cijelog ekrana (grafit + milimetarski papir), focus trap, Esc, zaključan skrol.
+ *   Na vrhu izbornika: crvena "Besplatna procjena" + "Nazovite …".
+ *   Bez JS-a: umjesto gumba izbornika je link (ista ikona) na navigaciju u podnožju.
+ *
+ * Linkovi na procjenu (data-quote-link): href="/procjena"; skripta ih prebacuje na "#procjena"
+ * kad stranica ima vlastiti obrazac (id="procjena") — vrijedi i za MobileCtaBar i Footer.
+ */
+import Logo from '@/components/ui/Logo.astro';
+import Button from '@/components/ui/Button.astro';
+import Icon from '@/components/ui/Icon.astro';
+import MotionToggle from './MotionToggle.astro';
+import { nav, services, site, telHref, waHref, viberHref } from '@/data/site';
+
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+/* "page" za točnu stranicu, "true" za roditeljsku sekciju (npr. Usluge na /usluge/dimnjaci) */
+const current = (href: string): 'page' | 'true' | undefined => {
+  if (href.includes('#')) return undefined;
+  if (path === href) return 'page';
+  return path.startsWith(`${href}/`) ? 'true' : undefined;
+};
+/* Na /hvala je upit već poslan: umjesto "Besplatna procjena" nudimo slanje slika uz broj upita */
+const isThanks = path === '/hvala';
+const homeLabel = `${site.name} — naslovnica`;
+---
+
+<header class="kr-header sticky top-0 z-50 h-14 lg:h-16" data-site-header>
+  <div class="kr-header__bar">
+    <div class="wrap flex h-full items-center">
+      <a href="/" class="kr-header__home -mx-1 flex items-center self-stretch px-1" aria-label={homeLabel}>
+        <Logo class="text-[20px] xl:text-[23px]" />
+      </a>
+
+      <nav class="ml-auto hidden pl-6 lg:block" aria-label="Glavna navigacija">
+        <ul class="flex items-center">
+          {
+            nav.map((item) => (
+              <li>
+                <a href={item.href} class="kr-nav-link" aria-current={current(item.href)}>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="kr-header__actions hidden items-center border-l border-white/10 lg:flex">
+        <a href={telHref} class="kr-header__phone inline-flex items-center" aria-label={`Nazovite ${site.phoneDisplay}`}>
+          <Icon name="phone" size={16} class="shrink-0 text-celik" />
+          <span>{site.phoneDisplay}</span>
+        </a>
+        {
+          isThanks ? (
+            <Button
+              href={waHref('Pozdrav, šaljem slike krova uz upit.')}
+              variant="whatsapp"
+              icon="whatsapp"
+              class="kr-header__cta"
+              data-thanks-wa
+            >
+              Pošaljite slike
+            </Button>
+          ) : (
+            <Button href="/procjena" class="kr-header__cta" data-quote-link>
+              Besplatna procjena
+            </Button>
+          )
+        }
+      </div>
+
+      <div class="ml-auto flex items-center gap-2 lg:hidden">
+        <a href={telHref} class="kr-iconbtn" aria-label={`Nazovite ${site.phoneDisplay}`}>
+          <Icon name="phone" size={20} />
+        </a>
+        {/* bez JS-a: ista ikona vodi na navigaciju u podnožju; skripta je mijenja pravim gumbom */}
+        <a href="#navigacija" class="kr-iconbtn" aria-label="Izbornik (navigacija u podnožju)" data-menu-fallback>
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="square"
+            aria-hidden="true"><path d="M3 8.5h18M3 15.5h12"></path></svg
+          >
+        </a>
+        <button
+          type="button"
+          class="kr-iconbtn"
+          aria-expanded="false"
+          aria-controls="kr-menu"
+          aria-label="Otvori izbornik"
+          hidden
+          data-menu-trigger
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="square"
+            aria-hidden="true"><path d="M3 8.5h18M3 15.5h12"></path></svg
+          >
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Mobilni izbornik -->
+<div
+  id="kr-menu"
+  class="kr-menu grid-paper fixed inset-0 z-[70] flex flex-col bg-grafit lg:hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="kr-menu-title"
+  hidden
+  data-menu
+>
+  <div class="wrap flex h-14 shrink-0 items-center justify-between">
+    <a href="/" class="-mx-1 flex items-center self-stretch px-1" aria-label={homeLabel}>
+      <Logo class="text-[20px]" />
+    </a>
+    <button type="button" class="kr-iconbtn" aria-label="Zatvori izbornik" data-menu-close>
+      <Icon name="close" size={20} />
+    </button>
+  </div>
+  <div class="kr-menu__line" aria-hidden="true"></div>
+
+  <div class="kr-menu__body min-h-0 flex-1 overflow-y-auto overscroll-contain">
+    <div class="wrap pt-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+      <h2 id="kr-menu-title" class="sr-only">Izbornik</h2>
+
+      <!-- Najvažnije odmah na vrhu: procjena i poziv -->
+      <div class="grid gap-2.5 sm:grid-cols-2" data-menu-item>
+        {
+          isThanks ? (
+            <Button
+              href={waHref('Pozdrav, šaljem slike krova uz upit.')}
+              variant="whatsapp"
+              icon="whatsapp"
+              size="lg"
+              class="w-full"
+              data-thanks-wa
+            >
+              Pošaljite slike
+            </Button>
+          ) : (
+            <Button href="/procjena" size="lg" iconRight="arrow-right" class="w-full" data-quote-link>
+              Besplatna procjena
+            </Button>
+          )
+        }
+        <a href={telHref} class="kr-menu__call">
+          <Icon name="phone" size={18} class="shrink-0 text-celik" />
+          <span>Nazovite</span>
+          <span class="kr-menu__num">{site.phoneDisplay}</span>
+        </a>
+      </div>
+
+      <nav class="mt-7" aria-label="Glavna navigacija">
+        <ul class="border-t border-white/10">
+          {
+            nav.map((item, i) => (
+              <li class="kr-menu__item border-b border-white/10" data-menu-item>
+                <a
+                  href={item.href}
+                  class="group flex min-h-[3.25rem] items-center justify-between gap-4 py-1.5"
+                  aria-current={current(item.href)}
+                  data-menu-link
+                >
+                  <span class="flex items-baseline gap-4">
+                    <span class="w-5 font-mono text-[0.6875rem] tracking-[0.08em] text-celik" aria-hidden="true">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span class="kr-menu__label type-display text-[1.5rem] text-white">{item.label}</span>
+                  </span>
+                  <Icon
+                    name="arrow-right"
+                    size={18}
+                    class="text-celik transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-white"
+                  />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <section class="mt-8" aria-labelledby="kr-menu-usluge" data-menu-item>
+        <h3 id="kr-menu-usluge" class="eyebrow text-celik">Usluge</h3>
+        <ul class="mt-2 grid sm:grid-cols-2 sm:gap-x-6">
+          {
+            services.map((s) => (
+              <li>
+                <a
+                  href={`/usluge/${s.slug}`}
+                  class="flex min-h-11 items-center text-[0.9375rem] text-linija transition-colors duration-150 hover:text-white aria-[current=page]:text-white aria-[current=page]:underline aria-[current=page]:decoration-redline aria-[current=page]:decoration-2 aria-[current=page]:underline-offset-[6px]"
+                  aria-current={current(`/usluge/${s.slug}`)}
+                  data-menu-link
+                >
+                  {s.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+
+      <section class="mt-8 border-t border-white/10 pt-7" aria-labelledby="kr-menu-slike" data-menu-item>
+        <h3 id="kr-menu-slike" class="eyebrow text-celik">Ili pošaljite slike krova</h3>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <Button href={waHref()} variant="whatsapp" icon="whatsapp" class="w-full">WhatsApp</Button>
+          <Button href={viberHref} variant="viber" icon="viber" class="w-full">Viber</Button>
+        </div>
+        <p class="mt-4 font-mono text-xs leading-5 text-celik">
+          {site.hours}<br />{site.responseTime}
+        </p>
+      </section>
+
+      <div class="mt-6 border-t border-white/10 pt-2" data-menu-item>
+        <MotionToggle />
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Vanjska kutija stalne visine; traka unutra se smanjuje (bez pomaka sadržaja) */
+  .kr-header {
+    pointer-events: none;
+  }
+  .kr-header__bar {
+    pointer-events: auto;
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 56px;
+    background: rgb(14 16 19 / 0.8);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
+    backdrop-filter: blur(12px) saturate(1.1);
+    transition:
+      height 180ms var(--ease-press),
+      background-color 200ms var(--ease-draft);
+  }
+  .kr-header__bar::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background: rgb(213 219 223 / 0.12);
+    opacity: 0;
+    transition: opacity 200ms var(--ease-draft);
+  }
+  .kr-header[data-scrolled] .kr-header__bar {
+    height: 52px;
+    background: var(--color-grafit);
+  }
+  .kr-header[data-scrolled] .kr-header__bar::after {
+    opacity: 1;
+  }
+  @media (width >= 64rem) {
+    .kr-header__bar {
+      height: 64px;
+    }
+    .kr-header[data-scrolled] .kr-header__bar {
+      height: 56px;
+    }
+  }
+
+  /* Presavijanje loga: gornji red "LIMARIJA" ide u 0, ostaje KARAMATIĆ */
+  .kr-header__home :global(.kr-logo__top) {
+    transition:
+      grid-template-rows 180ms var(--ease-press),
+      opacity 150ms var(--ease-press);
+  }
+  .kr-header[data-scrolled] .kr-header__home :global(.kr-logo__top) {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
+  /* Navigacija: crvena linija se crta slijeva, a povlači udesno.
+     lg (1024–1279) je zbijenija da stane i broj telefona. */
+  .kr-nav-link {
+    --px: 0.5rem;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding-inline: var(--px);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    /* puna boja (ne prozirnost): linija 86 % prema grafitu, ~11:1 */
+    color: color-mix(in srgb, var(--color-linija) 86%, var(--color-grafit));
+    white-space: nowrap;
+    transition: color 150ms var(--ease-press);
+  }
+  .kr-nav-link::after {
+    content: '';
+    position: absolute;
+    left: var(--px);
+    right: var(--px);
+    bottom: 7px;
+    height: 2px;
+    background: var(--color-redline);
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 200ms var(--ease-draft);
+  }
+  .kr-nav-link:hover,
+  .kr-nav-link[aria-current] {
+    color: #fff;
+  }
+  .kr-nav-link:hover::after,
+  .kr-nav-link:focus-visible::after,
+  .kr-nav-link[aria-current]::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+  @media (width >= 80rem) {
+    .kr-nav-link {
+      --px: 0.85rem;
+    }
+  }
+
+  /* Telefon + CTA */
+  .kr-header__actions {
+    gap: 1rem;
+    margin-left: 0.75rem;
+    padding-left: 1rem;
+  }
+  .kr-header__phone {
+    gap: 0.5rem;
+    height: 44px;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    word-spacing: -0.2em;
+    white-space: nowrap;
+    color: #fff;
+    transition: color 150ms var(--ease-press);
+  }
+  .kr-header__phone:hover {
+    color: var(--color-linija);
+  }
+  .kr-header__actions :global(.kr-header__cta) {
+    padding-inline: 1rem;
+  }
+  @media (width >= 80rem) {
+    .kr-header__actions {
+      gap: 1.5rem;
+      margin-left: 1.25rem;
+      padding-left: 1.5rem;
+    }
+    .kr-header__phone {
+      gap: 0.625rem;
+      font-size: 0.9375rem;
+      letter-spacing: 0.02em;
+      word-spacing: -0.15em;
+    }
+    .kr-header__actions :global(.kr-header__cta) {
+      padding-inline: 1.25rem;
+    }
+  }
+
+  /* Ikonski gumbi na mobitelu: 44 × 44 */
+  .kr-iconbtn {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    color: #fff;
+    border: 1px solid rgb(213 219 223 / 0.16);
+    border-radius: 2px;
+    transition:
+      border-color 150ms var(--ease-press),
+      background-color 150ms var(--ease-press);
+  }
+  .kr-iconbtn:hover {
+    border-color: rgb(213 219 223 / 0.45);
+    background: rgb(255 255 255 / 0.04);
+  }
+  .kr-iconbtn:active {
+    transform: translateY(1px);
+  }
+
+  .kr-menu__line {
+    height: 2px;
+    background: var(--color-redline);
+    transform-origin: left center;
+  }
+
+  /* "Nazovite 091 000 0000" — obrubljeni gumb iste visine kao crveni (52/56 px) */
+  .kr-menu__call {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    height: 3.25rem;
+    padding-inline: 1.25rem;
+    border: 1px solid rgb(213 219 223 / 0.35);
+    font-weight: 600;
+    color: var(--color-linija);
+    white-space: nowrap;
+    transition:
+      border-color 150ms var(--ease-press),
+      background-color 150ms var(--ease-press);
+  }
+  .kr-menu__call:hover {
+    border-color: var(--color-linija);
+    background: rgb(255 255 255 / 0.05);
+  }
+  .kr-menu__call:active {
+    transform: translateY(1px);
+  }
+  .kr-menu__num {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    word-spacing: -0.2em;
+    color: #fff;
+  }
+  @media (width >= 40rem) {
+    .kr-menu__call {
+      height: 3.5rem;
+    }
+  }
+
+  :global(html.motion-off) .kr-header__bar,
+  :global(html.motion-off) .kr-header__bar::after,
+  :global(html.motion-off) .kr-header__home :global(.kr-logo__top) {
+    transition: none;
+  }
+</style>
+
+<script>
+  import { gsap, motionOn } from '@/lib/motion';
+
+  const root = document.documentElement;
+
+  /* ── Linkovi na procjenu: obrazac na istoj stranici ima prednost ───────── */
+  if (document.getElementById('procjena')) {
+    document.querySelectorAll<HTMLAnchorElement>('a[data-quote-link]').forEach((a) => a.setAttribute('href', '#procjena'));
+  }
+
+  /* ── /hvala: WhatsApp u zaglavlju nosi broj upita ─────── */
+  const thanksWa = document.querySelectorAll<HTMLAnchorElement>('a[data-thanks-wa]');
+  if (thanksWa.length) {
+    const m = (new URLSearchParams(location.search).get('upit') ?? '').trim().match(/^(?:#?KR-?)?([A-Z0-9]{3,8})$/i);
+    if (m) {
+      // encodeURIComponent (ne URLSearchParams): razmak mora biti %20, ne "+"
+      const text = `Pozdrav, šaljem slike krova uz upit #KR-${m[1].toUpperCase()}.`;
+      thanksWa.forEach((a) => (a.href = `${a.href.split('?')[0]}?text=${encodeURIComponent(text)}`));
+    }
+  }
+
+  /* ── Stanje skrola ─────────────────────────────────────── */
+  const headers = document.querySelectorAll<HTMLElement>('[data-site-header]');
+  let scrolled: boolean | null = null;
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const s = window.scrollY > 40;
+    if (s === scrolled) return;
+    scrolled = s;
+    headers.forEach((h) => h.toggleAttribute('data-scrolled', s));
+  };
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    },
+    { passive: true },
+  );
+  update();
+
+  /* ── Mobilni izbornik ──────────────────────────────────── */
+  const menu = document.querySelector<HTMLElement>('[data-menu]');
+  const openBtn = document.querySelector<HTMLButtonElement>('[data-menu-trigger]');
+  const closeBtn = menu?.querySelector<HTMLButtonElement>('[data-menu-close]');
+
+  if (menu && openBtn && closeBtn) {
+    // JS radi: pravi gumb umjesto linka na podnožje (ista ikona, bez pomaka)
+    document.querySelectorAll<HTMLElement>('[data-menu-fallback]').forEach((a) => (a.hidden = true));
+    openBtn.hidden = false;
+
+    const line = menu.querySelector<HTMLElement>('.kr-menu__line');
+    const items = menu.querySelectorAll<HTMLElement>('[data-menu-item]');
+    let isOpen = false;
+    let tl: gsap.core.Timeline | null = null;
+
+    const focusables = () =>
+      Array.from(
+        menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => el.offsetParent !== null);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const f = focusables();
+      if (!f.length) return;
+      const first = f[0];
+      const last = f[f.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || !menu.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !menu.contains(active))) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    const open = () => {
+      if (isOpen) return;
+      isOpen = true;
+      tl?.kill();
+      menu.hidden = false;
+      openBtn.setAttribute('aria-expanded', 'true');
+      root.setAttribute('data-menu-open', '');
+      root.style.overflow = 'hidden';
+      document.addEventListener('keydown', onKey);
+      closeBtn.focus({ preventScroll: true });
+
+      if (motionOn()) {
+        tl = gsap
+          .timeline({ defaults: { overwrite: 'auto' } })
+          .fromTo(menu, { opacity: 0 }, { opacity: 1, duration: 0.12, ease: 'none' })
+          .fromTo(line, { scaleX: 0 }, { scaleX: 1, duration: 0.32, ease: 'draft' }, 0.04)
+          .fromTo(
+            items,
+            { y: 14, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.2, ease: 'press', stagger: 0.03, clearProps: 'transform,opacity' },
+            0.16,
+          );
+      }
+    };
+
+    const finishClose = () => {
+      menu.hidden = true;
+      gsap.set([menu, line, ...items], { clearProps: 'all' });
+    };
+
+    function close(returnFocus = true) {
+      if (!isOpen) return;
+      isOpen = false;
+      tl?.kill();
+      openBtn!.setAttribute('aria-expanded', 'false');
+      root.removeAttribute('data-menu-open');
+      root.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+      if (returnFocus) openBtn!.focus({ preventScroll: true });
+
+      if (motionOn()) {
+        tl = gsap.timeline({ onComplete: finishClose }).to(menu, { opacity: 0, duration: 0.15, ease: 'none' });
+      } else {
+        finishClose();
+      }
+    }
+
+    openBtn.addEventListener('click', open);
+    closeBtn.addEventListener('click', () => close());
+    menu.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) =>
+      a.addEventListener('click', () => close(false)),
+    );
+
+    // prijelaz na desktop zatvara izbornik
+    window.matchMedia('(min-width: 64rem)').addEventListener('change', (e) => {
+      if (e.matches) close(false);
+    });
+  }
+</script>

@@ -1,0 +1,303 @@
+---
+/**
+ * Recenzije (id="recenzije", papir).
+ * Google sažetak + niz kartica s native scroll-snapom (bez autoplaya).
+ * Recenzije u site.ts su PRIMJERI — kartica to jasno kaže dok je `example: true`.
+ * Strelice i traka napretka pojavljuju se tek s JS-om; bez njega niz se normalno povlači.
+ */
+import SectionHead from '@/components/ui/SectionHead.astro';
+import Icon from '@/components/ui/Icon.astro';
+import ExampleTag from '@/components/ui/ExampleTag.astro';
+import { site, reviews, stats } from '@/data/site';
+
+interface Props {
+  index?: string;
+}
+const { index = '07' } = Astro.props;
+
+const g = stats.find((s) => s.label === 'Google ocjena');
+const ratingValue = g?.value ?? 4.9;
+const rating = ratingValue.toFixed(1).replace('.', ',');
+const ratingConfirmed = g?.confirmed ?? false;
+const fullStars = Math.round(ratingValue);
+const reviewsHref = site.googleReviewsUrl;
+const reviewsExternal = reviewsHref.startsWith('http');
+const total = String(reviews.length).padStart(2, '0');
+---
+
+<section id="recenzije" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+  <div class="wrap">
+    <div class="grid gap-y-10 lg:grid-cols-12 lg:items-end lg:gap-x-8">
+      <SectionHead
+        class="lg:col-span-7"
+        tone="light"
+        index={index}
+        eyebrow="Recenzije"
+        title="Pitajte one kojima više ne curi."
+      />
+
+      <!-- Google sažetak -->
+      <div class="lg:col-span-4 lg:col-start-9" data-reveal>
+        <div class="flex items-end gap-5 border-b border-tinta/15 pb-6">
+          <p class="type-display text-[4.5rem] leading-[0.78] tracking-[-0.03em] sm:text-[5.5rem]">
+            <span class="sr-only">Prosječna ocjena </span>{rating}<span class="sr-only"> od 5</span>
+          </p>
+          <div class="pb-1">
+            <div class="flex gap-0.5 text-tinta" aria-hidden="true">
+              {Array.from({ length: 5 }, (_, i) => <Icon name="star" size={17} class={i < fullStars ? '' : 'opacity-25'} />)}
+            </div>
+            <p class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.9375rem] font-medium">
+              <Icon name="google" size={15} />
+              <span>na Googleu</span>
+              {!ratingConfirmed && <ExampleTag />}
+            </p>
+          </div>
+        </div>
+        {
+          reviewsExternal ? (
+            <a
+              href={reviewsHref}
+              class="rv-link group mt-5 inline-flex min-h-11 items-center gap-2 text-[0.9375rem] font-semibold"
+              target="_blank"
+              rel="noopener"
+            >
+              <span class="underline decoration-tinta/25 underline-offset-[0.35em] transition-colors duration-150 group-hover:decoration-tinta">
+                Sve recenzije na Googleu
+              </span>
+              <Icon name="arrow-up-right" size={18} class="transition-transform duration-150 ease-[var(--ease-press)] group-hover:translate-x-0.5" />
+            </a>
+          ) : (
+            <p class="mt-5 flex min-h-11 items-center">
+              <ExampleTag text="ovdje link na Google recenzije" />
+            </p>
+          )
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Niz kartica: puna širina, poravnat s .wrap preko paddinga -->
+  <div class="rv mt-12 sm:mt-16" data-reviews>
+    <ul
+      id="recenzije-niz"
+      class="rv-rail grid snap-x snap-mandatory grid-flow-col gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain sm:gap-6"
+      tabindex="0"
+      aria-label="Recenzije klijenata, povucite vodoravno za više"
+      data-reveal-group
+    >
+      {
+        reviews.map((r) => (
+          <li class="snap-start" data-reveal>
+            <article class="flex h-full flex-col border border-tinta/12 bg-white/45 p-6 sm:p-8">
+              <div class="flex items-center justify-between gap-4">
+                <div class="flex gap-0.5" role="img" aria-label={`${r.stars} od 5 zvjezdica`}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <Icon name="star" size={15} class={i < r.stars ? '' : 'opacity-25'} />
+                  ))}
+                </div>
+                {r.example && <ExampleTag text="Primjer recenzije" />}
+              </div>
+
+              <blockquote class="mt-7 flex-1 text-[1.0625rem] leading-[1.6] text-pretty sm:text-lg lg:text-[1.1875rem]">
+                <p>„{r.text}“</p>
+              </blockquote>
+
+              <footer class="mt-8 flex items-end justify-between gap-4 border-t border-tinta/12 pt-5">
+                <div class="min-w-0">
+                  {r.example ? (
+                    <p class="rv-blank" title="Ovdje dolazi ime iz stvarne Google recenzije">
+                      Ime i prezime
+                    </p>
+                  ) : (
+                    <p class="font-semibold">{r.name}</p>
+                  )}
+                  <p class="mt-1.5 font-mono text-[0.6875rem] tracking-[0.1em] text-tinta/70 uppercase">
+                    {r.place} · Google
+                  </p>
+                </div>
+                <Icon name="google" size={18} class="shrink-0 text-tinta/35" />
+              </footer>
+            </article>
+          </li>
+        ))
+      }
+    </ul>
+
+    <!-- kontrole (isti raspored kao rail Radova): brojač · tanka linija napretka · strelice; tek s JS-om -->
+    <div class="wrap mt-8 flex items-center gap-5 sm:gap-6" data-rv-controls hidden>
+      <p class="type-mono shrink-0 text-[0.75rem] tracking-[0.08em] text-tinta/70 tabular-nums" aria-hidden="true">
+        <span class="text-tinta" data-rv-pos>01</span>
+        <span class="mx-1.5">/</span>{total}
+      </p>
+      <div class="relative h-px flex-1 bg-tinta/15" aria-hidden="true">
+        <span class="rv-thumb absolute inset-y-0 left-0 bg-tinta" data-rv-thumb></span>
+      </div>
+      <div class="hidden items-center gap-2 md:flex">
+        <button
+          type="button"
+          class="rv-btn"
+          aria-label="Prethodne recenzije"
+          aria-controls="recenzije-niz"
+          aria-disabled="true"
+          data-rv-prev
+        >
+          <Icon name="arrow-right" size={18} class="rotate-180" />
+        </button>
+        <button
+          type="button"
+          class="rv-btn"
+          aria-label="Sljedeće recenzije"
+          aria-controls="recenzije-niz"
+          data-rv-next
+        >
+          <Icon name="arrow-right" size={18} />
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Padding niza = rub .wrap sadržaja, i na ekranima širim od 88rem */
+  .rv {
+    --pad: 1.25rem;
+  }
+  @media (width >= 48rem) {
+    .rv {
+      --pad: 2rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .rv {
+      --pad: 3rem;
+    }
+  }
+  .rv-rail {
+    --edge: max(var(--pad), calc((100% - 88rem) / 2 + var(--pad)));
+    padding-inline: var(--edge);
+    scroll-padding-inline: var(--edge);
+    grid-auto-columns: 86%;
+    scrollbar-width: none;
+    padding-block: 2px;
+  }
+  .rv-rail::-webkit-scrollbar {
+    display: none;
+  }
+  .rv-rail:focus-visible {
+    outline-offset: -2px;
+  }
+  @media (width >= 40rem) {
+    .rv-rail {
+      grid-auto-columns: 62%;
+    }
+  }
+  @media (width >= 48rem) {
+    .rv-rail {
+      grid-auto-columns: calc((100% - 1.5rem) / 2);
+    }
+  }
+  @media (width >= 64rem) {
+    .rv-rail {
+      grid-auto-columns: calc((100% - 3rem) / 3);
+    }
+  }
+
+  /* Prazno polje "Ime i prezime" kao na obrascu — jasno da je primjer */
+  .rv-blank {
+    display: inline-block;
+    min-width: 9.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px dashed rgb(21 24 27 / 0.35);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.7);
+  }
+
+  .rv-btn {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(21 24 27 / 0.25);
+    color: var(--color-tinta);
+    transition:
+      background-color 150ms var(--ease-press),
+      border-color 150ms var(--ease-press),
+      color 150ms var(--ease-press),
+      opacity 150ms var(--ease-press);
+  }
+  .rv-btn:hover:not([aria-disabled='true']) {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-papir);
+  }
+  .rv-btn[aria-disabled='true'] {
+    opacity: 0.3;
+    cursor: default;
+  }
+  .rv-thumb {
+    width: 33%;
+    transition: none;
+  }
+</style>
+
+<script>
+  function initReviews(root: HTMLElement) {
+    const rail = root.querySelector<HTMLElement>('.rv-rail');
+    const controls = root.querySelector<HTMLElement>('[data-rv-controls]');
+    if (!rail || !controls) return;
+    const prev = root.querySelector<HTMLButtonElement>('[data-rv-prev]');
+    const next = root.querySelector<HTMLButtonElement>('[data-rv-next]');
+    const thumb = root.querySelector<HTMLElement>('[data-rv-thumb]');
+    const pos = root.querySelector<HTMLElement>('[data-rv-pos]');
+    const items = Array.from(rail.querySelectorAll<HTMLElement>(':scope > li'));
+    controls.hidden = false;
+
+    const reduced = () =>
+      !document.documentElement.classList.contains('motion') ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const step = () => {
+      const a = items[0];
+      const b = items[1];
+      return a && b ? b.offsetLeft - a.offsetLeft : rail.clientWidth;
+    };
+    const pad = (n: number) => String(n).padStart(2, '0');
+    // gumb ostaje fokusabilan (aria-disabled, ne disabled) da tipkovnica ne izgubi mjesto
+    const setOff = (btn: HTMLButtonElement | null, off: boolean) => btn?.setAttribute('aria-disabled', String(off));
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const max = rail.scrollWidth - rail.clientWidth;
+      const x = Math.max(0, rail.scrollLeft);
+      const atEnd = x >= max - 2;
+      setOff(prev, x <= 2);
+      setOff(next, atEnd);
+      if (thumb) {
+        const visible = Math.min(1, rail.clientWidth / rail.scrollWidth);
+        const progress = max > 0 ? x / max : 0;
+        thumb.style.width = `${visible * 100}%`;
+        thumb.style.left = `${progress * (1 - visible) * 100}%`;
+      }
+      if (pos) pos.textContent = pad(atEnd ? items.length : Math.min(items.length, Math.round(x / step()) + 1));
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+
+    rail.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
+    const go = (btn: HTMLButtonElement | null, dir: 1 | -1) =>
+      btn?.addEventListener('click', () => {
+        if (btn.getAttribute('aria-disabled') === 'true') return;
+        rail.scrollBy({ left: dir * step(), behavior: reduced() ? 'auto' : 'smooth' });
+      });
+    go(prev, -1);
+    go(next, 1);
+    update();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-reviews]').forEach(initReviews);
+</script>
