@@ -1,52 +1,55 @@
 ---
 /**
- * Footer kao "sastavnica" — zaglavlje tehničkog crteža:
- *  1. tablica polja s mono oznakama (NAZIV, USLUGE, STRANICE, KONTAKT, PODRUČJE, RADNO VRIJEME, PODACI O TVRTKI).
- *     Veliki telefon i WhatsApp/Viber su u završnom CTA-u (FinalCta), ne ovdje.
+ * Footer kao "sastavnica" — zaglavlje tehničkog crteža, svedeno na bitno:
+ *  1. četiri polja: znak + potpis + područje · Usluge · Stranice · Kontakt (telefon, WhatsApp, e-mail, radno vrijeme)
+ *     i jedan tanki red: © · OIB · Privatnost | Mjerilo 1 : 1 | prekidač animacija.
+ *     Područje je jedan redak (site.area — "Zagreb i šire") s linkom na /kontakt ("Gdje radimo").
+ *     Poruke samo preko WhatsAppa (nema Vibera).
  *  2. golemi KARAMATIĆ preko cijele širine kontejnera — na desktopu se "razvije" po osi širine
  *     (font-stretch 62 % → 125 %, ScrollTrigger once, ease draft); na mobitelu / reduced statičan.
- * Mobitel: Usluge | Stranice u dva stupca, popis mjesta u <details>, podaci o tvrtki u jednom retku.
- * Na < lg ima donji padding za mobilnu CTA traku.
+ * Mobilni dok (MobileCtaBar) se skriva dok je footer na ekranu (data-site-footer), pa footer na dnu
+ * treba samo safe-area razmak; bez JS-a dok je stalno vidljiv i footer mu ostavlja mjesto.
  */
 import Logo from '@/components/ui/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import MotionToggle from './MotionToggle.astro';
-import { site, services, areas, telHref, waHref, viberHref } from '@/data/site';
+import { site, services, telHref, waHref } from '@/data/site';
 
 const year = new Date().getFullYear();
+/* Kratke oznake kao u glavnoj navigaciji; "Besplatna procjena" je već u zaglavlju, doku i obrascu iznad footera */
 const pages = [
   { href: '/radovi', label: 'Radovi' },
-  { href: '/upravitelji-zgrada', label: 'Za upravitelje zgrada' },
+  { href: '/upravitelji-zgrada', label: 'Za zgrade' },
   { href: '/o-nama', label: 'O nama' },
   { href: '/kontakt', label: 'Kontakt' },
-  { href: '/procjena', label: 'Besplatna procjena', quote: true },
-  { href: '/privatnost', label: 'Privatnost' },
 ];
-const hours = site.hours.split(' · ');
+/* radno vrijeme u dijelovima: lomi se samo između dijelova */
+const hoursParts = site.hours.split(' · ');
 const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
 ---
 
-<footer class="kr-footer grid-paper relative bg-grafit text-linija" aria-labelledby="kr-footer-title">
+<footer class="kr-footer grid-paper relative bg-grafit text-linija" aria-labelledby="kr-footer-title" data-site-footer>
   <h2 id="kr-footer-title" class="sr-only">Navigacija, kontakt i podaci o tvrtki</h2>
 
-  <div class="wrap pt-10 sm:pt-16 lg:pt-24">
-    <div class="kr-tb grid grid-flow-row-dense grid-cols-2 lg:grid-cols-12">
-      <!-- A1 · Naziv (na mobitelu ga zamjenjuje potpis + golemi KARAMATIĆ ispod tablice) -->
-      <div class="kr-cell col-span-2 hidden sm:block lg:col-span-4">
-        <p class="kr-label"><span>Naziv</span><span aria-hidden="true">A1</span></p>
-        <a href="/" class="inline-block" aria-label={`${site.name} — naslovnica`}>
-          <Logo class="text-[1.625rem] sm:text-[2.125rem]" />
+  <div class="wrap pt-14 sm:pt-20 lg:pt-28">
+    <div class="kr-tb grid grid-cols-2 lg:grid-cols-12">
+      <!-- Znak · potpis · područje (na mobitelu bez znaka: golemi KARAMATIĆ je ispod) -->
+      <div class="kr-cell kr-cell--brand col-span-2 lg:col-span-4">
+        <a href="/" class="hidden sm:inline-block" aria-label={`${site.name} — naslovnica`}>
+          <Logo class="text-[2.125rem]" />
         </a>
-        <p class="type-display mt-5 text-[1.25rem] leading-[1.1] text-white sm:mt-7 sm:text-2xl lg:text-[1.375rem] xl:text-2xl">
+        <p class="type-display text-[1.375rem] leading-[1.1] text-white sm:mt-8 sm:text-2xl lg:text-[1.375rem] xl:text-2xl">
           Sedam puta mjerimo.<br />Jednom savijemo.
         </p>
-        <p class="mt-2.5 text-sm text-celik sm:mt-3">Limeni krovovi, opšavi i oluci · {site.city}</p>
+        <a href="/kontakt" class="kr-area">
+          <span>{site.area}</span><span class="sr-only"> — područje rada i kontakt</span>
+          <Icon name="arrow-right" size={15} class="kr-area__arrow" />
+        </a>
       </div>
 
-      <!-- A2 · Usluge (cilj linka "Izbornik" kad JS ne radi) -->
+      <!-- Usluge (cilj linka "Izbornik" kad JS ne radi) -->
       <nav id="navigacija" class="kr-cell col-span-1 lg:col-span-3" aria-labelledby="kr-f-usluge">
-        <p class="kr-label" id="kr-f-usluge"><span>Usluge</span><span aria-hidden="true">A2</span></p>
+        <p class="kr-label" id="kr-f-usluge">Usluge</p>
         <ul class="kr-links">
           {
             services.map((s) => (
@@ -58,116 +61,49 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
         </ul>
       </nav>
 
-      <!-- A3 · Stranice -->
       <nav class="kr-cell col-span-1 lg:col-span-2" aria-labelledby="kr-f-stranice">
-        <p class="kr-label" id="kr-f-stranice"><span>Stranice</span><span aria-hidden="true">A3</span></p>
+        <p class="kr-label" id="kr-f-stranice">Stranice</p>
         <ul class="kr-links">
           {
             pages.map((p) => (
               <li>
-                <a href={p.href} {...(p.quote ? { 'data-quote-link': '' } : {})}>
-                  {p.label}
-                </a>
+                <a href={p.href}>{p.label}</a>
               </li>
             ))
           }
         </ul>
       </nav>
 
-      <!-- A4 · Kontakt -->
       <div class="kr-cell col-span-2 lg:col-span-3">
-        <p class="kr-label"><span>Kontakt</span><span aria-hidden="true">A4</span></p>
+        <p class="kr-label">Kontakt</p>
         <ul class="kr-links kr-links--contact">
           <li>
             <a href={telHref} class="kr-tel" aria-label={`Nazovite ${site.phoneDisplay}`}>{site.phoneDisplay}</a>
           </li>
-          <li><a href={waHref()} target="_blank" rel="noopener">WhatsApp</a></li>
-          <li class="kr-viber">
-            <a href={viberHref}>Viber</a>
-            {/* na računalu viber:// bez instalirane aplikacije ne radi ništa: tamo samo podatak */}
-            <span class="kr-viber__fine">Viber: isti broj</span>
+          <li>
+            <a href={waHref()} target="_blank" rel="noopener" aria-label="Pošaljite slike na WhatsApp">WhatsApp</a>
           </li>
           <li class="kr-mail"><a href={`mailto:${site.email}`}>{site.email}</a></li>
         </ul>
+        <p class="kr-hours">{hoursParts.map((h) => <span>{h}</span>)}</p>
       </div>
 
-      <!-- B1 · Područje -->
-      <div class="kr-cell kr-cell--area col-span-1 lg:col-span-4">
-        <p class="kr-label"><span>Područje</span><span aria-hidden="true">B1</span></p>
-        <p class="text-[0.9375rem] leading-snug font-semibold text-white">{site.area}</p>
-        <div class="mt-2 hidden text-sm leading-relaxed text-celik lg:block">
-          <ul class="kr-areas inline">{areas.map((a) => <li>{a}</li>)}</ul>
-          <ExampleTag class="ml-1" />
-        </div>
-        <details class="kr-areas-d lg:hidden">
-          <summary>
-            <span>{areas.length} mjesta</span>
-            <Icon name="plus" size={14} class="kr-areas-d__icon" />
-          </summary>
-          <div class="pb-1 text-sm leading-relaxed text-celik">
-            <ul class="kr-areas inline">{areas.map((a) => <li>{a}</li>)}</ul>
-            <ExampleTag class="ml-1" />
-          </div>
-        </details>
-      </div>
-
-      <!-- B2 · Radno vrijeme -->
-      <div class="kr-cell kr-cell--hours col-span-1 lg:col-span-3">
-        <p class="kr-label"><span>Radno vrijeme</span><span aria-hidden="true">B2</span></p>
-        <ul class="font-mono text-xs leading-6 text-linija sm:text-[0.8125rem] lg:leading-7">
-          {
-            hours.map((h, i) => (
-              <li>
-                {h}
-                {i === hours.length - 1 && <ExampleTag class="ml-1 sm:ml-1.5" />}
-              </li>
-            ))
-          }
-        </ul>
-        <p class="mt-1.5 text-[0.8125rem] leading-snug text-celik sm:mt-2 sm:text-sm">{site.responseTime}</p>
-      </div>
-
-      <!-- B3 · Podaci o tvrtki -->
-      <div class="kr-cell col-span-2 lg:col-span-5">
-        <p class="kr-label"><span>Podaci o tvrtki</span><span aria-hidden="true">B3</span></p>
-        <dl class="kr-dl">
-          <div>
-            <dt>Naziv</dt>
-            <dd>{site.legalName}</dd>
-          </div>
-          <div>
-            <dt>OIB</dt>
-            <dd class="font-mono tracking-[0.04em]">{site.oib} <ExampleTag class="ml-1" /></dd>
-          </div>
-          <div>
-            <dt>Sjedište</dt>
-            <dd>{site.city}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="kr-cell kr-cell--thin col-span-2 lg:col-span-4">
-        <p class="font-mono text-xs leading-5 text-celik">
-          <span class="whitespace-nowrap">© {year} {site.name}</span><span class="hidden sm:inline"
-            ><span aria-hidden="true"> · </span><span class="whitespace-nowrap">Sva prava pridržana</span></span
-          >
+      <!-- tanki red sastavnice -->
+      <div class="kr-cell kr-cell--thin col-span-2 lg:col-span-7">
+        <p class="kr-fine">
+          <span>© {year} {site.legalName}</span>
+          <span>OIB {site.oib}</span>
+          <a href="/privatnost">Privatnost</a>
         </p>
       </div>
-      <div class="kr-cell kr-cell--thin kr-cell--meta col-span-1 lg:col-span-3" aria-hidden="true">
+      <div class="kr-cell kr-cell--thin kr-cell--meta lg:col-span-2" aria-hidden="true">
         <p class="kr-meta"><span>Mjerilo</span><span>1 : 1</span></p>
-      </div>
-      <div class="kr-cell kr-cell--thin kr-cell--meta col-span-1 lg:col-span-2" aria-hidden="true">
-        <p class="kr-meta"><span>List</span><span>01 / 01</span></p>
       </div>
       <div class="kr-cell kr-cell--thin col-span-2 !py-0 lg:col-span-3">
         <MotionToggle />
       </div>
     </div>
 
-    <!-- Potpis (samo mobitel; od sm je u polju A1) + golemi wordmark -->
-    <p class="type-display mt-9 text-[1.375rem] leading-[1.1] text-white sm:hidden">
-      Sedam puta mjerimo.<br />Jednom savijemo.
-    </p>
     <div class="kr-giant-wrap" aria-hidden="true">
       <p class="kr-giant" data-giant>KAR<svg class="kr-giant__lam" viewBox="0 0 954 688" preserveAspectRatio="none"><path d={LAMBDA} /></svg>MATIĆ</p>
     </div>
@@ -176,12 +112,12 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
 
 <style>
   .kr-footer {
-    /* mjesto za mobilnu CTA traku (64 px + safe area) */
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
   }
-  @media (width >= 64rem) {
-    .kr-footer {
-      padding-bottom: 0;
+  /* bez JS-a mobilni dok je stalno vidljiv: ostavi mu mjesto (56 + 12 px + safe area) */
+  @media (width < 64rem) {
+    :global(html:not(.motion):not(.motion-off)) .kr-footer {
+      padding-bottom: calc(76px + env(safe-area-inset-bottom));
     }
   }
 
@@ -190,13 +126,13 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
     position: relative;
     overflow: hidden;
     background: var(--color-grafit);
-    border: 1px solid rgb(213 219 223 / 0.3);
+    border: 1px solid rgb(213 219 223 / 0.28);
   }
   .kr-cell {
     margin: 0 -1px -1px 0;
-    padding: 1rem 1rem 1.125rem;
-    border-right: 1px solid rgb(213 219 223 / 0.12);
-    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    padding: 1.25rem 1.125rem 1.375rem;
+    border-right: 1px solid rgb(213 219 223 / 0.1);
+    border-bottom: 1px solid rgb(213 219 223 / 0.1);
     min-width: 0;
   }
   .kr-cell--thin {
@@ -205,13 +141,13 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
     min-height: 3rem;
     padding-block: 0.625rem;
   }
-  /* Mjerilo i List su ukras — na mobitelu ne troše redak */
+  /* Mjerilo je ukras — na mobitelu ne troši redak */
   .kr-cell--meta {
     display: none;
   }
   @media (width >= 40rem) {
     .kr-cell {
-      padding: 1.25rem 1.25rem 1.5rem;
+      padding: 1.5rem 1.5rem 1.75rem;
     }
     .kr-cell--meta {
       display: flex;
@@ -229,16 +165,21 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
   }
   @media (width >= 80rem) {
     .kr-cell {
-      padding: 1.5rem 1.5rem 1.75rem;
+      padding: 1.75rem 1.75rem 2rem;
+    }
+    .kr-cell--thin {
+      padding-block: 0.5rem;
+    }
+  }
+  /* mjerilo između © i prekidača samo na sm–lg ne stane u red: tamo ga nema */
+  @media (width >= 40rem) and (width < 64rem) {
+    .kr-cell--meta {
+      display: none;
     }
   }
 
   .kr-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 0.625rem;
+    margin-bottom: 0.75rem;
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     line-height: 1rem;
@@ -246,21 +187,56 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
     text-transform: uppercase;
     color: var(--color-celik);
   }
-  /* indeks polja (A1–B3) je ukras: aria-hidden, ista čelik boja (AA na grafitu) */
-  .kr-label > span:last-child {
-    letter-spacing: 0.08em;
-  }
   @media (width >= 40rem) {
     .kr-label {
       margin-bottom: 1rem;
     }
   }
 
+  /* Područje: jedan redak s linkom na kontakt */
+  .kr-area {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    margin-top: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-linija);
+    transition: color 150ms var(--ease-press);
+  }
+  .kr-area > span:first-child {
+    text-decoration: underline;
+    text-decoration-color: rgb(213 219 223 / 0.3);
+    text-underline-offset: 5px;
+    transition: text-decoration-color 150ms var(--ease-press);
+  }
+  .kr-area :global(.kr-area__arrow) {
+    color: var(--color-celik);
+    transition:
+      transform 180ms var(--ease-press),
+      color 150ms var(--ease-press);
+  }
+  .kr-area:hover {
+    color: #fff;
+  }
+  .kr-area:hover > span:first-child {
+    text-decoration-color: var(--color-redline);
+  }
+  .kr-area:hover :global(.kr-area__arrow) {
+    color: #fff;
+    transform: translateX(3px);
+  }
+  @media (width >= 40rem) {
+    .kr-area {
+      margin-top: 1rem;
+    }
+  }
+
   .kr-links {
     display: grid;
   }
-  .kr-links a,
-  .kr-viber__fine {
+  .kr-links a {
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
@@ -275,24 +251,22 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
     color: #fff;
   }
   @media (width >= 40rem) {
-    .kr-links a,
-    .kr-viber__fine {
+    .kr-links a {
       font-size: 0.9375rem;
     }
   }
   @media (width >= 64rem) {
-    .kr-links a,
-    .kr-viber__fine {
+    .kr-links a {
       min-height: 2rem;
       padding-block: 0.25rem;
     }
   }
 
-  /* Kontakt: na mobitelu telefon · WhatsApp · Viber u jednom retku, e-mail ispod */
+  /* Kontakt: na mobitelu telefon · WhatsApp u jednom retku, e-mail ispod */
   .kr-links--contact {
     display: flex;
     flex-wrap: wrap;
-    column-gap: 1.5rem;
+    column-gap: 1.75rem;
   }
   .kr-mail {
     flex-basis: 100%;
@@ -312,98 +286,66 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
   .kr-links .kr-tel:hover {
     color: var(--color-linija);
   }
-  .kr-viber__fine {
-    display: none;
-    color: var(--color-celik);
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .kr-viber > a {
-      display: none;
-    }
-    .kr-viber__fine {
-      display: inline-flex;
-    }
-  }
-
-  /* točka ostaje na kraju retka, nikad na početku */
-  .kr-areas li {
-    display: inline-block;
-    white-space: nowrap;
-  }
-  .kr-areas li:not(:last-child)::after {
-    content: ' ·';
-  }
-  .kr-areas li:not(:last-child) {
-    margin-right: 0.3em;
-  }
-
-  /* Područje na mobitelu: popis mjesta na klik */
-  .kr-areas-d summary {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 2.75rem;
-    font-size: 0.875rem;
-    color: var(--color-linija);
-    list-style: none;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .kr-areas-d summary::-webkit-details-marker {
-    display: none;
-  }
-  .kr-areas-d summary > span {
-    text-decoration: underline;
-    text-decoration-color: rgb(213 219 223 / 0.35);
-    text-underline-offset: 4px;
-  }
-  .kr-areas-d :global(.kr-areas-d__icon) {
-    color: var(--color-celik);
-    transition: transform 180ms var(--ease-press);
-  }
-  .kr-areas-d[open] :global(.kr-areas-d__icon) {
-    transform: rotate(45deg);
-  }
-
-  /* otvoren popis mjesta dobiva punu širinu (radno vrijeme ide ispod, isto puno) */
-  @media (width < 64rem) {
-    .kr-tb:has(.kr-areas-d[open]) :is(.kr-cell--area, .kr-cell--hours) {
-      grid-column: span 2;
-    }
-  }
-
-  /* Podaci o tvrtki: na mobitelu jedan (prelomljeni) redak, od sm tri stupca */
-  .kr-dl {
+  .kr-hours {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 1.25rem;
-  }
-  .kr-dl > div {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-  }
-  .kr-dl dt {
+    column-gap: 0.5rem;
+    margin-top: 0.5rem;
     font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    letter-spacing: 0.02em;
     color: var(--color-celik);
   }
-  .kr-dl dd {
-    font-size: 0.875rem;
-    color: var(--color-linija);
+  .kr-hours > span {
     white-space: nowrap;
   }
-  @media (width >= 40rem) {
-    .kr-dl {
-      gap: 0.75rem 2rem;
+  .kr-hours > span:not(:last-child)::after {
+    content: '·';
+    margin-left: 0.5rem;
+    color: rgb(138 147 155 / 0.6);
+  }
+  @media (width >= 64rem) {
+    .kr-hours {
+      margin-top: 0.75rem;
     }
-    .kr-dl > div {
-      display: block;
-    }
-    .kr-dl dd {
-      margin-top: 0.25rem;
-      font-size: 0.9375rem;
+  }
+
+  /* © · OIB · Privatnost: dijelovi se lome cijeli, točka nikad na početku retka */
+  .kr-fine {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.25rem;
+    color: var(--color-celik);
+  }
+  .kr-fine > * {
+    white-space: nowrap;
+  }
+  .kr-fine > :not(:last-child)::after {
+    content: '·';
+    margin-left: 0.5rem;
+    color: rgb(138 147 155 / 0.6);
+  }
+  .kr-fine a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--color-linija);
+    text-decoration: underline;
+    text-decoration-color: rgb(213 219 223 / 0.3);
+    text-underline-offset: 4px;
+    transition: color 150ms var(--ease-press);
+  }
+  .kr-fine a:hover {
+    color: #fff;
+  }
+  @media (width >= 64rem) {
+    .kr-fine a {
+      min-height: 2rem;
     }
   }
 
@@ -431,7 +373,7 @@ const LAMBDA = 'M8 688 477-10 946 688H661L477 236 293 688Z';
      i završava ~0,05 em prije kraja (Ć). Veličina se računa iz širine kontejnera (cqi). */
   .kr-giant-wrap {
     container-type: inline-size;
-    padding-top: 0.5rem;
+    padding-top: 2rem;
     padding-bottom: clamp(1.25rem, 2.4vw, 2.25rem);
   }
   @media (width >= 40rem) {

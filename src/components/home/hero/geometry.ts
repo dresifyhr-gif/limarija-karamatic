@@ -229,24 +229,6 @@ const dims = {
 /* ── pečat ────────────────────────────────────────────────── */
 const stamp = { x: 562, y: 414, r: -6 };
 
-/* ── prozor na fotografiju: SAMO krov (zidovi ostaju nacrtani) + odredište na rubu ──
- * Obris krova: donji rub opšava zabata → kosine → sljeme (glavni krov, spoj, krilo)
- * → stražnja streha krila → stražnji kraj strehe → prednja streha. Svaka točka ima
- * svoju ciljnu točku na rubu ploče (udjeli širine/visine), redom u smjeru kazaljke,
- * pa se prozor u obliku krova samo "rastvori" do punog okvira. */
-const windowPoly: { v: P; t: P }[] = [
-  { v: add(EL, 0, BT), t: [0, 1] },
-  { v: EL, t: [0, 0.42] },
-  { v: A, t: [0, 0] },
-  { v: A2, t: [0.56, 0] },
-  { v: J0, t: [0.66, 0] },
-  { v: B, t: [0.78, 0] },
-  { v: B2, t: [1, 0] },
-  { v: WE2, t: [1, 0.34] },
-  { v: ER2, t: [1, 1] },
-  { v: add(ER, 0, BT), t: [0.56, 1] },
-];
-
 /* ── glint: maska za odsjaj (ploha glavnog krova + krila) ─── */
 const roofClip = path([A, A2, ER2, ER], true) + wingRoof;
 
@@ -299,5 +281,4 @@ export const drawing = {
       lines: `M${CX - hw + 8} ${n(by - 70)}H${CX + hw - 8}M${CX - hw + 8} ${n(by - 12)}H${CX - nh - 6}M${CX + nh + 6} ${n(by - 12)}H${CX + hw - 8}`,
     };
   })(),
-  windowPoly: windowPoly.map((w) => [Math.round(w.v[0]), Math.round(w.v[1]), w.t[0], w.t[1]]),
 };

@@ -1,13 +1,11 @@
 ---
 /**
- * Traka od tri činjenice za PageHero default slot (lijevi stupac, dno uz fotografiju).
+ * Traka od tri činjenice za PageHero default slot (lijevi stupac, dno uz fotografiju). Svijetla (papir).
  * Mobitel: redovi (oznaka lijevo, vrijednost desno). ≥ 40rem: tri stupca s tankim linijama.
- *  items  { k: oznaka, v: vrijednost, example?: nepotvrđeno → <ExampleTag/> }[]
+ *  items  { k: oznaka, v: vrijednost }[]
  */
-import ExampleTag from '@/components/ui/ExampleTag.astro';
-
 interface Props {
-  items: { k: string; v: string; example?: boolean }[];
+  items: { k: string; v: string }[];
   class?: string;
 }
 const { items, class: className = '' } = Astro.props;
@@ -18,10 +16,7 @@ const { items, class: className = '' } = Astro.props;
     items.map((it) => (
       <div>
         <dt>{it.k}</dt>
-        <dd>
-          {it.v}
-          {it.example && <ExampleTag />}
-        </dd>
+        <dd>{it.v}</dd>
       </div>
     ))
   }
@@ -31,7 +26,7 @@ const { items, class: className = '' } = Astro.props;
   .hf {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    border-top: 1px solid rgb(213 219 223 / 0.16);
+    border-top: 1px solid rgb(21 24 27 / 0.14);
   }
   .hf > div {
     display: flex;
@@ -39,29 +34,24 @@ const { items, class: className = '' } = Astro.props;
     justify-content: space-between;
     gap: 1rem;
     padding: 0.875rem 0;
-    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    border-bottom: 1px solid rgb(21 24 27 / 0.1);
   }
   .hf dt {
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-celik);
+    color: rgb(21 24 27 / 0.7);
   }
   .hf dd {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem 0.625rem;
     font-weight: 600;
     text-align: right;
-    color: #fff;
+    color: var(--color-tinta);
   }
   @media (width >= 40rem) {
     .hf {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      border-bottom: 1px solid rgb(213 219 223 / 0.12);
+      border-bottom: 1px solid rgb(21 24 27 / 0.1);
     }
     .hf > div {
       flex-direction: column;
@@ -73,10 +63,9 @@ const { items, class: className = '' } = Astro.props;
     }
     .hf > div + div {
       padding-left: 1.25rem;
-      border-left: 1px solid rgb(213 219 223 / 0.12);
+      border-left: 1px solid rgb(21 24 27 / 0.1);
     }
     .hf dd {
-      justify-content: flex-start;
       text-align: left;
     }
   }

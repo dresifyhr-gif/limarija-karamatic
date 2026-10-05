@@ -1,34 +1,26 @@
 ---
 /**
- * Sastavnica stavki (papir): Poz. · Stavka · kvačica — "Što je uključeno" na stranici usluge
+ * Popis stavki (papir): stavka · kvačica — "Što je uključeno" na stranici usluge
  * i "Opis rada" na stranici rada. Redovi ulaze u nizu (data-reveal-group).
+ * Namjerno bez zaglavlja stupaca i brojeva pozicija: jedna jaka linija gore, tanke između redova.
  *  items     stavke
  *  label     aria-label popisa
- *  head?     natpisi stupaca [poz, stavka, kvačica]
- *  slot foot redak ispod tablice (mono napomena + poveznica)
+ *  slot foot redak ispod popisa (kratka napomena + poveznica)
  */
 import Icon from '@/components/ui/Icon.astro';
 
 interface Props {
   items: string[];
   label: string;
-  head?: [string, string, string];
 }
-const { items, label, head = ['Poz.', 'Stavka', 'Uklj.'] } = Astro.props;
-const pad = (n: number) => String(n).padStart(2, '0');
+const { items, label } = Astro.props;
 ---
 
 <div class="inc" data-reveal-group>
-  <div class="inc-head" aria-hidden="true">
-    <span>{head[0]}</span>
-    <span>{head[1]}</span>
-    <span class="text-right">{head[2]}</span>
-  </div>
-  <ol class="inc-list" aria-label={label}>
+  <ul class="inc-list" aria-label={label}>
     {
-      items.map((item, k) => (
+      items.map((item) => (
         <li class="inc-row" data-reveal>
-          <span class="inc-n" aria-hidden="true">{pad(k + 1)}</span>
           <span class="inc-t">{item}</span>
           <span class="inc-check" aria-hidden="true">
             <Icon name="check" size={16} />
@@ -36,7 +28,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </li>
       ))
     }
-  </ol>
+  </ul>
   {
     Astro.slots.has('foot') && (
       <div class="inc-foot" data-reveal>
@@ -50,48 +42,19 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .inc {
     border-top: 2px solid var(--color-tinta);
   }
-  .inc-head,
   .inc-row {
     display: grid;
-    grid-template-columns: 2.5rem minmax(0, 1fr) 2.25rem;
-    gap: 0 1rem;
-    align-items: center;
-  }
-  @media (width >= 40rem) {
-    .inc-head,
-    .inc-row {
-      grid-template-columns: 4rem minmax(0, 1fr) 2.75rem;
-      gap: 0 1.5rem;
-    }
-  }
-  .inc-head {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid rgb(21 24 27 / 0.2);
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: rgb(21 24 27 / 0.7);
-  }
-  .inc-row {
-    min-height: 4.5rem;
-    padding: 1.125rem 0;
-    border-bottom: 1px solid rgb(21 24 27 / 0.14);
+    grid-template-columns: minmax(0, 1fr) 2rem;
+    gap: 0 1.5rem;
+    align-items: start;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid rgb(21 24 27 / 0.12);
   }
   @media (width >= 40rem) {
     .inc-row {
-      min-height: 5rem;
-      padding: 1.375rem 0;
+      grid-template-columns: minmax(0, 1fr) 2.25rem;
+      padding: 1.5rem 0;
     }
-  }
-  .inc-n {
-    align-self: start;
-    padding-top: 0.3em;
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
-    letter-spacing: 0.08em;
-    color: var(--color-redline-dark);
-    font-variant-numeric: tabular-nums;
   }
   .inc-t {
     font-size: 1.0625rem;
@@ -108,19 +71,11 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   .inc-check {
     justify-self: end;
-    align-self: start;
     display: grid;
     place-items: center;
-    width: 2rem;
-    height: 2rem;
-    border: 1px solid rgb(21 24 27 / 0.22);
+    width: 1.75rem;
+    height: 1.75rem;
     color: var(--color-tinta);
-  }
-  @media (width >= 40rem) {
-    .inc-check {
-      width: 2.25rem;
-      height: 2.25rem;
-    }
   }
   .inc-foot {
     display: flex;
@@ -129,10 +84,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
     justify-content: space-between;
     gap: 0.5rem 1.5rem;
     padding-top: 1.25rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.9375rem;
     line-height: 1.5;
-    letter-spacing: 0.02em;
     color: rgb(21 24 27 / 0.72);
   }
   .inc-foot :global(.inc-link) {
@@ -140,10 +93,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
     align-items: center;
     gap: 0.5rem;
     min-height: 2.75rem;
-    font-family: var(--font-sans);
     font-size: 0.9375rem;
     font-weight: 600;
-    letter-spacing: 0;
     color: var(--color-tinta);
     text-underline-offset: 4px;
   }

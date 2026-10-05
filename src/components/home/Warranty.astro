@@ -1,7 +1,11 @@
 ---
 /**
- * 05 · Standard izvedbe i jamstvo — "sastavnica" (zaglavlje tehničkog crteža).
- * Tablica iz site.ts → standard[]; nepotvrđeni redovi nose <ExampleTag/>.
+ * Standard izvedbe i jamstvo — "sastavnica" (zaglavlje tehničkog crteža).
+ * Koristi se na /o-nama (iza "Tri pravila"); s naslovnice je maknuta. Svijetla sekcija, bez broja.
+ *  id?     id sekcije (default "jamstvo")
+ *  class?  pozadina i razmaci sekcije (default "bg-papir py-24 sm:py-28 lg:py-32")
+ *  cta?    gumb "Besplatna procjena" ispod tablice (default true; /procjena + data-quote-link)
+ * Tablica iz site.ts → standard[] (podaci su potvrđeni, bez oznaka nepotvrđenosti).
  * Red s highlight (jamstvo): crvena "rukom" povučena elipsa (DrawSVG, draft) + mali Λ pečat (press).
  * Zaglavlje i redovi dijele iste stupce (CSS grid) pa se sve okomite linije poklapaju.
  * Mobitel: oznaka iznad vrijednosti; ARIA uloge čuvaju semantiku tablice.
@@ -9,18 +13,23 @@
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Button from '@/components/ui/Button.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import { standard } from '@/data/site';
 
-type Row = { k: string; v: string; confirmed: boolean; highlight?: boolean };
+type Row = { k: string; v: string; highlight?: boolean };
 const rows = standard as Row[];
+
+interface Props {
+  id?: string;
+  class?: string;
+  cta?: boolean;
+}
+const { id = 'jamstvo', class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32', cta = true } = Astro.props;
 ---
 
-<section id="jamstvo" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32" data-sastavnica>
+<section id={id} class:list={['tb-sec text-tinta', sectionClass]} data-sastavnica>
   <div class="wrap grid gap-12 sm:gap-14 xl:grid-cols-12 xl:gap-x-12">
     <div class="xl:col-span-4">
       <SectionHead
-        index="05"
         eyebrow="Jamstvo"
         title="Standard izvedbe i jamstvo."
         lead="Što ugrađujemo, koliko je lim debeo i što vam jamčimo. Prije početka radova, na papiru."
@@ -39,10 +48,6 @@ const rows = standard as Row[];
           <div class="tb-cell tb-h-naz">
             <p class="tb-cap">Naziv</p>
             <p class="tb-title">Standard izvedbe</p>
-          </div>
-          <div class="tb-cell tb-h-list">
-            <p class="tb-cap">List</p>
-            <p class="tb-title tabular-nums">05</p>
           </div>
         </div>
 
@@ -64,11 +69,6 @@ const rows = standard as Row[];
                   </td>
                   <th scope="row" role="rowheader" class="tb-k">
                     <span>{r.k}</span>
-                    {!r.confirmed && (
-                      <span class="tb-tag-m">
-                        <ExampleTag />
-                      </span>
-                    )}
                   </th>
                   <td role="cell" class="tb-v">
                     {r.highlight ? (
@@ -94,11 +94,6 @@ const rows = standard as Row[];
                     ) : (
                       <span class="tb-val">{r.v}</span>
                     )}
-                    {!r.confirmed && (
-                      <span class="tb-tag-d">
-                        <ExampleTag />
-                      </span>
-                    )}
                   </td>
                 </tr>
               ))
@@ -111,9 +106,13 @@ const rows = standard as Row[];
         <p class="max-w-[34rem] text-base leading-relaxed text-tinta/75">
           Na materijal vrijedi jamstvo proizvođača. Sve piše u ponudi i na računu.
         </p>
-        <Button href="#procjena" variant="primary" iconRight="arrow-right" class="w-full shrink-0 sm:w-auto">
-          Besplatna procjena
-        </Button>
+        {
+          cta && (
+            <Button href="/procjena" variant="primary" iconRight="arrow-right" class="w-full shrink-0 sm:w-auto" data-quote-link>
+              Besplatna procjena
+            </Button>
+          )
+        }
       </div>
     </div>
   </div>
@@ -121,7 +120,7 @@ const rows = standard as Row[];
 
 <style>
   /* sigurnosna mreža: ništa iz sekcije ne smije proširiti stranicu */
-  #jamstvo {
+  .tb-sec {
     overflow-x: clip;
   }
 
@@ -150,11 +149,7 @@ const rows = standard as Row[];
     border-bottom: var(--line);
   }
   .tb-h-naz {
-    grid-column: 1 / 3;
-  }
-  .tb-h-list {
-    grid-column: 3;
-    border-left: var(--line);
+    grid-column: 1 / -1;
   }
   @media (width >= 40rem) {
     .tb-cell {
@@ -165,11 +160,8 @@ const rows = standard as Row[];
       border-bottom: 0;
     }
     .tb-h-naz {
-      grid-column: 3;
+      grid-column: 3 / -1;
       border-left: var(--line);
-    }
-    .tb-h-list {
-      grid-column: 4;
     }
   }
   .tb-cap {
@@ -256,31 +248,10 @@ const rows = standard as Row[];
     font-weight: 500;
     color: rgb(21 24 27 / 0.94);
   }
-  /* oznaka "primjer": na mobitelu uz naziv stavke, na desktopu desno u vrijednosti
-     (uvijek je vidljiva samo jedna kopija; display:none je skriva i čitačima ekrana) */
   .tb-k {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 0.75rem;
-  }
-  .tb-tag-m {
-    display: inline-flex;
-    flex-shrink: 0;
-    letter-spacing: 0;
-    text-transform: none;
-  }
-  .tb-tag-d {
-    display: none;
-    flex-shrink: 0;
-  }
-  @media (width >= 40rem) {
-    .tb-tag-m {
-      display: none;
-    }
-    .tb-tag-d {
-      display: inline-flex;
-    }
   }
 
   @media (width >= 40rem) {

@@ -1,38 +1,31 @@
 ---
 /**
- * /o-nama · "U brojkama" (kotna linija iz `stats`, nepotvrđene → <ExampleTag/>) + završni poziv.
- * Grafit + milimetarski papir (dopušteno: kotna linija i završni CTA), prelazi u footer.
+ * /o-nama · "U brojkama" (kotna linija iz `stats`) + završni poziv.
+ * Svijetli list: bijela + milimetarski papir (dopušteno: kotna linija i završni CTA), prelazi u footer.
+ *  class?  pozadina i razmaci sekcije
  */
 import Button from '@/components/ui/Button.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import { stats, site, telHref } from '@/data/site';
 
 interface Props {
-  index?: string;
+  class?: string;
 }
-const { index = '04' } = Astro.props;
+const { class: sectionClass = 'bg-white grid-paper-light py-24 sm:py-28 lg:py-32' } = Astro.props;
 
 const fmt = (v: number, d = 0) =>
   v.toLocaleString('hr-HR', { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\./g, ' ');
 ---
 
-<section id="brojke" class="relative isolate bg-grafit grid-paper py-20 text-linija sm:py-28 lg:py-32" aria-labelledby="brojke-cta">
+<section id="brojke" class:list={['relative isolate text-tinta', sectionClass]} aria-labelledby="brojke-cta">
   <div class="wrap">
-    <p class="eyebrow flex items-center gap-3 text-celik" data-reveal>
-      <span class="text-redline" aria-hidden="true">{index}</span>
-      <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
-      <span>U brojkama</span>
-    </p>
+    <p class="eyebrow text-tinta/70" data-reveal>U brojkama</p>
 
     <dl class="sc-stats mt-10" data-reveal-group>
       {
         stats.map((s) => (
           <div class="sc-cell" data-reveal>
-            <dt class="sc-label">
-              <span>{s.label}</span>
-              {!s.confirmed && <ExampleTag />}
-            </dt>
-            <dd class="sc-num type-display text-white">
+            <dt class="sc-label">{s.label}</dt>
+            <dd class="sc-num type-display">
               {s.prefix}
               {fmt(s.value, s.decimals)}
               <span class="sc-suf">{s.suffix}</span>
@@ -42,22 +35,22 @@ const fmt = (v: number, d = 0) =>
       }
     </dl>
 
-    <div class="mt-20 grid gap-y-10 border-t border-linija/15 pt-14 lg:mt-28 lg:grid-cols-12 lg:items-end lg:gap-x-8 lg:pt-20">
+    <div class="mt-20 grid gap-y-10 border-t border-tinta/12 pt-14 lg:mt-28 lg:grid-cols-12 lg:items-end lg:gap-x-8 lg:pt-20">
       <div class="lg:col-span-7">
         <h2
           id="brojke-cta"
-          class="type-display text-[2.125rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]"
+          class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]"
           data-reveal
         >
           Izmjerit ćemo i vaš krov.
         </h2>
-        <p class="mt-6 max-w-lg text-lg leading-relaxed text-pretty text-linija" data-reveal>
+        <p class="mt-6 max-w-lg text-lg leading-relaxed text-pretty text-tinta/75" data-reveal>
           Besplatna procjena na terenu i pisana ponuda stavku po stavku. Bez obveze.
         </p>
       </div>
       <div class="flex flex-col gap-3 min-[30rem]:flex-row min-[30rem]:flex-wrap lg:col-span-5 lg:justify-end" data-reveal>
-        <Button href="/procjena" size="lg" iconRight="arrow-right">Besplatna procjena</Button>
-        <Button href={telHref} variant="outline" size="lg" icon="phone">
+        <Button href="/procjena" size="lg" iconRight="arrow-right" data-quote-link>Besplatna procjena</Button>
+        <Button href={telHref} variant="outline-dark" size="lg" icon="phone">
           Nazovite <span class="font-mono tracking-[0.02em]">{site.phoneDisplay}</span>
         </Button>
       </div>
@@ -81,7 +74,7 @@ const fmt = (v: number, d = 0) =>
     right: 0;
     top: 0.4375rem;
     height: 1px;
-    background: rgb(213 219 223 / 0.3);
+    background: rgb(21 24 27 / 0.3);
   }
   @media (width >= 64rem) {
     .sc-stats {
@@ -107,8 +100,8 @@ const fmt = (v: number, d = 0) =>
     background: linear-gradient(
       to top right,
       transparent calc(50% - 0.75px),
-      var(--color-linija) calc(50% - 0.75px),
-      var(--color-linija) calc(50% + 0.75px),
+      var(--color-tinta) calc(50% - 0.75px),
+      var(--color-tinta) calc(50% + 0.75px),
       transparent calc(50% + 0.75px)
     );
   }
@@ -119,7 +112,7 @@ const fmt = (v: number, d = 0) =>
     top: -1.75rem;
     height: 1.25rem;
     width: 1px;
-    background: rgb(213 219 223 / 0.3);
+    background: rgb(21 24 27 / 0.3);
   }
   /* na mobitelu drugi red nema crtu iznad — zarezi samo u prvom redu */
   @media (width < 64rem) {
@@ -128,7 +121,7 @@ const fmt = (v: number, d = 0) =>
       display: none;
     }
     .sc-cell:nth-child(n + 3) {
-      border-top: 1px solid rgb(213 219 223 / 0.12);
+      border-top: 1px solid rgb(21 24 27 / 0.1);
       padding-top: 1.5rem;
     }
   }
@@ -151,19 +144,12 @@ const fmt = (v: number, d = 0) =>
   .sc-suf {
     font-size: 0.5em;
     letter-spacing: 0;
-    color: var(--color-celik);
+    color: rgb(21 24 27 / 0.6);
   }
   .sc-label {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.625rem;
     max-width: 15rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.9375rem;
     line-height: 1.4;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-celik);
+    color: rgb(21 24 27 / 0.72);
   }
 </style>

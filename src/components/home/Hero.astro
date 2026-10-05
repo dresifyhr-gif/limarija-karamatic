@@ -2,13 +2,12 @@
 /**
  * Hero (#vrh) — "NACRT → LIM".
  * Lijevo: H1 (LCP tekst, nikad animiran), podnaslov, CTA blok, jamstva.
- * Desno (na mobitelu prvo): list 01 — crtež koji se savije u lim i otvori u pravi krov.
- * Animacija: src/lib/hero.ts. HTML je uvijek u završnom stanju.
+ * Desno (na mobitelu prvo): list 01 — crtež koji se savije u lim; završava na gotovom crtežu
+ * (bez fotografije). Animacija: ./hero/intro.ts. HTML je uvijek u završnom stanju.
  * Od lg naviše list je visok koliko stane u prozor (cijeli list s natpisom iznad pregiba).
  */
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import HeroSheet from './hero/HeroSheet.astro';
 import { site, telHref, waHref } from '@/data/site';
 ---
@@ -29,7 +28,7 @@ import { site, telHref, waHref } from '@/data/site';
         <span class="hx-kw eyebrow block text-celik">
           <span class="whitespace-nowrap">Limarija Karamatić</span><span class="hx-sep">&nbsp;· </span><span
             class="whitespace-nowrap">limeni krovovi, opšavi i oluci</span
-          ><span class="hx-sep">&nbsp;· </span><span class="whitespace-nowrap">Zagreb</span>
+          ><span class="hx-sep">&nbsp;· </span><span class="whitespace-nowrap">{site.area}</span>
         </span>
         <span class="hx-display type-display mt-3 block text-white sm:mt-5 lg:mt-6">
           Sedam puta mjerimo.<br /> Jednom savijemo.
@@ -38,12 +37,13 @@ import { site, telHref, waHref } from '@/data/site';
 
       <p class="hx-sub order-3 mt-5 max-w-[34rem] text-[1.0625rem] leading-relaxed text-pretty text-celik sm:text-lg md:mt-6 lg:order-2">
         Limeni i falcani krovovi, popravci, opšavi atika i dimnjaka, oluci i snjegobrani&nbsp;— sve krojeno i
-        savijeno po mjeri vašeg krova. Zagreb i okolica.
+        savijeno po mjeri vašeg krova.
       </p>
 
       <!-- CTA blok: na mobitelu (contents) primarni ide odmah ispod naslova; od md jedan blok
-           (na tabletu ispred podnaslova, da stane iznad donje trake)
-           (primarni preko cijele širine, ispod dva sekundarna) -->
+           (na tabletu ispred podnaslova). Dva gumba: Besplatna procjena + WhatsApp;
+           telefon je tihi tekstualni link ispod (poziv ostaje na jedan dodir, ali se ne gura).
+           data-dock-anchor: mobilni dock se pojavi tek kad ovaj gumb izađe iz ekrana. -->
       <div class="hx-ctas contents md:order-2 md:mt-8 md:grid md:gap-3 lg:order-3" data-hx-ctas>
         <Button
           href="#procjena"
@@ -51,17 +51,23 @@ import { site, telHref, waHref } from '@/data/site';
           size="lg"
           iconRight="arrow-right"
           class="hx-cta-main order-2 mt-6 w-full md:order-none md:mt-0"
+          data-dock-anchor
         >
           Besplatna procjena
         </Button>
-        <div class="order-4 mt-3 flex flex-col gap-3 sm:flex-row md:contents">
-          <Button href={telHref} variant="outline" icon="phone" class="w-full sm:flex-1 md:w-full">
-            Nazovite <span class="type-mono">{site.phoneDisplay}</span>
-          </Button>
-          <Button href={waHref()} variant="whatsapp" icon="whatsapp" class="w-full sm:flex-1 md:w-full">
-            Pošaljite slike
-          </Button>
-        </div>
+        <Button
+          href={waHref()}
+          variant="whatsapp"
+          size="lg"
+          icon="whatsapp"
+          class="hx-cta-wa order-4 mt-3 w-full md:order-none md:mt-0"
+        >
+          Pošaljite slike
+        </Button>
+        <a href={telHref} class="hx-tel order-4 md:order-none">
+          <Icon name="phone" size={16} />
+          <span>Ili nazovite <span class="type-mono text-white">{site.phoneDisplay}</span></span>
+        </a>
       </div>
 
       <ul class="hx-trust order-5 mt-9 md:mt-10" aria-label="Što dobivate">
@@ -75,10 +81,7 @@ import { site, telHref, waHref } from '@/data/site';
         </li>
         <li>
           <span class="hx-trust-i" aria-hidden="true"><Icon name="clock" size={18} /></span>
-          <span class="hx-trust-l">
-            {site.responseTime}
-            <ExampleTag class="hx-trust-tag" />
-          </span>
+          <span class="hx-trust-l">{site.responseTime}</span>
         </li>
       </ul>
     </div>
@@ -91,7 +94,7 @@ import { site, telHref, waHref } from '@/data/site';
 </section>
 
 <script>
-  import { initHeroes } from '@/lib/hero';
+  import { initHeroes } from './hero/intro';
   initHeroes();
 </script>
 
@@ -136,16 +139,38 @@ import { site, telHref, waHref } from '@/data/site';
       width: max-content;
       max-width: 100%;
     }
-    .hx-ctas .hx-cta-main {
+    .hx-ctas .hx-tel {
       grid-column: 1 / -1;
     }
   }
-  /* lg: uski stupac — tri gumba iste širine, jedan ispod drugog */
+  /* lg: uski stupac — dva gumba iste širine, jedan ispod drugog */
   @media (width >= 64rem) and (width < 80rem) {
     .hx-ctas {
       grid-template-columns: minmax(0, 1fr);
       width: 100%;
       max-width: 21.5rem;
+    }
+  }
+  /* telefon: tihi link (≥ 44 px za dodir), ne treći gumb */
+  .hx-tel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    margin-top: 0.25rem;
+    font-size: 0.9375rem;
+    color: var(--color-celik);
+    text-underline-offset: 4px;
+    transition: color 0.15s var(--ease-press);
+  }
+  .hx-tel:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+  @media (width >= 48rem) {
+    .hx-tel {
+      margin-top: 0;
+      justify-self: start;
     }
   }
 
@@ -182,17 +207,10 @@ import { site, telHref, waHref } from '@/data/site';
       font-size: 0.875rem;
     }
   }
-  .hx-trust-tag {
-    display: table;
-    margin-top: 0.4rem;
-    color: var(--color-celik);
-  }
 
   /* ── list ─────────────────────────────────────────────────── */
-  /* neprozirni list s vlastitom mrežom; pokrov i veo imaju isti papir (poravnat) */
-  .hx-sheet,
-  .hx-cover,
-  .hx-veil {
+  /* neprozirni list s vlastitom mrežom */
+  .hx-sheet {
     background-color: #13161a;
     background-image:
       linear-gradient(to right, rgb(213 219 223 / 0.05) 1px, transparent 1px),
@@ -326,97 +344,13 @@ import { site, telHref, waHref } from '@/data/site';
     }
   }
 
-  .hx-photo {
-    position: absolute;
-    inset: 0;
-    background: var(--color-grafit-3);
-  }
-  .hx-photo picture,
-  .hx-photo img {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  .hx-photo img {
-    object-fit: cover;
-    object-position: 50% 0%;
-  }
-  .hx-photo::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: linear-gradient(
-      180deg,
-      rgb(14 16 19 / 0.28) 0%,
-      rgb(14 16 19 / 0.04) 26%,
-      rgb(14 16 19 / 0.08) 60%,
-      rgb(14 16 19 / 0.72) 100%
-    );
-  }
-
-  /* jedna bijela oznaka koja leži na snjegobranu (samo kad je list dovoljno velik) */
-  .hx-note {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    display: none;
-    pointer-events: none;
-  }
-  @media (width >= 64rem) {
-    .hx-note {
-      display: block;
-    }
-  }
-  .hx-note-l {
-    fill: none;
-    stroke: #fff;
-    stroke-width: 1.25;
-    vector-effect: non-scaling-stroke;
-  }
-  .hx-note-dot {
-    fill: #fff;
-  }
-  .hx-note-t {
-    font-family: var(--font-mono);
-    font-size: 20px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    fill: #fff;
-    paint-order: stroke;
-    stroke: rgb(14 16 19 / 0.6);
-    stroke-width: 5px;
-    stroke-linejoin: round;
-  }
-  @media (width >= 80rem) {
-    .hx-note-t {
-      font-size: 17px;
-    }
-  }
-
-  /* pokrov lista (samo tijekom uvoda): fotografija ispod je naslikana od prvog kadra */
-  .hx-veil,
-  .hx-cover {
-    position: absolute;
-    inset: 0;
-    display: none;
-    background-position: -1px calc(-1px - 2.75rem);
-  }
-  .motion:not(.hx-played) .hx-sheet:not(.is-live) :is(.hx-cover, .hx-veil),
-  .hx-sheet.is-intro :is(.hx-cover, .hx-veil) {
-    display: block;
-  }
-
   .hx-drawing {
     position: absolute;
     inset: 0;
     pointer-events: none;
   }
 
-  /* zaglavlje lista: samo tijekom crtanja na širokim ekranima; u završnom kadru
-     natpis je jedini sloj preko fotografije */
+  /* zaglavlje lista (dolje desno) — od xl, gdje ima mjesta pored crteža */
   .hx-tb {
     position: absolute;
     right: 0.875rem;
@@ -446,84 +380,9 @@ import { site, telHref, waHref } from '@/data/site';
     letter-spacing: 0.16em;
   }
   @media (width >= 80rem) {
-    .motion:not(.hx-played) .hx-sheet:not(.is-live) .hx-tb,
-    .hx-sheet.is-intro .hx-tb {
+    .hx-tb {
       display: grid;
     }
-  }
-
-  /* natpis ispod fotografije */
-  .hx-caption-wrap {
-    position: absolute;
-    left: 0.625rem;
-    right: 0.625rem;
-    bottom: 0.625rem;
-    z-index: 3;
-  }
-  @media (width >= 40rem) {
-    .hx-caption-wrap {
-      left: 0.875rem;
-      right: auto;
-      bottom: 0.875rem;
-    }
-  }
-  .hx-caption {
-    display: inline-grid;
-    grid-template-columns: auto auto auto;
-    align-items: center;
-    column-gap: 0.6rem;
-    row-gap: 0.2rem;
-    min-height: 2.75rem;
-    padding: 0.55rem 0.85rem;
-    background: rgb(14 16 19 / 0.84);
-    border: 1px solid rgb(213 219 223 / 0.2);
-    color: #fff;
-    font-size: 0.8125rem;
-    line-height: 1.3;
-    transition: border-color 0.15s var(--ease-press), background-color 0.15s var(--ease-press);
-  }
-  .hx-caption strong {
-    font-weight: 650;
-  }
-  .hx-caption-meta {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-linija);
-  }
-  @media (width < 40rem) {
-    .hx-caption {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      font-size: 0.875rem;
-    }
-    .hx-caption-meta {
-      grid-row: 2;
-      font-size: 0.625rem;
-      letter-spacing: 0.03em;
-    }
-    .hx-caption-arrow {
-      grid-row: 1 / 3;
-      grid-column: 2;
-    }
-  }
-  /* 360 px: natpis u dva retka */
-  @media (width < 24rem) {
-    .hx-cap-mat {
-      display: none;
-    }
-  }
-  .hx-caption-arrow {
-    color: #fff;
-    transition: transform 0.15s var(--ease-press);
-  }
-  .hx-caption:hover {
-    border-color: rgb(213 219 223 / 0.5);
-    background: rgb(14 16 19 / 0.94);
-  }
-  .hx-caption:hover .hx-caption-arrow {
-    transform: translateX(3px);
   }
 
   /* ── crtež ────────────────────────────────────────────────── */
@@ -695,21 +554,10 @@ import { site, telHref, waHref } from '@/data/site';
 
 
   /* ── ZAVRŠNO stanje (HTML, bez JS-a, reduced-motion, ponovni posjet) ──
-     samo fotografija + natpis (+ oznaka na snjegobranu); crtež je ugašen */
-  .hx-fill,
-  .hx-fx,
-  .hx-ink,
-  .hx-ruler,
-  .hx-dash,
-  .hx-dim {
-    opacity: 0;
-  }
+     gotov crtež; skrivena je samo greda preše (JS je spusti tijekom uvoda) */
   .hx-beam {
     opacity: 0;
     visibility: hidden;
-  }
-  .hx-stamp-in {
-    opacity: 0;
   }
 
   /* prije nego JS preuzme: prazan list (bez bljeska gotovog crteža) */

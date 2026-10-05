@@ -1,25 +1,30 @@
 ---
 /**
- * /usluge/[slug] — SEO stranica usluge (i landing za Google Ads).
- * Ritam: hero (grafit+papir) → opseg radova (papir) → galerija + radovi (grafit) →
- *        dokaz: ocjena · recenzija · jamstvo (papir) → pitanja (papir) →
- *        procjena: FinalCta s predodabranom uslugom (grafit+papir) → ostale usluge (papir) → footer.
+ * /usluge/[slug] — SEO stranica usluge (i landing za Google Ads). Sve sekcije su SVIJETLE.
+ * Ritam (pozadine se izmjenjuju): hero (papir + mreža) → opseg radova (bijela) →
+ *        galerija + radovi (papir) → dokaz: brojke i ocjena + pitanja (bijela) →
+ *        procjena: FinalCta s predodabranom uslugom (papir + mreža) → ostale usluge (bijela) → footer.
+ *        Opšav atike ima jednu sekciju više (Detalj je potpis, papir), pa se dalje pomakne:
+ *        galerija + radovi (bijela) → dokaz (papir) → pitanja (bijela).
  * Fotografije: nijedna se ne ponavlja na stranici (vidi servicePhotos u _parts/media.ts).
  * Schema: Service (provider → '/#business' iz Base), BreadcrumbList, FAQPage.
  */
 import Base from '@/layouts/Base.astro';
-import PageHero, { breadcrumbSchema, homeCrumb, profileNames } from '@/components/layout/PageHero.astro';
+import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
 import ProjectCard from '@/components/ui/ProjectCard.astro';
 import Icon from '@/components/ui/Icon.astro';
 import Photo from '@/components/ui/Photo.astro';
 import Faq from '@/components/home/Faq.astro';
 import FinalCta from '@/components/home/FinalCta.astro';
+import DetailSignature from '@/components/home/DetailSignature.astro';
+import HeroFacts from '@/components/pages/HeroFacts.astro';
 import Gallery from './_parts/Gallery.astro';
 import Scope from './_parts/Scope.astro';
 import Proof from './_parts/Proof.astro';
-import { faqFor, pad, radova, servicePhotos } from './_parts/media';
-import { services, projects, projectKinds, type Service, type ProjectKind } from '@/data/site';
+import { faqFor, radova, servicePhotos } from './_parts/media';
+import { services, projects, site, type Service } from '@/data/site';
+import detailPhoto from '@/assets/projects/atika-opsav-kut-detalj.jpg';
 
 export function getStaticPaths() {
   return services.map((service) => ({ params: { slug: service.slug }, props: { service } }));
@@ -29,37 +34,31 @@ interface Props {
   service: Service;
 }
 const { service } = Astro.props;
-const total = pad(services.length);
 
 /* Popravak je landing za Google Ads: telefon je glavni gumb (kreativni smjer §4). */
 const urgent = service.slug === 'popravak-krova';
+/* "Detalj je potpis" (kut atike na geru) živi samo na opšavu atike, odmah iza "Što je uključeno" */
+const hasDetail = service.slug === 'opsav-atike';
 
 const crumbs = [homeCrumb, { href: '/usluge', label: 'Usluge' }, { href: `/usluge/${service.slug}`, label: service.title }];
 
-/* hero → kartice radova → galerija → sličice: svaka fotografija jednom */
-const { heroProject, cards, gallery, thumbs } = servicePhotos(service);
+/* hero → kartice radova → galerija → sličice: svaka fotografija jednom
+   (fotografija iz Detalja je rezervirana, da se ne ponovi u galeriji) */
+const { heroProject, cards, gallery, thumbs } = servicePhotos(service, hasDetail ? [detailPhoto] : []);
 const others = services.filter((s) => s.slug !== service.slug);
 
 /* "Svi radovi" pločica popunjava ostatak zadnjeg reda (sm: 2 stupca, lg: 3) */
 const lgSpan = cards.length % 3 === 0 ? 3 : 3 - (cards.length % 3);
 const smSpan = cards.length % 2 === 0 ? 2 : 1;
-const legend = (Object.entries(projectKinds) as [ProjectKind, string][])
-  .map(([k, label]) => ({ k, label, n: projects.filter((p) => p.kind === k).length }))
-  .filter((x) => x.n > 0);
 
 const faqItems = faqFor(service);
 
 /* hrvatski navodnici u tekstu iz site.ts */
 const hr = (t: string) => t.replace(/"([^"]+)"/g, '„$1“');
 
-/* brojevi sekcija ovise o tome što se prikazuje */
-let n = 0;
-const idx = () => pad(++n);
-const iOpseg = idx();
-const iGal = gallery.length ? idx() : '';
-const iRad = idx();
-const iFaq = idx();
-const iProc = idx();
+/* svijetle pozadine se izmjenjuju (vidi ritam gore); pitanja su uvijek bijela, forma papir */
+const midBg = hasDetail ? 'bg-white' : 'bg-papir';
+const proofClass = hasDetail ? 'bg-papir py-20 sm:py-24' : 'bg-white pt-20 sm:pt-24 lg:pt-28';
 
 /* završni naslov: hitni poslovi zadržavaju "Ne čekajte da počne kapati." (FinalCta default) */
 const closeTitle = urgent || service.slug === 'dimnjaci' ? undefined : 'Izmjerimo i vaš krov.';
@@ -93,12 +92,6 @@ const faqSchema = {
     acceptedAnswer: { '@type': 'Answer', text: f.a },
   })),
 };
-
-const promise = [
-  { t: 'Mjerenje na terenu', d: 'Besplatno, bez obveze' },
-  { t: 'Pisana ponuda', d: 'Stavku po stavku' },
-  { t: 'Pisano jamstvo', d: 'Na izvedbu' },
-];
 ---
 
 <Base
@@ -109,7 +102,7 @@ const promise = [
   schema={[serviceSchema, breadcrumbSchema(crumbs, Astro.site), faqSchema]}
 >
   <PageHero
-    eyebrow="Zagreb i okolica · besplatna procjena"
+    eyebrow={`${site.area} · besplatna procjena`}
     title={service.h1}
     lead={service.lead ?? service.short}
     crumbs={crumbs}
@@ -119,29 +112,21 @@ const promise = [
     profile={service.profile}
     phoneFirst={urgent}
   >
-    <ol class="ph-promise" aria-label="Kako radimo">
-      {
-        promise.map((p, k) => (
-          <li>
-            <span class="ph-promise-n" aria-hidden="true">{pad(k + 1)}</span>
-            <span class="ph-promise-t">{p.t}</span>
-            <span class="ph-promise-d">{p.d}</span>
-          </li>
-        ))
-      }
-    </ol>
+    <HeroFacts
+      items={[
+        { k: 'Mjerenje', v: 'Besplatno, na terenu' },
+        { k: 'Ponuda', v: 'Pisana, stavku po stavku' },
+        { k: 'Jamstvo', v: 'Pisano, na izvedbu' },
+      ]}
+    />
   </PageHero>
 
   <!-- Opseg radova -->
-  <section id="opseg" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32" aria-labelledby="opseg-naslov">
+  <section id="opseg" class="bg-white py-24 text-tinta sm:py-28 lg:py-32" aria-labelledby="opseg-naslov">
     <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
       <div class="lg:col-span-5">
         <div class="lg:sticky lg:top-28">
-          <p class="eyebrow mb-4 flex items-center gap-3 text-tinta/70" data-reveal>
-            <span class="text-redline-dark">{iOpseg}</span>
-            <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
-            <span>Opseg radova</span>
-          </p>
+          <p class="eyebrow mb-4 text-tinta/70" data-reveal>Opseg radova</p>
           <h2 id="opseg-naslov" class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
             {service.includesTitle ?? 'Što je uključeno.'}
           </h2>
@@ -165,14 +150,16 @@ const promise = [
     </div>
   </section>
 
+  <!-- Detalj je potpis (samo opšav atike) -->
+  {hasDetail && <DetailSignature class="bg-papir py-24 sm:py-28 lg:py-32" />}
+
   <!-- Galerija -->
   {
     gallery.length > 0 && (
       <Gallery
         images={gallery}
-        tone="dark"
+        bg={midBg}
         id="galerija"
-        index={iGal}
         eyebrow="S gradilišta"
         title={service.galleryTitle ?? 'Ovako izgleda gotovo.'}
         lead={service.galleryLead ?? 'Fotografije s naših gradilišta. Antracit RAL 7016.'}
@@ -183,18 +170,14 @@ const promise = [
   <!-- Radovi (kartice) + arhiva -->
   <section
     id="radovi"
-    class:list={['bg-grafit pb-20 text-linija sm:pb-28 lg:pb-32', gallery.length ? 'pt-4' : 'pt-20 sm:pt-28 lg:pt-32']}
+    class:list={[midBg, 'pb-24 text-tinta sm:pb-28 lg:pb-32', gallery.length ? 'pt-0' : 'pt-24 sm:pt-28 lg:pt-32']}
     aria-labelledby="radovi-naslov"
   >
     <div class="wrap">
-      <div class:list={[gallery.length > 0 && 'border-t border-linija/12 pt-16 sm:pt-20']}>
-        <header>
-          <p class="eyebrow mb-4 flex items-center gap-3 text-celik" data-reveal>
-            <span class="text-redline">{iRad}</span>
-            <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
-            <span>{cards.length ? `Radovi · ${radova(cards.length)}` : 'Radovi'}</span>
-          </p>
-          <h2 id="radovi-naslov" class="type-display text-[2.125rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.25rem,3.4vw,3rem)]" data-reveal>
+      <div class:list={[gallery.length > 0 && 'border-t border-tinta/10 pt-16 sm:pt-20']}>
+        <header class="max-w-3xl">
+          <p class="eyebrow mb-4 text-tinta/70" data-reveal>Radovi</p>
+          <h2 id="radovi-naslov" class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.25rem,3.4vw,3rem)]" data-reveal>
             {cards.length ? (service.relatedTitle ?? 'Već izvedeno.') : 'Pogledajte i druge krovove.'}
           </h2>
         </header>
@@ -202,54 +185,31 @@ const promise = [
         <ul class:list={['rad-grid mt-12 sm:mt-14', cards.length > 0 && 'rad-grid--rail']} role="list">
           {
             cards.map((p) => (
-              <li class="text-white">
+              <li>
                 <ProjectCard project={p} sizes="(min-width: 88rem) 26rem, (min-width: 64rem) 30vw, (min-width: 30rem) 46vw, 78vw" />
               </li>
             ))
           }
           <li class:list={['rad-all', `rad-all--lg${lgSpan}`, `rad-all--sm${smSpan}`, cards.length === 0 && 'rad-all--solo']}>
-            <div class="rad-all-in group/all">
-              <div class="rad-all-main">
-                <p class="eyebrow text-celik">Arhiva · {radova(projects.length)}</p>
-                {
-                  thumbs.length > 0 && (
-                    <div class="rad-thumbs" aria-hidden="true">
-                      {thumbs.map((p) => (
-                        <div class="rad-thumb">
-                          <Photo src={p.image} alt="" widths={[160, 320]} sizes="7rem" class="block h-full w-full" />
-                        </div>
-                      ))}
-                    </div>
-                  )
-                }
-                <a href="/radovi" class="rad-all-a">
-                  <span class="type-display block text-[1.75rem] text-white sm:text-[2rem]">Svi radovi</span>
-                </a>
-                <span
-                  class="rad-all-arrow grid h-11 w-11 place-items-center border border-linija/30 text-white transition-colors duration-150 group-hover/all:border-white"
-                  aria-hidden="true"
-                >
-                  <Icon name="arrow-right" size={18} />
-                </span>
-              </div>
-              <div class="rad-legend-box">
-                <p class="rad-legend-k" aria-hidden="true">
-                  <span>Po vrsti</span>
-                  <span>Kom.</span>
-                </p>
-                <ul class="rad-legend" role="list" aria-label="Radovi po vrsti">
-                  {
-                    legend.map((x) => (
-                      <li>
-                        <a href={`/radovi?vrsta=${x.k}`}>
-                          <span>{x.label}</span>
-                          <span class="rad-legend-n">{pad(x.n)}</span>
-                        </a>
-                      </li>
-                    ))
-                  }
-                </ul>
-              </div>
+            <div class="rad-all-in">
+              <p class="eyebrow text-tinta/70">{radova(projects.length)}</p>
+              {
+                thumbs.length > 0 && (
+                  <div class="rad-thumbs" aria-hidden="true">
+                    {thumbs.map((p) => (
+                      <div class="rad-thumb">
+                        <Photo src={p.image} alt="" widths={[160, 320]} sizes="8rem" class="block h-full w-full" />
+                      </div>
+                    ))}
+                  </div>
+                )
+              }
+              <a href="/radovi" class="rad-all-a">
+                <span class="type-display block text-[1.75rem] sm:text-[2rem]">Svi radovi</span>
+              </a>
+              <span class="rad-all-arrow" aria-hidden="true">
+                <Icon name="arrow-right" size={18} />
+              </span>
             </div>
           </li>
         </ul>
@@ -257,31 +217,26 @@ const promise = [
     </div>
   </section>
 
-  <!-- Dokaz uz formu: ocjena · recenzija · jamstvo -->
-  <Proof slug={service.slug} />
+  <!-- Dokaz uz formu: brojke i ocjena (recenzije kad postoje) -->
+  <Proof slug={service.slug} class={proofClass} />
 
   <!-- Pitanja -->
   <Faq
     items={faqItems}
     tone="light"
     id="pitanja"
-    index={iFaq}
     title={service.faqTitle ?? 'Što nas najčešće pitaju.'}
     compact={faqItems.length <= 4}
   />
 
   <!-- Procjena (zajednička završna forma, predodabrana usluga) -->
-  <FinalCta index={iProc} preselect={service.slug} title={closeTitle} />
+  <FinalCta preselect={service.slug} title={closeTitle} />
 
   <!-- Ostale usluge -->
-  <section class="bg-papir py-16 text-tinta sm:py-20 lg:py-24" aria-labelledby="ostale-naslov">
+  <section class="bg-white py-20 text-tinta sm:py-24" aria-labelledby="ostale-naslov">
     <div class="wrap">
       <div class="flex items-center justify-between gap-6">
-        <h2 id="ostale-naslov" class="eyebrow flex items-center gap-3 text-tinta/70">
-          <span>Ostale usluge</span>
-          <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
-          <span aria-hidden="true">{pad(others.length)}</span>
-        </h2>
+        <h2 id="ostale-naslov" class="eyebrow text-tinta/70">Ostale usluge</h2>
         <a href="/usluge" class="xl-all group/a">
           Sve usluge
           <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover/a:translate-x-0.5" />
@@ -289,30 +244,20 @@ const promise = [
       </div>
       <ul class="xl-grid mt-6" role="list" data-reveal-group>
         {
-          others.map((s) => {
-            const k = services.indexOf(s);
-            return (
-              <li data-reveal>
-                <a href={`/usluge/${s.slug}`} class="xl-card group/x" data-profile-host>
-                  <span class="xl-rule" aria-hidden="true" />
-                  <span class="xl-top" aria-hidden="true">
-                    <span>
-                      <span class="text-redline-dark">{pad(k + 1)}</span>
-                      <span class="text-tinta/70">/{total}</span>
-                    </span>
-                    <span class="text-tinta/70">{profileNames[s.profile]}</span>
-                  </span>
-                  <ProfileIcon profile={s.profile} size={56} animate class="xl-icon" />
-                  <span class="xl-title">{s.title}</span>
-                  <Icon
-                    name="arrow-right"
-                    size={18}
-                    class="xl-arrow transition-transform duration-150 group-hover/x:translate-x-0.5"
-                  />
-                </a>
-              </li>
-            );
-          })
+          others.map((s) => (
+            <li data-reveal>
+              <a href={`/usluge/${s.slug}`} class="xl-card group/x" data-profile-host>
+                <span class="xl-rule" aria-hidden="true" />
+                <ProfileIcon profile={s.profile} size={56} animate class="xl-icon" />
+                <span class="xl-title">{s.title}</span>
+                <Icon
+                  name="arrow-right"
+                  size={18}
+                  class="xl-arrow transition-transform duration-150 group-hover/x:translate-x-0.5"
+                />
+              </a>
+            </li>
+          ))
         }
       </ul>
     </div>
@@ -320,60 +265,6 @@ const promise = [
 </Base>
 
 <style>
-  /* ── hero: obećanje u tri stavke (slot PageHero) ── */
-  .ph-promise {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    border-top: 1px solid rgb(213 219 223 / 0.14);
-  }
-  .ph-promise li {
-    display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
-    align-items: baseline;
-    gap: 0 0.5rem;
-    padding: 0.875rem 0;
-    border-bottom: 1px solid rgb(213 219 223 / 0.14);
-  }
-  .ph-promise-n {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.1em;
-    color: var(--color-redline);
-  }
-  .ph-promise-t {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: #fff;
-  }
-  .ph-promise-d {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.04em;
-    color: var(--color-celik);
-    text-align: right;
-  }
-  @media (width >= 40rem) {
-    .ph-promise {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      border-bottom: 1px solid rgb(213 219 223 / 0.14);
-    }
-    .ph-promise li {
-      grid-template-columns: minmax(0, 1fr);
-      align-content: start;
-      gap: 0.375rem;
-      padding: 1.125rem 1.25rem 1.25rem 0;
-      border-bottom: 0;
-    }
-    .ph-promise li + li {
-      padding-left: 1.25rem;
-      border-left: 1px solid rgb(213 219 223 / 0.14);
-    }
-    .ph-promise-d {
-      text-align: left;
-    }
-  }
-
-
   /* ── radovi ── */
   .rad-grid {
     display: grid;
@@ -391,7 +282,7 @@ const promise = [
       gap: 3.5rem 1.5rem;
     }
   }
-  /* "Svi radovi" — pločica s legendom vrsta */
+  /* "Svi radovi" — tiha pločica (sličice drugih radova kad je široka) */
   .rad-all {
     min-width: 0;
   }
@@ -409,55 +300,50 @@ const promise = [
     }
   }
   .rad-all-in {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100%;
-    border: 1px solid rgb(213 219 223 / 0.16);
-    transition: border-color 200ms var(--ease-draft);
-  }
-  .rad-all-in:has(.rad-all-a:hover) {
-    border-color: rgb(213 219 223 / 0.4);
-  }
-  .rad-all-main {
-    position: relative;
-    display: flex;
-    flex: 1;
-    flex-direction: column;
     min-height: 10rem;
     padding: 1.25rem 1.25rem 1.5rem;
+    border: 1px solid rgb(21 24 27 / 0.14);
+    transition: border-color 200ms var(--ease-draft);
+  }
+  @media (width >= 64rem) {
+    .rad-all-in {
+      padding: 1.5rem;
+    }
+  }
+  .rad-all-in:has(.rad-all-a:hover) {
+    border-color: rgb(21 24 27 / 0.4);
   }
   .rad-all-a {
     margin-top: auto;
     padding-top: 2rem;
+    color: var(--color-tinta);
   }
-  /* kontaktni arak drugih radova — samo u širokoj pločici; ispunjava prostor do naslova */
+  /* kontaktni arak drugih radova — samo u širokoj pločici */
   .rad-thumbs {
     display: none;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-content: start;
     gap: 0.5rem;
-    margin-top: 1.5rem;
-    max-width: 40rem;
+    margin-top: 1.25rem;
+    max-width: 36rem;
   }
   .rad-thumb {
     aspect-ratio: 4 / 5;
     overflow: hidden;
     background: var(--color-antracit);
-    opacity: 0.85;
-    transition: opacity 200ms var(--ease-draft);
   }
   .rad-thumb :global(img) {
     height: 100%;
     width: 100%;
     object-fit: cover;
   }
-  .rad-all-in:has(.rad-all-a:hover) .rad-thumb {
-    opacity: 1;
-  }
   @media (width >= 30rem) and (width < 64rem) {
     .rad-all--sm2 .rad-thumbs {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
   @media (width >= 64rem) {
@@ -465,9 +351,19 @@ const promise = [
     .rad-all--lg3 .rad-thumbs {
       display: grid;
     }
-    /* pločica preko dva stupca: arak 2 × 2, visok kao kartica do nje */
+    /* pločica preko dva stupca je visoka kao kartica do nje: sličice preko cijele širine */
     .rad-all--lg2 .rad-thumbs {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      max-width: none;
+      margin-top: 1.5rem;
+      gap: 0.75rem;
+    }
+  }
+  .rad-all--solo .rad-thumbs {
+    display: grid;
+  }
+  @media (width >= 30rem) {
+    .rad-all--solo {
+      grid-column: 1 / -1;
     }
   }
   .rad-all-a::after {
@@ -480,99 +376,28 @@ const promise = [
     outline: none;
   }
   .rad-all-a:focus-visible::after {
-    outline: 2px solid var(--color-redline);
+    outline: 2px solid var(--color-redline-dark);
     outline-offset: -2px;
   }
   .rad-all-arrow {
     position: absolute;
     top: 1rem;
     right: 1rem;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(21 24 27 / 0.25);
+    color: var(--color-tinta);
+    transition:
+      background-color 150ms var(--ease-press),
+      border-color 150ms var(--ease-press),
+      color 150ms var(--ease-press);
   }
   .rad-all-a:hover ~ .rad-all-arrow {
-    background: #fff;
-    color: var(--color-grafit);
-  }
-  /* legenda vrsta: ćelija sastavnice (natpis gore, popis dolje) */
-  .rad-legend-box {
-    display: flex;
-    flex-direction: column;
-    padding: 0 1.25rem 0.75rem;
-    border-top: 1px solid rgb(213 219 223 / 0.12);
-  }
-  .rad-legend-k {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.25rem 0 0.75rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.12);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    line-height: 1rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-celik);
-  }
-  .rad-legend {
-    margin-top: auto;
-  }
-  .rad-legend a {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    min-height: 2.75rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.08);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-linija);
-    transition: color 150ms var(--ease-press);
-  }
-  .rad-legend li:last-child a {
-    border-bottom: 0;
-  }
-  .rad-legend a:hover {
-    color: #fff;
-  }
-  .rad-legend-n {
-    color: var(--color-celik);
-    font-variant-numeric: tabular-nums;
-  }
-  .rad-legend a:hover .rad-legend-n {
-    color: var(--color-redline);
-  }
-  /* široka pločica: legenda desno, kao stupac sastavnice */
-  @media (width >= 30rem) and (width < 64rem) {
-    .rad-all--sm2 .rad-all-in {
-      flex-direction: row;
-    }
-    .rad-all--sm2 .rad-legend-box {
-      width: 50%;
-      border-top: 0;
-      border-left: 1px solid rgb(213 219 223 / 0.12);
-    }
-  }
-  @media (width >= 64rem) {
-    .rad-all--lg2 .rad-all-in,
-    .rad-all--lg3 .rad-all-in {
-      flex-direction: row;
-    }
-    .rad-all--lg2 .rad-legend-box,
-    .rad-all--lg3 .rad-legend-box {
-      width: 50%;
-      border-top: 0;
-      border-left: 1px solid rgb(213 219 223 / 0.12);
-      padding: 0 1.5rem 1rem;
-    }
-    .rad-all--lg2 .rad-legend-k,
-    .rad-all--lg3 .rad-legend-k {
-      padding-top: 1.5rem;
-    }
-    .rad-all--lg2 .rad-all-main,
-    .rad-all--lg3 .rad-all-main {
-      padding: 1.5rem;
-    }
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: var(--color-papir);
   }
 
   /* mobitel: kartice radova kao vodoravni niz (native scroll-snap), "Svi radovi" je zadnja */
@@ -597,26 +422,6 @@ const promise = [
       scroll-snap-align: start;
     }
   }
-  /* bez kartica: pločica preko cijele širine, sličice vidljive na svim širinama */
-  .rad-all--solo .rad-thumbs {
-    display: grid;
-  }
-  @media (width >= 30rem) {
-    .rad-all--solo {
-      grid-column: 1 / -1;
-    }
-    .rad-all--solo .rad-all-in {
-      flex-direction: row;
-    }
-    .rad-all--solo .rad-thumbs {
-      display: grid;
-    }
-    .rad-all--solo .rad-legend-box {
-      width: 50%;
-      border-top: 0;
-      border-left: 1px solid rgb(213 219 223 / 0.12);
-    }
-  }
 
   /* ── ostale usluge ── */
   .xl-all {
@@ -636,58 +441,45 @@ const promise = [
   .xl-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    border-top: 1px solid rgb(21 24 27 / 0.16);
+    border-top: 1px solid rgb(21 24 27 / 0.14);
   }
   @media (width >= 40rem) {
     .xl-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      border-left: 1px solid rgb(21 24 27 / 0.16);
+      column-gap: 2rem;
     }
   }
   @media (width >= 64rem) {
     .xl-grid {
       grid-template-columns: repeat(5, minmax(0, 1fr));
+      column-gap: 0;
+      border-left: 1px solid rgb(21 24 27 / 0.1);
     }
   }
   .xl-grid > li {
-    border-bottom: 1px solid rgb(21 24 27 / 0.16);
+    border-bottom: 1px solid rgb(21 24 27 / 0.1);
   }
-  @media (width >= 40rem) {
+  @media (width >= 64rem) {
     .xl-grid > li {
-      border-right: 1px solid rgb(21 24 27 / 0.16);
+      border-right: 1px solid rgb(21 24 27 / 0.1);
     }
   }
   .xl-card {
     position: relative;
     display: grid;
-    grid-template-columns: 3.5rem minmax(0, 1fr) auto;
-    grid-template-areas:
-      'icon top   arrow'
-      'icon title arrow';
+    grid-template-columns: 3rem minmax(0, 1fr) auto;
+    grid-template-areas: 'icon title arrow';
     align-items: center;
     column-gap: 1rem;
-    row-gap: 0.25rem;
-    padding: 1.125rem 0.25rem;
-    min-height: 5.5rem;
+    padding: 1rem 0.25rem;
+    min-height: 4.75rem;
     color: var(--color-tinta);
     transition: background-color 200ms var(--ease-draft);
   }
-  .xl-top {
-    grid-area: top;
-    display: flex;
-    gap: 0.75rem;
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-  .xl-top > span:last-child {
-    display: none;
-  }
   .xl-card :global(.xl-icon) {
     grid-area: icon;
-    width: 3.5rem;
-    height: 3.5rem;
+    width: 3rem;
+    height: 3rem;
   }
   .xl-title {
     grid-area: title;
@@ -698,7 +490,7 @@ const promise = [
   }
   .xl-card :global(.xl-arrow) {
     grid-area: arrow;
-    color: rgb(21 24 27 / 0.7);
+    color: rgb(21 24 27 / 0.6);
   }
   .xl-rule {
     position: absolute;
@@ -711,38 +503,28 @@ const promise = [
     transform-origin: 0 50%;
     transition: transform 380ms var(--ease-draft);
   }
-  @media (width >= 40rem) {
+  @media (width >= 64rem) {
     .xl-card {
       grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: 1fr auto;
       grid-template-areas:
-        'top   top'
         'icon  icon'
         'title arrow';
       align-items: end;
-      row-gap: 1rem;
-      min-height: 15rem;
-      padding: 1.25rem 1.25rem 1.375rem;
-    }
-    .xl-top {
-      justify-content: space-between;
-    }
-    .xl-top > span:last-child {
-      display: inline;
+      row-gap: 1.25rem;
+      min-height: 13rem;
+      padding: 1.5rem 1.25rem 1.375rem;
     }
     .xl-card :global(.xl-icon) {
       align-self: center;
       justify-self: start;
-      width: 4.5rem;
-      height: 4.5rem;
-    }
-    .xl-title {
-      font-size: 1.125rem;
+      width: 4rem;
+      height: 4rem;
     }
   }
   @media (hover: hover) {
     .xl-card:hover {
-      background: rgb(226 223 216 / 0.7);
+      background: var(--color-papir);
     }
     .xl-card:hover .xl-rule {
       transform: scaleX(1);

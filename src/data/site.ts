@@ -24,7 +24,13 @@ import imgAtikaAlatSiroko from '@/assets/projects/atika-opsav-alat-siroko.jpg';
 import imgDimnjak from '@/assets/projects/dimnjak-oblaganje-kapa.jpg';
 
 /** Prototip: prikazuje oznaku "PROTOTIP" i "primjer" uz nepotvrđene podatke. */
-export const PROTOTYPE = true;
+// Klijent je potvrdio podatke (2026-10-05): bez oznaka "primjer" i bez oznake PROTOTIP.
+export const PROTOTYPE = false;
+/**
+ * Oznake "primjer" uz pojedine podatke. Za prezentaciju klijentu su isključene —
+ * dovoljna je jedna oznaka PROTOTIP u kutu (Base.astro). Uključiti za interni pregled.
+ */
+export const SHOW_EXAMPLE_TAGS = false;
 
 export const site = {
   name: 'Limarija Karamatić',
@@ -37,7 +43,9 @@ export const site = {
   viber: '+385910000000', // TODO
   email: 'info@limarija-karamatic.hr', // TODO
   city: 'Zagreb', // TODO: potvrditi sjedište
-  area: 'Zagreb i okolica',
+  area: 'Zagreb i šire',
+  /** pozicioniranje: nismo ograničeni na Zagreb */
+  areaLine: 'Sjedište u Zagrebu — radimo gdje god se posao isplati.',
   hours: 'Pon–Pet 7–17 h · Sub 8–13 h', // TODO
   hoursShort: 'Pon–Sub od 7 h', // TODO
   responseTime: 'Javljamo se isti radni dan', // TODO: potvrditi
@@ -115,13 +123,13 @@ export const services: Service[] = [
     image: imgSnjegobrani,
     imageAlt: 'Novi limeni krov u antracitu s redovima snjegobrana, Zagreb',
     gallery: [imgSnjegobrani, imgZalazak, imgSnjegobraniOdozgo, imgSpojRadnik],
-    seoTitle: 'Limeni krovovi Zagreb | Limarija Karamatić',
+    seoTitle: 'Limeni krovovi — Zagreb i šire | Limarija Karamatić',
     seoDescription:
-      'Novi limeni krovovi i zamjena crijepa limom u Zagrebu i okolici. Crijep-lim i trapez, antracit RAL 7016. Besplatna procjena.',
-    h1: 'Limeni krovovi u Zagrebu',
+      'Novi limeni krovovi i zamjena crijepa limom u Zagrebu i šire. Crijep-lim i trapez, antracit RAL 7016. Besplatna procjena.',
+    h1: 'Limeni krovovi',
     includesTitle: 'Cijeli krov, sloj po sloj.',
     galleryTitle: 'Crijep-lim u antracitu.',
-    galleryLead: 'Fotografije s naših krovova u Zagrebu i okolici.',
+    galleryLead: 'Fotografije s naših krovova.',
     relatedTitle: 'Krovovi koje smo pokrili.',
     faqTitle: 'Pitanja o limenom krovu.',
     faq: [
@@ -156,10 +164,10 @@ export const services: Service[] = [
     image: imgFalcIzlaz,
     imageAlt: 'Falcani limeni krov s izlazom na krov',
     gallery: [imgFalcIzlaz, imgFalcZid],
-    seoTitle: 'Falcani krovovi Zagreb | Limarija Karamatić',
+    seoTitle: 'Falcani krovovi — Zagreb i šire | Limarija Karamatić',
     seoDescription:
-      'Falcani limeni krovovi (stojeći falc) u Zagrebu i okolici. Bez vidljivih vijaka, za niske nagibe i moderne kuće.',
-    h1: 'Falcani krovovi u Zagrebu',
+      'Falcani limeni krovovi (stojeći falc) u Zagrebu i šire. Bez vidljivih vijaka, za niske nagibe i moderne kuće.',
+    h1: 'Falcani krovovi',
     includesTitle: 'Što radimo na falcanom krovu.',
     galleryTitle: 'Trake bez poprečnih spojeva.',
     galleryLead: 'Čiste linije, bez vijaka kroz pokrov.',
@@ -197,10 +205,10 @@ export const services: Service[] = [
     image: imgUvalaRadnik,
     imageAlt: 'Limar na krovu montira opšav uvale na limenom krovu',
     gallery: [imgUvalaRadnik, imgSpojRadnik],
-    seoTitle: 'Popravak krova Zagreb — krov pušta? | Limarija Karamatić',
+    seoTitle: 'Popravak krova — krov pušta? | Limarija Karamatić',
     seoDescription:
-      'Popravak i sanacija krova u Zagrebu: uvale, sljeme, opšavi i dimnjaci. Nađemo uzrok prokišnjavanja. Nazovite ili pošaljite slike na WhatsApp.',
-    h1: 'Popravak krova u Zagrebu',
+      'Popravak i sanacija krova, Zagreb i šire: uvale, sljeme, opšavi i dimnjaci. Nađemo uzrok prokišnjavanja. Nazovite ili pošaljite slike na WhatsApp.',
+    h1: 'Popravak krova',
     lead: 'Krov više neće puštati. Nađemo uzrok, a ne samo mrlju — uvale, sljeme, spojevi i dimnjaci.',
     includesTitle: 'Kako popravljamo krov.',
     galleryTitle: 'Ovako izgleda sanirano.',
@@ -239,14 +247,14 @@ export const services: Service[] = [
     image: imgTrapezGromobran,
     imageAlt: 'Ravni krov s trapeznim limom i opšavom atike u antracitu',
     gallery: [imgTrapezGromobran, imgAtikaKutDetalj, imgAtikaSljunak, imgTrapezMedvednica],
-    seoTitle: 'Opšav atike Zagreb | Limarija Karamatić',
+    seoTitle: 'Opšav atike — Zagreb i šire | Limarija Karamatić',
     seoDescription:
-      'Opšav atike i limarija ravnih krovova u Zagrebu. Kape atika po mjeri, kutovi na geru, trapezni lim. Besplatna procjena.',
-    h1: 'Opšav atike u Zagrebu',
+      'Opšav atike i limarija ravnih krovova, Zagreb i šire. Kape atika po mjeri, kutovi na geru, trapezni lim. Besplatna procjena.',
+    h1: 'Opšav atike',
     lead: 'Kape atika s pravim kutovima i preklopima koji ne puštaju. Trapezni lim za ravne krovove.',
     includesTitle: 'Što uključuje opšav atike.',
     galleryTitle: 'Kutovi savijeni na licu mjesta.',
-    galleryLead: 'Ravni krovovi i atike u Zagrebu.',
+    galleryLead: 'Ravni krovovi i atike koje smo napravili.',
     relatedTitle: 'Atike i ravni krovovi.',
     faqTitle: 'Pitanja o opšavu atike.',
     faq: [
@@ -280,10 +288,10 @@ export const services: Service[] = [
     image: imgDimnjak,
     imageAlt: 'Dimnjak obložen antracit limom s limenom kapom',
     gallery: [imgDimnjak],
-    seoTitle: 'Opšav dimnjaka Zagreb | Limarija Karamatić',
+    seoTitle: 'Opšav dimnjaka — Zagreb i šire | Limarija Karamatić',
     seoDescription:
-      'Opšav i oblaganje dimnjaka limom u Zagrebu, limene kape dimnjaka. Rješavamo prokišnjavanje oko dimnjaka.',
-    h1: 'Opšav dimnjaka u Zagrebu',
+      'Opšav i oblaganje dimnjaka limom, limene kape dimnjaka. Zagreb i šire. Rješavamo prokišnjavanje oko dimnjaka.',
+    h1: 'Opšav dimnjaka',
     includesTitle: 'Od opšava do kape.',
     galleryTitle: 'Najčešće mjesto curenja, riješeno.',
     galleryLead: 'Dimnjak obložen limom u boji krova.',
@@ -320,10 +328,10 @@ export const services: Service[] = [
     image: imgSnjegobraniOdozgo,
     imageAlt: 'Limeni krov sa snjegobranima, gledan odozgo',
     gallery: [imgSnjegobraniOdozgo, imgSnjegobranCijev, imgSnjegobrani],
-    seoTitle: 'Oluci i snjegobrani Zagreb | Limarija Karamatić',
+    seoTitle: 'Oluci i snjegobrani — Zagreb i šire | Limarija Karamatić',
     seoDescription:
-      'Montaža oluka, vertikala i snjegobrana u Zagrebu i okolici. Za nove i postojeće limene krovove.',
-    h1: 'Oluci i snjegobrani u Zagrebu',
+      'Montaža oluka, vertikala i snjegobrana u Zagrebu i šire. Za nove i postojeće limene krovove.',
+    h1: 'Oluci i snjegobrani',
     includesTitle: 'Odvodnja i zaštita od snijega.',
     galleryTitle: 'Snijeg ostaje na krovu.',
     galleryLead: 'Snjegobrani na limenim krovovima.',
@@ -602,40 +610,13 @@ export const standard = [
   { k: 'Račun', v: 'R1 račun · plaćanje iz pričuve za zgrade', confirmed: false },
 ];
 
-/* ── Recenzije — PRIMJERI, zamijeniti stvarnim Google recenzijama ── */
-export const reviews = [
-  {
-    name: 'Primjer recenzije',
-    place: 'Zagreb',
-    text: 'Došli su izmjeriti dan nakon poziva, ponuda je bila jasna i rok je ispoštovan. Krov izgleda odlično, a dvorište su ostavili čišće nego što je bilo.',
-    stars: 5,
-    example: true,
-  },
-  {
-    name: 'Primjer recenzije',
-    place: 'Zagreb',
-    text: 'Godinama nam je curilo oko dimnjaka. Našli su uzrok, obložili cijeli dimnjak i od tada mir.',
-    stars: 5,
-    example: true,
-  },
-  {
-    name: 'Primjer recenzije',
-    place: 'Zagreb',
-    text: 'Kao upravitelj zgrade trebao sam ponudu za opšav atike i dokumentaciju za pričuvu — sve je stiglo složeno, bez natezanja.',
-    stars: 5,
-    example: true,
-  },
-  {
-    name: 'Primjer recenzije',
-    place: 'Zagreb',
-    text: 'Majstori koji znaju što rade. Kutovi na atici su savršeni, susjedi su odmah pitali za broj.',
-    stars: 5,
-    example: true,
-  },
-];
+/* ── Recenzije ─────────────────────────────────────────────── */
+// TODO: dodati STVARNE recenzije klijenata (Google ili poruke uz dopuštenje).
+// Dok je popis prazan, sekcija prikazuje samo brojke i ocjenu — bez izmišljenih citata.
+export type Review = { name: string; place: string; text: string; stars: number };
+export const reviews: Review[] = [];
 
-/* ── Područje rada ─────────────────────────────────────────── */
-// TODO: potvrditi s klijentom
+/* ── Mjesta (prijedlozi u formi — NIJE ograničenje područja rada) ── */
 export const areas = [
   'Zagreb',
   'Novi Zagreb',
@@ -683,6 +664,10 @@ export const faq = [
   {
     q: 'Dajete li jamstvo?',
     a: 'Da, na izvedbu dajemo pisano jamstvo, a na materijal vrijedi jamstvo proizvođača. Sve piše u ponudi i na računu.',
+  },
+  {
+    q: 'Radite li izvan Zagreba?',
+    a: 'Da. Sjedište nam je u Zagrebu, a dolazimo gdje god se posao isplati. Javite se s lokacijom i opisom posla pa dogovorimo izlazak.',
   },
   // TODO: potvrditi s klijentom (predujam, osiguranje)
   {

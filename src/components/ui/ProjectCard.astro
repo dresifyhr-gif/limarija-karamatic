@@ -1,10 +1,9 @@
 ---
 /**
- * Kartica projekta (rail na naslovnici, /radovi, servisne stranice).
+ * Kartica projekta (rail na naslovnici, /radovi, servisne stranice, zgrade).
  *  - 4:5 fotografija (Photo + data-scan otkrivanje; reveal.ts čeka da se slika učita)
- *  - mono specifikacija: "LIMENI KROV · CRIJEP-LIM · RAL 7016"
- *  - mjesto · godina + <ExampleTag/> (nepotvrđeno)
- *  - naslov (h3)
+ *  - naslov (h3) + strelica
+ *  - JEDAN mono red: "OPŠAV ATIKE · ZAGREB" (manje sitnih oznaka)
  * Cijela kartica je jedan link na /radovi/{slug}.
  * Boja teksta se nasljeđuje (radi na grafitu i na papiru). Prigušeni tekst: --pcard-muted ako ga
  * roditelj zada (rail na grafitu → čelik), inače 74 % boje teksta (na papiru ≥ tinta/70, AA).
@@ -16,7 +15,6 @@ import type { Project } from '@/data/site';
 import { projectKinds } from '@/data/site';
 import Photo from './Photo.astro';
 import Icon from './Icon.astro';
-import ExampleTag from './ExampleTag.astro';
 
 interface Props {
   project: Project;
@@ -37,7 +35,7 @@ const {
 } = Astro.props;
 
 const kind = projectKinds[project.kind];
-const spec = `${kind} · ${project.material}`;
+const meta = `${kind} · ${project.location}`;
 const label = `${project.title} — ${kind}, ${project.location}. Pogledajte rad`;
 ---
 
@@ -58,10 +56,7 @@ const label = `${project.title} — ${kind}, ${project.location}. Pogledajte rad
   </div>
 
   <div class="pt-4">
-    <p class="pcard-muted type-mono min-h-8 text-[0.6875rem] leading-4 tracking-[0.08em] uppercase sm:min-h-0">
-      {spec}
-    </p>
-    <div class="mt-2.5 flex items-start justify-between gap-4">
+    <div class="flex items-start justify-between gap-4">
       <h3 class="text-[1.125rem] leading-snug font-semibold text-balance sm:text-[1.1875rem]">
         {project.title}
       </h3>
@@ -71,10 +66,7 @@ const label = `${project.title} — ${kind}, ${project.location}. Pogledajte rad
         class="mt-[0.2rem] shrink-0 opacity-60 transition-[transform,opacity] duration-200 ease-[var(--ease-press)] group-hover/card:translate-x-0.5 group-hover/card:-translate-y-0.5 group-hover/card:opacity-100"
       />
     </div>
-    <p class="pcard-muted type-mono mt-2 flex items-center gap-2 text-[0.75rem] leading-4">
-      <span>{project.location} · {project.year}</span>
-      <ExampleTag />
-    </p>
+    <p class="pcard-muted type-mono mt-2 text-[0.6875rem] leading-4 tracking-[0.08em] uppercase">{meta}</p>
   </div>
 </a>
 

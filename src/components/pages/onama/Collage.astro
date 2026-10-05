@@ -1,21 +1,21 @@
 ---
 /**
  * /o-nama · kolaž stvarnih radova (papir).
- * Desktop: tri stupca s pomakom (5 / 3 / 3 od 12), kao listovi na stolu; pomak raste udesno (0 / 3 / 9 rem) da se Sl. brojevi čitaju redom.
+ * Desktop: tri stupca s pomakom (5 / 3 / 3 od 12), kao listovi na stolu; pomak raste udesno (0 / 3 / 9 rem).
+ * Potpis ispod fotografije: samo naziv rada (bez "Sl. 0x" i mono reda).
  * Mobitel: stupci postaju `display: contents` → mreža 2 × n, prva fotografija preko cijele širine.
  * Fotografije otkriva data-scan (jedini stil otkrivanja fotki).
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Photo from '@/components/ui/Photo.astro';
 import Button from '@/components/ui/Button.astro';
-import { projects, projectKinds, type Project } from '@/data/site';
+import { projects, type Project } from '@/data/site';
 
 interface Props {
-  index?: string;
-  /** broj prve slike u nizu stranice (hero Sl. 01, priča Sl. 02 → kolaž od Sl. 03) */
-  startAt?: number;
+  /** pozadina i razmaci sekcije */
+  class?: string;
 }
-const { index = '03', startAt = 3 } = Astro.props;
+const { class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32' } = Astro.props;
 
 const pick = (slug: string) => projects.find((p) => p.slug === slug);
 const [p1, p2, p3, p4, p5] = [
@@ -36,17 +36,15 @@ const colC: Item[] = [
   { p: p3, n: 3, ratio: 'aspect-[4/5]', sizes: '(min-width: 64rem) 21vw, 50vw', cls: 'cl-o3' },
   { p: p5, n: 5, ratio: 'aspect-[4/5]', sizes: '(min-width: 64rem) 21vw, 50vw', cls: 'cl-o5' },
 ];
-const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
-<section id="nas-rad" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+<section id="nas-rad" class:list={['text-tinta', sectionClass]}>
   <div class="wrap">
     <SectionHead
       tone="light"
-      index={index}
       eyebrow="Naši radovi"
       title="Pogledajte izbliza."
-      lead="Sve fotografije su s naših krovova u Zagrebu i okolici, snimljene na gradilištu."
+      lead="Sve fotografije su s naših krovova, snimljene na gradilištu."
     />
 
     <div class="cl mt-14 lg:mt-20">
@@ -66,21 +64,14 @@ const pad = (n: number) => String(n).padStart(2, '0');
                         imgClass="h-full w-full object-cover transition-transform duration-[400ms] ease-[var(--ease-draft)] group-hover:scale-[1.03]"
                       />
                     </div>
-                    <p class="cl-cap">
-                      <span class="text-redline-dark">Sl. {pad(startAt + it.n - 1)}</span>
-                      <span class="text-tinta">{it.p.title}</span>
-                      <span class="cl-cap-m">
-                        {projectKinds[it.p.kind]} · {it.p.material.split(' · ').pop()}
-                      </span>
-                    </p>
+                    <p class="cl-cap">{it.p.title}</p>
                   </a>
                 ),
             )}
             {ci === 0 && (
               <div class="cl-more cl-o6">
-                <p class="max-w-[24rem] leading-relaxed text-pretty text-tinta/70">
-                  Svaki rad u galeriji ima mjesto, materijal i boju. Isti antracit, isti detalji, od obiteljske kuće
-                  do zgrade.
+                <p class="max-w-[24rem] leading-relaxed text-pretty text-tinta/75">
+                  Isti antracit, isti detalji, od obiteljske kuće do zgrade.
                 </p>
                 <Button href="/radovi" variant="outline-dark" iconRight="arrow-right" class="mt-6">
                   Svi radovi
@@ -167,27 +158,14 @@ const pad = (n: number) => String(n).padStart(2, '0');
     min-width: 0;
   }
   .cl-cap {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 0.75rem;
-    row-gap: 0.125rem;
     margin-top: 0.875rem;
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    line-height: 1.45;
-    letter-spacing: 0.06em;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--color-tinta);
+    text-wrap: balance;
   }
-  .cl-cap > span:first-child {
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-  .cl-cap-m {
-    flex-basis: 100%;
-    color: rgb(21 24 27 / 0.7);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .cl-item:hover .cl-cap > span:nth-child(2) {
+  .cl-item:hover .cl-cap {
     text-decoration: underline;
     text-underline-offset: 0.3em;
   }

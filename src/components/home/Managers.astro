@@ -1,142 +1,52 @@
 ---
 /**
- * Za upravitelje zgrada i izvođače (id="zgrade", grafit-2).
- * Statična sekcija: samo data-reveal i data-scan na fotografiji.
- * Tri "priloga" = ono što upravitelj nosi suvlasnicima.
+ * Za zgrade (id="zgrade", papir-2) — kompaktna svijetla traka između Recenzija i Pitanja (≤ 0,45 ekrana).
+ * Jedan naslov, tri kratke točke u nizu i jedan gumb na /upravitelji-zgrada. Bez fotografije:
+ * cijela priča (ponuda za suvlasnike, R1, fotodokumentacija) je na stranici za upravitelje.
+ * Statična sekcija: samo data-reveal.
  */
-import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon, { type IconName } from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
-import Photo from '@/components/ui/Photo.astro';
-import { site, telHref, projects } from '@/data/site';
-import fallbackImg from '@/assets/projects/atika-opsav-susjedni-krov.jpg';
 
 interface Props {
+  /** zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju */
   index?: string;
 }
-const { index = '06' } = Astro.props;
 
-/* Fotografija koje nema drugdje na naslovnici: atika uz susjedni krov (kontekst zgrade u nizu). */
-const project = projects.find((p) => p.slug === 'atika-uz-susjedni-krov');
-const image = project?.image ?? fallbackImg;
-const alt = project?.alt ?? 'Opšav atike uz susjedni limeni krov';
-
-const points: { icon: IconName; title: string; text: string; tag: string }[] = [
-  {
-    icon: 'building',
-    title: 'Plaćanje iz pričuve',
-    text: 'Ponudu i dokumentaciju složimo tako da je upravitelj može odmah staviti pred suvlasnike na odluku.',
-    tag: 'Za odluku suvlasnika',
-  },
-  {
-    icon: 'file',
-    title: 'Jasna ponuda i račun na zgradu',
-    text: 'Ponuda stavku po stavku: materijal, debljina lima, boja i rok. Račun glasi na OIB zgrade, a za tvrtke R1.',
-    tag: 'Stavku po stavku',
-  },
-  {
-    icon: 'camera',
-    title: 'Fotodokumentacija',
-    text: 'Krov snimamo prije, tijekom i poslije radova, da suvlasnici vide za što je otišao novac iz pričuve.',
-    tag: 'Prije · tijekom · poslije',
-  },
+const points: { icon: IconName; text: string }[] = [
+  { icon: 'building', text: 'Ponuda za odluku suvlasnika' },
+  { icon: 'file', text: 'Račun na zgradu, plaćanje iz pričuve' },
+  { icon: 'camera', text: 'Fotografije prije i poslije radova' },
 ];
 ---
 
-<section id="zgrade" class="bg-grafit-2 py-20 text-linija sm:py-28 lg:py-32">
-  <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-0">
-    <!-- A · zaglavlje -->
-    <div class="lg:col-span-6 lg:row-start-1">
-      <SectionHead
-        index={index}
-        eyebrow="Za upravitelje zgrada i izvođače"
-        title="Krov zgrade bez natezanja sa suvlasnicima."
-        lead="Upravitelju treba papir, suvlasnicima jasna cijena, a zgradi krov koji ne pušta. Pripremamo sve troje."
-      />
-    </div>
-
-    <!-- C · fotografija (na mobitelu između zaglavlja i točaka) -->
-    <figure class="lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1 lg:self-start">
-      <div class="relative">
-        <span class="mgr-ticks" aria-hidden="true"></span>
-        <div class="aspect-[4/3] overflow-hidden bg-grafit-3 sm:aspect-[5/4] lg:aspect-[4/5]" data-scan>
-          <Photo
-            src={image}
-            alt={alt}
-            widths={[480, 720, 960, 1200]}
-            sizes="(min-width: 88rem) 34rem, (min-width: 64rem) 38vw, calc(100vw - 2.5rem)"
-            imgClass="h-full w-full object-cover object-[55%_50%]"
-          />
-        </div>
-      </div>
-      <figcaption class="mt-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-mono text-[0.6875rem] tracking-[0.08em] text-celik uppercase">
-        <span class="text-linija">{project?.title ?? 'Atika uz susjedni krov'}</span>
-        <span>{project?.material ?? 'Kapa atike · RAL 7016'} · {project?.location ?? site.city}</span>
-      </figcaption>
-    </figure>
-
-    <!-- B · tri priloga + CTA -->
-    <div class="lg:col-span-6 lg:row-start-2 lg:mt-14">
-      <ol class="border-t border-linija/12" data-reveal-group>
+<section id="zgrade" class="bg-papir-2 py-14 text-tinta sm:py-16 lg:py-20" aria-labelledby="zgrade-naslov">
+  <div class="wrap flex flex-col gap-y-8 lg:flex-row lg:items-center lg:justify-between lg:gap-x-16">
+    <div class="min-w-0">
+      <p class="eyebrow text-tinta/70" data-reveal>Stambene zgrade</p>
+      <h2
+        id="zgrade-naslov"
+        class="type-display mt-4 max-w-[24ch] text-[1.75rem] text-balance sm:text-[2.125rem] lg:text-[2.375rem]"
+        data-reveal
+      >
+        Krov zgrade bez natezanja sa suvlasnicima.
+      </h2>
+      <ul class="mt-6 flex flex-col gap-y-2.5 sm:mt-7 sm:flex-row sm:flex-wrap sm:gap-x-9" data-reveal-group>
         {
-          points.map((p, i) => (
-            <li class="grid grid-cols-[2.75rem_1fr] gap-x-5 border-b border-linija/12 py-6 sm:grid-cols-[2.75rem_1fr_auto] sm:gap-x-6 sm:py-7 lg:grid-cols-[2.75rem_1fr] xl:grid-cols-[2.75rem_1fr_auto]" data-reveal>
-              <span class="grid size-11 place-items-center border border-linija/20 text-white">
-                <Icon name={p.icon} size={22} />
-              </span>
-              <div class="min-w-0">
-                <p class="font-mono text-[0.6875rem] tracking-[0.12em] text-celik uppercase">
-                  Prilog {String(i + 1).padStart(2, '0')}
-                </p>
-                <h3 class="mt-1.5 text-[1.1875rem] leading-snug font-bold text-white [font-stretch:112%] sm:text-xl">
-                  {p.title}
-                </h3>
-                <p class="mt-2 max-w-[34rem] leading-relaxed text-pretty text-celik">{p.text}</p>
-              </div>
-              <span class="hidden pt-0.5 text-right font-mono text-[0.6875rem] tracking-[0.12em] whitespace-nowrap text-celik uppercase sm:block lg:hidden xl:block">
-                {p.tag}
-              </span>
+          points.map((p) => (
+            <li class="flex items-center gap-2.5 text-[1rem] leading-snug text-tinta/80" data-reveal>
+              <Icon name={p.icon} size={18} class="flex-none text-tinta/55" />
+              <span>{p.text}</span>
             </li>
           ))
         }
-      </ol>
+      </ul>
+    </div>
 
-      <div class="mt-10 flex flex-col gap-y-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8" data-reveal>
-        <Button href="/upravitelji-zgrada" variant="outline" size="lg" iconRight="arrow-right" class="w-full sm:w-auto">
-          Sve za upravitelje zgrada
-        </Button>
-        <a
-          href={telHref}
-          class="group inline-flex min-h-11 items-center gap-3 self-start text-white sm:self-auto"
-          aria-label={`Nazovite ${site.phoneDisplay}`}
-        >
-          <Icon name="phone" size={20} class="text-celik transition-colors duration-150 group-hover:text-white" />
-          <span class="font-mono text-[1.0625rem] font-medium tracking-[0.02em] underline decoration-transparent underline-offset-[0.35em] transition-colors duration-150 group-hover:decoration-current">
-            {site.phoneDisplay}
-          </span>
-        </a>
-      </div>
+    <div class="flex-none" data-reveal>
+      <Button href="/upravitelji-zgrada" variant="outline-dark" size="lg" iconRight="arrow-right" class="w-full sm:w-auto">
+        Sve za upravitelje zgrada
+      </Button>
     </div>
   </div>
 </section>
-
-<style>
-  /* Kutne oznake crteža oko fotografije (registracijski kutovi) */
-  .mgr-ticks {
-    position: absolute;
-    inset: -0.625rem;
-    pointer-events: none;
-    --t: 0.875rem;
-    --c: rgb(213 219 223 / 0.35);
-    background:
-      linear-gradient(var(--c), var(--c)) 0 0 / var(--t) 1px,
-      linear-gradient(var(--c), var(--c)) 0 0 / 1px var(--t),
-      linear-gradient(var(--c), var(--c)) 100% 0 / var(--t) 1px,
-      linear-gradient(var(--c), var(--c)) 100% 0 / 1px var(--t),
-      linear-gradient(var(--c), var(--c)) 0 100% / var(--t) 1px,
-      linear-gradient(var(--c), var(--c)) 0 100% / 1px var(--t),
-      linear-gradient(var(--c), var(--c)) 100% 100% / var(--t) 1px,
-      linear-gradient(var(--c), var(--c)) 100% 100% / 1px var(--t);
-    background-repeat: no-repeat;
-  }
-</style>

@@ -1,9 +1,10 @@
 ---
 /**
- * /upravitelji-zgrada · "Tipični radovi na zgradama" (grafit).
- * Gore: indeks radova kao tablica pozicija (presjek lima se savije kad uđe u ekran).
+ * /upravitelji-zgrada · "Tipični radovi na zgradama" (bijela).
+ * Gore: popis vrsta posla (presjek lima se savije kad uđe u ekran / na hover).
  * Dolje: četiri stvarna rada sa zgrada (fotografije 4, 2, 10, 7) — ProjectCard;
  * na mobitelu native scroll-snap traka.
+ *  class?  pozadina i razmaci sekcije (default "bg-white py-24 sm:py-28 lg:py-32")
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
@@ -12,40 +13,35 @@ import Icon from '@/components/ui/Icon.astro';
 import { projects, type Profile, type Project } from '@/data/site';
 
 interface Props {
-  index?: string;
+  class?: string;
 }
-const { index = '03' } = Astro.props;
+const { class: sectionClass = 'bg-white py-24 sm:py-28 lg:py-32' } = Astro.props;
 
-const types: { profile: Profile; title: string; text: string; tag: string }[] = [
+const types: { profile: Profile; title: string; text: string }[] = [
   {
     profile: 'atika',
     title: 'Opšav atike',
     text: 'Kape krojene po mjeri, s okapnicom. Kutovi na geru i preklopi okrenuti tako da voda nema kamo ući.',
-    tag: 'Kapa atike',
   },
   {
     profile: 'trapez',
     title: 'Ravni krovovi i trapez',
     text: 'Trapezni lim za ravne krovove i nadogradnje, s gromobranskom instalacijom vođenom po opšavu.',
-    tag: 'Trapezni lim',
   },
   {
     profile: 'oluk',
     title: 'Oluci i vertikale',
     text: 'Polukružni i četvrtasti oluci, kotlići i vertikale do spoja na odvodnju. Bez prelijevanja po fasadi.',
-    tag: 'Odvodnja',
   },
   {
     profile: 'dimnjak',
     title: 'Dimnjaci i prodori',
     text: 'Opšav uz krov, oblaganje limom i kape za dimnjake, ventilacije i izlaze na krov.',
-    tag: 'Opšav uz zid',
   },
   {
     profile: 'uvala',
     title: 'Sanacija nakon nevremena',
     text: 'Kad vjetar podigne lim ili opšav, prvo osiguramo krov, a zatim ga popravimo i fotografiramo za upravitelja.',
-    tag: 'Hitno',
   },
 ];
 
@@ -53,61 +49,40 @@ const types: { profile: Profile; title: string; text: string; tag: string }[] = 
 const picks = ['ravni-krov-gromobran', 'atika-sljunak', 'ravni-krov-trapez-medvednica', 'atika-kut-na-geru']
   .map((slug) => projects.find((p) => p.slug === slug))
   .filter((p): p is Project => !!p);
-const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
-<section id="radovi-zgrade" class="bg-grafit py-20 text-linija sm:py-28 lg:py-32">
+<section id="radovi-zgrade" class:list={['text-tinta', sectionClass]}>
   <div class="wrap">
-    <div class="grid gap-y-8 lg:grid-cols-12 lg:items-end lg:gap-x-8">
-      <SectionHead
-        class="lg:col-span-8"
-        index={index}
-        eyebrow="Tipični radovi na zgradama"
-        title="Atike, ravni krovovi, oluci i dimnjaci."
-        lead="Zgrada trpi više od kuće: veći krov, više spojeva, više vjetra. Ovo su poslovi koje na zgradama radimo."
-      />
-    </div>
+    <SectionHead
+      tone="light"
+      eyebrow="Tipični radovi na zgradama"
+      title="Atike, ravni krovovi, oluci i dimnjaci."
+      lead="Zgrada trpi više od kuće: veći krov, više spojeva, više vjetra."
+    />
 
-    <ol class="wk-list mt-14 border-t border-linija/15 lg:mt-20" data-reveal-group>
+    <ul class="wk-list mt-14 border-t border-tinta/14 lg:mt-20" data-reveal-group>
       {
-        types.map((t, i) => (
+        types.map((t) => (
           <li class="wk-row" data-reveal data-profile-host>
-            <span aria-hidden="true" class="wk-n font-mono text-[0.75rem] tracking-[0.12em] text-celik">
-              <span class="text-redline">{pad(i + 1)}</span>
-            </span>
-            <span class="wk-ico text-white">
+            <span class="wk-ico">
               <ProfileIcon profile={t.profile} size={64} animate class="h-auto w-full" />
             </span>
-            <h3 class="wk-t text-[1.25rem] leading-tight font-bold text-white [font-stretch:112%] sm:text-[1.375rem]">
-              {t.title}
-            </h3>
-            <p class="wk-d leading-relaxed text-pretty text-celik">{t.text}</p>
-            <span class="wk-tag hidden font-mono text-[0.6875rem] tracking-[0.12em] text-celik uppercase lg:block">
-              {t.tag}
-            </span>
+            <h3 class="wk-t text-[1.25rem] leading-tight font-bold [font-stretch:112%] sm:text-[1.375rem]">{t.title}</h3>
+            <p class="wk-d leading-relaxed text-pretty text-tinta/75">{t.text}</p>
           </li>
         ))
       }
-    </ol>
+    </ul>
 
-    <div class="mt-20 flex items-end justify-between gap-6 lg:mt-28">
-      <p class="eyebrow flex items-center gap-3 whitespace-nowrap text-celik">
-        <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
-        Sa zgrada · RAL 7016
-      </p>
-      <a
-        href="/radovi"
-        class="group inline-flex min-h-11 items-center gap-3 font-mono text-[0.75rem] tracking-[0.14em] whitespace-nowrap text-linija uppercase transition-colors duration-150 hover:text-white"
-        aria-label="Svi radovi"
-      >
-        <span class="hidden sm:inline">Svi radovi</span>
-        <span class="grid size-11 place-items-center border border-linija/30 transition-colors duration-150 group-hover:border-white">
-          <Icon name="arrow-right" size={18} />
-        </span>
+    <div class="mt-20 flex items-center justify-between gap-6 lg:mt-28">
+      <p class="eyebrow text-tinta/70">Sa zgrada</p>
+      <a href="/radovi" class="wk-all group">
+        Svi radovi
+        <Icon name="arrow-right" size={16} class="transition-transform duration-150 group-hover:translate-x-0.5" />
       </a>
     </div>
 
-    <ul class="wk-rail mt-8" aria-label="Radovi na zgradama">
+    <ul class="wk-rail mt-6" aria-label="Radovi na zgradama">
       {
         picks.map((p) => (
           <li class="wk-card">
@@ -120,27 +95,24 @@ const pad = (n: number) => String(n).padStart(2, '0');
 </section>
 
 <style>
-  /* ── indeks radova ── */
+  /* ── popis vrsta posla ── */
   .wk-row {
     display: grid;
-    grid-template-columns: 2rem 3.5rem minmax(0, 1fr);
+    grid-template-columns: 3.5rem minmax(0, 1fr);
     grid-template-areas:
-      'n ico t'
-      'n ico d';
-    column-gap: 1rem;
+      'ico t'
+      'ico d';
+    column-gap: 1.25rem;
     row-gap: 0.375rem;
     align-items: start;
     padding-block: 1.5rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.15);
-  }
-  .wk-n {
-    grid-area: n;
-    padding-top: 0.25rem;
+    border-bottom: 1px solid rgb(21 24 27 / 0.1);
   }
   .wk-ico {
     grid-area: ico;
     display: block;
     width: 3.5rem;
+    color: var(--color-tinta);
   }
   .wk-t {
     grid-area: t;
@@ -149,13 +121,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .wk-d {
     grid-area: d;
   }
-  .wk-tag {
-    grid-area: tag;
-  }
   @media (width >= 40rem) {
     .wk-row {
-      grid-template-columns: 3rem 4.5rem minmax(0, 1fr);
-      column-gap: 1.5rem;
+      grid-template-columns: 4.5rem minmax(0, 1fr);
+      column-gap: 1.75rem;
       padding-block: 1.75rem;
     }
     .wk-ico {
@@ -164,25 +133,32 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   @media (width >= 64rem) {
     .wk-row {
-      grid-template-columns: 4rem 5rem minmax(0, 18rem) minmax(0, 1fr) 10rem;
-      grid-template-areas: 'n ico t d tag';
-      column-gap: 2rem;
+      grid-template-columns: 5rem minmax(0, 18rem) minmax(0, 1fr);
+      grid-template-areas: 'ico t d';
+      column-gap: 2.5rem;
       align-items: center;
       padding-block: 1.25rem;
     }
-    .wk-n,
     .wk-t {
       padding-top: 0;
     }
-    .wk-ico {
-      width: 4.5rem;
-    }
     .wk-d {
-      max-width: 34rem;
+      max-width: 36rem;
     }
-    .wk-tag {
-      text-align: right;
-    }
+  }
+  .wk-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+    text-underline-offset: 4px;
+    white-space: nowrap;
+  }
+  .wk-all:hover {
+    text-decoration: underline;
   }
 
   /* ── radovi: rail na mobitelu, mreža na desktopu ── */

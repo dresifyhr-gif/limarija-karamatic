@@ -4,7 +4,8 @@
  * Bez JS-a forma je obična: sva tri koraka jedan ispod drugog, POST multipart na /api/upit
  * (TODO backend: Cloudflare Pages Function → e-mail + Telegram, odgovor 303 na /hvala?upit=…).
  * S JS-om (ovdje) postaje koračna: validacija po koraku, crtež kuće dobiva sloj po korak,
- * a na slanje se crta crvena linija strehe i spušta pečat "PRIMLJENO".
+ * a na slanje se crta crvena linija strehe i spušta pečat "PRIMLJENO". Napredak pokazuje kotni lanac
+ * koraka iznad forme; crtež kuće stoji uz naslov koraka.
  *
  * Sve je vezano uz korijen forme ([data-rn]) pa radi i s više instanci na stranici.
  */
@@ -14,7 +15,7 @@ const MAX_PHOTOS = 6;
 const STEPS = 3;
 
 type Err = { el: HTMLElement; focus: HTMLElement; msg: string };
-type Controller = { go: (n: number, dir: 1 | -1) => void; current: () => number; refresh: () => void };
+type Controller = { go: (n: number, dir: 1 | -1) => void; current: () => number };
 const controllers = new WeakMap<HTMLFormElement, Controller>();
 
 /** Hrvatski broj, labavo: +385 / 00385 / 0 pa 8–9 znamenki (mobitel 09x…, fiksni 01…, 0xx…). */
@@ -45,7 +46,6 @@ function initForm(form: HTMLFormElement) {
   const btnNext = form.querySelector<HTMLButtonElement>('[data-rn-next]')!;
   const btnSubmit = form.querySelector<HTMLButtonElement>('[data-rn-submit]')!;
   const status = root.querySelector<HTMLElement>('[data-rn-status]')!;
-  const stepNo = root.querySelectorAll<HTMLElement>('[data-rn-stepno]');
   const dims = [...root.querySelectorAll<HTMLElement>('[data-rn-dim]')];
   const drawing = root.querySelector<SVGSVGElement>('[data-rn-drawing]');
 
@@ -65,23 +65,6 @@ function initForm(form: HTMLFormElement) {
     const inp = form.querySelector<HTMLInputElement>(`input[name="vrsta"][value="${fromUrl}"]`);
     if (inp) inp.checked = true;
   }
-
-  /* ── sažetak uz crtež ───────────────────────────────────── */
-  const sum = (key: string, value: string) => {
-    root.querySelectorAll<HTMLElement>(`[data-rn-sum="${key}"]`).forEach((el) => {
-      el.textContent = value || '—';
-      el.classList.toggle('is-empty', !value);
-    });
-  };
-  const refreshSummary = () => {
-    const job = form.querySelector<HTMLInputElement>('input[name="vrsta"]:checked');
-    sum('vrsta', (job?.dataset.label ?? '').split(' — ')[0]);
-    const place = (form.elements.namedItem('mjesto') ?? form.elements.namedItem('adresa')) as HTMLInputElement | null;
-    sum('mjesto', place?.value.trim() ?? '');
-    const size = form.querySelector<HTMLInputElement>('input[name="velicina"]:checked');
-    sum('velicina', size?.value ?? '');
-    sum('foto', photos.length ? `${photos.length} / ${MAX_PHOTOS}` : '');
-  };
 
   /* ── fotografije: do 6, pregled + uklanjanje ────────────── */
   const fileInput = form.querySelector<HTMLInputElement>('input[type="file"][name="fotografije"]');
@@ -134,10 +117,12 @@ function initForm(form: HTMLFormElement) {
       }),
     );
     thumbs.hidden = photos.length === 0;
-    if (photoCount) photoCount.textContent = `${photos.length} / ${MAX_PHOTOS}`;
+    if (photoCount) {
+      photoCount.textContent = `${photos.length} / ${MAX_PHOTOS}`;
+      photoCount.hidden = photos.length === 0;
+    }
     root.classList.toggle('has-max-photos', photos.length >= MAX_PHOTOS);
     if (fileInput) fileInput.disabled = photos.length >= MAX_PHOTOS;
-    refreshSummary();
   };
   fileInput?.addEventListener('change', () => {
     const picked = [...(fileInput.files ?? [])].filter((f) => f.type.startsWith('image/'));
@@ -226,14 +211,12 @@ function initForm(form: HTMLFormElement) {
             : v.length >= (t.name === 'adresa' ? 4 : 2);
       if (ok) clearErr(t.name);
     }
-    refreshSummary();
   });
   form.addEventListener('change', (e) => {
     const t = e.target as HTMLInputElement;
     if (t.type === 'radio') clearErr(t.name);
     // hitno: veličina krova više nije obavezna
     if (t.name === 'vrsta' && t.value === 'hitno') clearErr('velicina');
-    refreshSummary();
   });
 
   /* ── crtež: sloj po korak ───────────────────────────────── */
@@ -276,7 +259,6 @@ function initForm(form: HTMLFormElement) {
       if (k === n) d.setAttribute('aria-current', 'step');
       else d.removeAttribute('aria-current');
     });
-    stepNo.forEach((el) => (el.textContent = String(n)));
     btnBack.hidden = n === 1;
     btnNext.hidden = n === STEPS;
     btnSubmit.hidden = n !== STEPS;
@@ -379,7 +361,7 @@ function initForm(form: HTMLFormElement) {
       //   if (!res.ok) throw new Error(String(res.status));
       //   const { upit } = await res.json();
       void data;
-      await wait(900); // prototip: simulacija mreže
+      await wait(900); // dok nema backenda: simulacija mreže
     } catch {
       busy = false;
       btnSubmit.disabled = false;
@@ -415,12 +397,11 @@ function initForm(form: HTMLFormElement) {
     location.assign(`/hvala?${q}`);
   });
 
-  controllers.set(form, { go, current: () => current, refresh: refreshSummary });
+  controllers.set(form, { go, current: () => current });
 
   /* ── početno stanje ─────────────────────────────────────── */
   render(1);
   setStage(1, false);
-  refreshSummary();
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('is-live')));
 
   // obris kuće se nacrta jednom kad forma uđe u vidno polje
@@ -466,7 +447,6 @@ export function preselectJob(value: string, opts: { scroll?: boolean; focus?: bo
   input.dispatchEvent(new Event('change', { bubbles: true }));
   const ctl = controllers.get(form);
   if (ctl && ctl.current() !== 1) ctl.go(1, -1);
-  ctl?.refresh();
   const section = document.getElementById('procjena') ?? root;
   if (scroll) section.scrollIntoView({ behavior: motionOn() ? 'smooth' : 'auto', block: 'start' });
   if (focus) form.querySelector<HTMLElement>('.rn-step[data-step="1"] [data-rn-heading]')?.focus({ preventScroll: true });

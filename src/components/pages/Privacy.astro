@@ -1,6 +1,6 @@
 ---
 /**
- * /privatnost · NACRT politike privatnosti (papir, dugi tekst).
+ * /privatnost · NACRT politike privatnosti (bijela, dugi tekst).
  * Struktura: voditelj obrade, podaci, svrha i osnova, rok čuvanja, prava ispitanika, kontakt.
  * Sve što treba provjeriti označeno je vidljivim TODO markerom i HTML komentarom.
  * Tipografija: Archivo 100 % širine, max-w-prose, 1,7 prored; lijevo sadržaj (sticky na desktopu).
@@ -19,7 +19,7 @@ const toc = [
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
-<section class="pv bg-papir py-16 text-tinta sm:py-24 lg:py-28">
+<section class="pv bg-white py-24 text-tinta sm:py-28 lg:py-32">
   <!-- TODO (pravnik): cijeli tekst je nacrt. Provjeriti s pravnikom prije objave (GDPR / ZPDZOP). -->
   <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
     <aside class="lg:col-span-4 xl:col-span-3">
@@ -82,7 +82,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
           adresa zgrade, upravitelj ili tvrtka i broj ulaza.
         </li>
         <li>
-          <strong>Telefon, WhatsApp, Viber i e-pošta:</strong> vaš broj ili adresu i sadržaj poruke, uključujući
+          <strong>Telefon, WhatsApp i e-pošta:</strong> vaš broj ili adresu i sadržaj poruke, uključujući
           poslane fotografije.
         </li>
         <li>

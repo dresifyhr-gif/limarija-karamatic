@@ -1,164 +1,286 @@
 ---
 /**
- * Recenzije (id="recenzije", papir).
- * Google sažetak + niz kartica s native scroll-snapom (bez autoplaya).
- * Recenzije u site.ts su PRIMJERI — kartica to jasno kaže dok je `example: true`.
- * Strelice i traka napretka pojavljuju se tek s JS-om; bez njega niz se normalno povlači.
+ * Recenzije (id="recenzije", bijela) — zaglavlje + četiri brojke kao lančana kota + (kad postoje) recenzije.
+ *
+ *  Brojke (iz site.ts `stats`) stoje kao kota tehničkog crteža: pomoćne linije, kotna linija s kosim
+ *  crticama, broj iznad, opis ispod. Desktop (≥ md) jedna neprekinuta kota; mobitel 2 × 2, svaka ćelija
+ *  svoja mala kota. Pokret (jednom): crveni pravac se nacrta ('draft'), crtice "pucnu" ('press').
+ *  Odbrojavaju se SAMO cijeli brojevi s "+" (godine, krovovi); ocjena i jamstvo samo se pojave.
+ *
+ *  Recenzije: `reviews` u site.ts je za sada PRAZAN — tada sekcija prikazuje samo brojke i ocjenu
+ *  (bez kartica, bez niza, bez izmišljenih imena). Čim se u popis dodaju stvarne recenzije, kartice
+ *  i vodoravni niz (native scroll-snap, bez autoplaya) pojave se sami.
+ *  Link "Sve recenzije na Googleu" prikazuje se samo kad je `site.googleReviewsUrl` upisan.
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon from '@/components/ui/Icon.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
-import { site, reviews, stats } from '@/data/site';
+import { site, reviews as allReviews, stats, type Review } from '@/data/site';
 
 interface Props {
+  /** zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju */
   index?: string;
+  /** recenzije za prikaz (default: sve iz site.ts) */
+  items?: Review[];
 }
-const { index = '07' } = Astro.props;
+const { items = allReviews } = Astro.props;
+const list = items.filter((r) => r && r.text);
+const hasReviews = list.length > 0;
 
-const g = stats.find((s) => s.label === 'Google ocjena');
-const ratingValue = g?.value ?? 4.9;
-const rating = ratingValue.toFixed(1).replace('.', ',');
-const ratingConfirmed = g?.confirmed ?? false;
-const fullStars = Math.round(ratingValue);
-const reviewsHref = site.googleReviewsUrl;
+const reviewsHref = site.googleReviewsUrl as string;
 const reviewsExternal = reviewsHref.startsWith('http');
-const total = String(reviews.length).padStart(2, '0');
+const total = String(list.length).padStart(2, '0');
+
+const fmt = (n: number, d = 0) => {
+  const [int, dec] = n.toFixed(d).split('.');
+  const grouped = Math.abs(n) >= 10000 ? int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : int;
+  return dec ? `${grouped},${dec}` : grouped;
+};
+// "+" ostaje uz broj; jedinice (" / 5", " god.") idu sitno — kao mjere na crtežu
+const split = (suffix = '') => {
+  const t = suffix.trim();
+  return t === '+' || t === '%' ? { big: t, unit: '' } : { big: '', unit: t };
+};
+// odbrojava se samo cijeli broj s "+" (15+, 600+)
+const counts = (s: (typeof stats)[number]) => !(s.decimals ?? 0) && (s.suffix ?? '').trim() === '+';
+const isRating = (s: (typeof stats)[number]) => /ocjena/i.test(s.label);
 ---
 
-<section id="recenzije" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+<section id="recenzije" class="bg-white py-24 text-tinta sm:py-28 lg:py-32">
   <div class="wrap">
-    <div class="grid gap-y-10 lg:grid-cols-12 lg:items-end lg:gap-x-8">
-      <SectionHead
-        class="lg:col-span-7"
-        tone="light"
-        index={index}
-        eyebrow="Recenzije"
-        title="Pitajte one kojima više ne curi."
-      />
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+      <SectionHead tone="light" eyebrow="Recenzije" title="Pitajte one kojima više ne curi." />
+      {
+        reviewsExternal && (
+          <a
+            href={reviewsHref}
+            class="group inline-flex min-h-11 flex-none items-center gap-2 self-start text-[0.9375rem] font-semibold lg:self-auto"
+            target="_blank"
+            rel="noopener"
+            data-reveal
+          >
+            <Icon name="google" size={16} class="text-tinta/70" />
+            <span class="underline decoration-tinta/25 underline-offset-[0.35em] transition-colors duration-150 group-hover:decoration-tinta">
+              Sve recenzije na Googleu
+            </span>
+            <Icon name="arrow-up-right" size={18} class="transition-transform duration-150 ease-[var(--ease-press)] group-hover:translate-x-0.5" />
+          </a>
+        )
+      }
+    </div>
 
-      <!-- Google sažetak -->
-      <div class="lg:col-span-4 lg:col-start-9" data-reveal>
-        <div class="flex items-end gap-5 border-b border-tinta/15 pb-6">
-          <p class="type-display text-[4.5rem] leading-[0.78] tracking-[-0.03em] sm:text-[5.5rem]">
-            <span class="sr-only">Prosječna ocjena </span>{rating}<span class="sr-only"> od 5</span>
-          </p>
-          <div class="pb-1">
-            <div class="flex gap-0.5 text-tinta" aria-hidden="true">
-              {Array.from({ length: 5 }, (_, i) => <Icon name="star" size={17} class={i < fullStars ? '' : 'opacity-25'} />)}
-            </div>
-            <p class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.9375rem] font-medium">
-              <Icon name="google" size={15} />
-              <span>na Googleu</span>
-              {!ratingConfirmed && <ExampleTag />}
-            </p>
-          </div>
-        </div>
+    <!-- brojke: lančana kota -->
+    <div class="mt-14 sm:mt-16 lg:mt-20" data-rv-kota>
+      <h3 class="sr-only">Limarija Karamatić u brojkama</h3>
+      <ul class="rk grid grid-cols-2 gap-x-6 gap-y-11 md:grid-cols-4 md:gap-x-0">
         {
-          reviewsExternal ? (
-            <a
-              href={reviewsHref}
-              class="rv-link group mt-5 inline-flex min-h-11 items-center gap-2 text-[0.9375rem] font-semibold"
-              target="_blank"
-              rel="noopener"
-            >
-              <span class="underline decoration-tinta/25 underline-offset-[0.35em] transition-colors duration-150 group-hover:decoration-tinta">
-                Sve recenzije na Googleu
-              </span>
-              <Icon name="arrow-up-right" size={18} class="transition-transform duration-150 ease-[var(--ease-press)] group-hover:translate-x-0.5" />
-            </a>
-          ) : (
-            <p class="mt-5 flex min-h-11 items-center">
-              <ExampleTag text="ovdje link na Google recenzije" />
-            </p>
-          )
+          stats.map((s) => {
+            const { big, unit } = split(s.suffix);
+            const value = fmt(s.value, s.decimals ?? 0);
+            const full = `${s.prefix ?? ''}${value}${big}${unit ? ' ' + unit : ''}`;
+            const stars = Math.round(s.value);
+            return (
+              <li class="rk-seg relative text-center" data-seg>
+                <span class="sr-only">
+                  {full} — {s.label}
+                </span>
+                <div class="relative pt-1" aria-hidden="true">
+                  <span class="rk-ext rk-ext-l" />
+                  <span class="rk-ext rk-ext-r" />
+                  <p class="rk-num relative inline-flex items-baseline" data-num>
+                    {s.prefix && <span class="type-display">{s.prefix}</span>}
+                    <span class="type-display relative tabular-nums">
+                      <span class="invisible">{value}</span>
+                      <span class="absolute inset-0 pt-[0.06em] text-right" data-count={counts(s) ? s.value : undefined}>
+                        {value}
+                      </span>
+                    </span>
+                    {big && <span class="type-display">{big}</span>}
+                    {unit && <span class="rk-unit type-mono ml-1.5 font-medium text-tinta/70">{unit}</span>}
+                  </p>
+                  <div class="rk-dim relative h-[18px]">
+                    <span class="rk-line" data-line />
+                    <svg class="rk-tick rk-tick-l" viewBox="0 0 16 16">
+                      <path d="M3 13 13 3" />
+                    </svg>
+                    <svg class="rk-tick rk-tick-r" viewBox="0 0 16 16">
+                      <path d="M3 13 13 3" />
+                    </svg>
+                  </div>
+                </div>
+                <p class="rk-label mx-auto mt-4 max-w-[20ch] px-2 text-tinta/70 md:max-w-[24ch]" aria-hidden="true">
+                  {isRating(s) && (
+                    <span class="mr-2 inline-flex translate-y-[-0.0625rem] gap-0.5 align-middle text-tinta">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <Icon name="star" size={12} class={i < stars ? '' : 'opacity-25'} />
+                      ))}
+                    </span>
+                  )}
+                  {s.label}
+                </p>
+              </li>
+            );
+          })
         }
-      </div>
+      </ul>
     </div>
   </div>
 
-  <!-- Niz kartica: puna širina, poravnat s .wrap preko paddinga -->
-  <div class="rv mt-12 sm:mt-16" data-reviews>
-    <ul
-      id="recenzije-niz"
-      class="rv-rail grid snap-x snap-mandatory grid-flow-col gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain sm:gap-6"
-      tabindex="0"
-      aria-label="Recenzije klijenata, povucite vodoravno za više"
-      data-reveal-group
-    >
-      {
-        reviews.map((r) => (
-          <li class="snap-start" data-reveal>
-            <article class="flex h-full flex-col border border-tinta/12 bg-white/45 p-6 sm:p-8">
-              <div class="flex items-center justify-between gap-4">
+  {
+    hasReviews && (
+      <div class="rv mt-16 sm:mt-20" data-reviews>
+        <ul
+          id="recenzije-niz"
+          class="rv-rail grid snap-x snap-mandatory grid-flow-col gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain sm:gap-6"
+          tabindex="0"
+          aria-label="Recenzije klijenata"
+          data-reveal-group
+        >
+          {list.map((r) => (
+            <li class="snap-start" data-reveal>
+              <article class="flex h-full flex-col bg-papir p-7 sm:p-9">
                 <div class="flex gap-0.5" role="img" aria-label={`${r.stars} od 5 zvjezdica`}>
                   {Array.from({ length: 5 }, (_, i) => (
                     <Icon name="star" size={15} class={i < r.stars ? '' : 'opacity-25'} />
                   ))}
                 </div>
-                {r.example && <ExampleTag text="Primjer recenzije" />}
-              </div>
+                <blockquote class="mt-6 flex-1 text-[1.0625rem] leading-[1.6] text-pretty sm:text-lg">
+                  <p>„{r.text}“</p>
+                </blockquote>
+                <footer class="mt-8">
+                  <p class="font-semibold">{r.name}</p>
+                  {r.place && <p class="mt-0.5 text-[0.9375rem] text-tinta/70">{r.place}</p>}
+                </footer>
+              </article>
+            </li>
+          ))}
+        </ul>
 
-              <blockquote class="mt-7 flex-1 text-[1.0625rem] leading-[1.6] text-pretty sm:text-lg lg:text-[1.1875rem]">
-                <p>„{r.text}“</p>
-              </blockquote>
-
-              <footer class="mt-8 flex items-end justify-between gap-4 border-t border-tinta/12 pt-5">
-                <div class="min-w-0">
-                  {r.example ? (
-                    <p class="rv-blank" title="Ovdje dolazi ime iz stvarne Google recenzije">
-                      Ime i prezime
-                    </p>
-                  ) : (
-                    <p class="font-semibold">{r.name}</p>
-                  )}
-                  <p class="mt-1.5 font-mono text-[0.6875rem] tracking-[0.1em] text-tinta/70 uppercase">
-                    {r.place} · Google
-                  </p>
-                </div>
-                <Icon name="google" size={18} class="shrink-0 text-tinta/35" />
-              </footer>
-            </article>
-          </li>
-        ))
-      }
-    </ul>
-
-    <!-- kontrole (isti raspored kao rail Radova): brojač · tanka linija napretka · strelice; tek s JS-om -->
-    <div class="wrap mt-8 flex items-center gap-5 sm:gap-6" data-rv-controls hidden>
-      <p class="type-mono shrink-0 text-[0.75rem] tracking-[0.08em] text-tinta/70 tabular-nums" aria-hidden="true">
-        <span class="text-tinta" data-rv-pos>01</span>
-        <span class="mx-1.5">/</span>{total}
-      </p>
-      <div class="relative h-px flex-1 bg-tinta/15" aria-hidden="true">
-        <span class="rv-thumb absolute inset-y-0 left-0 bg-tinta" data-rv-thumb></span>
+        <!-- kontrole: tek s JS-om i samo kad niz stvarno ima više od jednog ekrana -->
+        <div class="wrap mt-8 flex items-center gap-5 sm:gap-6" data-rv-controls hidden>
+          <p class="type-mono shrink-0 text-[0.75rem] tracking-[0.08em] text-tinta/70 tabular-nums" aria-hidden="true">
+            <span class="text-tinta" data-rv-pos>
+              01
+            </span>
+            <span class="mx-1.5">/</span>
+            {total}
+          </p>
+          <div class="relative h-px flex-1 bg-tinta/15" aria-hidden="true">
+            <span class="rv-thumb absolute inset-y-0 left-0 bg-tinta" data-rv-thumb />
+          </div>
+          <div class="hidden items-center gap-2 md:flex">
+            <button
+              type="button"
+              class="rv-btn"
+              aria-label="Prethodne recenzije"
+              aria-controls="recenzije-niz"
+              aria-disabled="true"
+              data-rv-prev
+            >
+              <Icon name="arrow-right" size={18} class="rotate-180" />
+            </button>
+            <button type="button" class="rv-btn" aria-label="Sljedeće recenzije" aria-controls="recenzije-niz" data-rv-next>
+              <Icon name="arrow-right" size={18} />
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="hidden items-center gap-2 md:flex">
-        <button
-          type="button"
-          class="rv-btn"
-          aria-label="Prethodne recenzije"
-          aria-controls="recenzije-niz"
-          aria-disabled="true"
-          data-rv-prev
-        >
-          <Icon name="arrow-right" size={18} class="rotate-180" />
-        </button>
-        <button
-          type="button"
-          class="rv-btn"
-          aria-label="Sljedeće recenzije"
-          aria-controls="recenzije-niz"
-          data-rv-next
-        >
-          <Icon name="arrow-right" size={18} />
-        </button>
-      </div>
-    </div>
-  </div>
+    )
+  }
 </section>
 
 <style>
-  /* Padding niza = rub .wrap sadržaja, i na ekranima širim od 88rem */
+  /* ── kota s brojkama ── */
+  .rk-num {
+    font-size: 2.25rem;
+    color: var(--color-tinta);
+  }
+  .rk-num .type-display {
+    line-height: 1;
+  }
+  .rk-unit {
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  @media (width >= 48rem) {
+    .rk-num {
+      font-size: 2.5rem;
+    }
+  }
+  @media (width >= 80rem) {
+    .rk-num {
+      font-size: 3rem;
+    }
+    .rk-unit {
+      font-size: 0.875rem;
+    }
+  }
+  .rk-label {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+
+  /* pomoćne (odmjerne) linije — od vrha broja do malo ispod kote */
+  .rk-ext {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgb(21 24 27 / 0.16);
+  }
+  .rk-ext-l {
+    left: 0;
+  }
+  .rk-ext-r {
+    right: 0;
+  }
+
+  /* kotna linija (na svijetlom: tamnija crvena) */
+  .rk-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 11px;
+    height: 1px;
+    background: var(--color-redline-dark);
+    transform-origin: 0 50%;
+  }
+  .rk-tick {
+    position: absolute;
+    top: 3.5px;
+    width: 16px;
+    height: 16px;
+    overflow: visible;
+    fill: none;
+    stroke: var(--color-redline-dark);
+    stroke-width: 1.5;
+    stroke-linecap: square;
+  }
+  .rk-tick-l {
+    left: -8px;
+  }
+  .rk-tick-r {
+    right: -8px;
+  }
+  @media (width >= 48rem) {
+    /* lančana kota: susjedne ćelije dijele pomoćnu liniju i crticu */
+    .rk-seg + .rk-seg .rk-ext-l,
+    .rk-seg + .rk-seg .rk-tick-l {
+      display: none;
+    }
+  }
+
+  /* stanje prije animacije — samo dok JS ne preuzme */
+  :global(.motion) [data-rv-kota]:not([data-ready]) .rk-line {
+    transform: scaleX(0);
+  }
+  :global(.motion) [data-rv-kota]:not([data-ready]) .rk-tick,
+  :global(.motion) [data-rv-kota]:not([data-ready]) .rk-num {
+    opacity: 0;
+  }
+
+  /* ── niz recenzija (samo kad postoje) ── */
   .rv {
     --pad: 1.25rem;
   }
@@ -201,20 +323,6 @@ const total = String(reviews.length).padStart(2, '0');
       grid-auto-columns: calc((100% - 3rem) / 3);
     }
   }
-
-  /* Prazno polje "Ime i prezime" kao na obrascu — jasno da je primjer */
-  .rv-blank {
-    display: inline-block;
-    min-width: 9.5rem;
-    padding-bottom: 0.25rem;
-    border-bottom: 1px dashed rgb(21 24 27 / 0.35);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgb(21 24 27 / 0.7);
-  }
-
   .rv-btn {
     display: grid;
     place-items: center;
@@ -239,12 +347,107 @@ const total = String(reviews.length).padStart(2, '0');
   }
   .rv-thumb {
     width: 33%;
-    transition: none;
   }
 </style>
 
 <script>
-  function initReviews(root: HTMLElement) {
+  import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
+
+  const fmt = (n: number) => String(Math.round(n));
+
+  /* ── kota s brojkama ─────────────────────────────────────── */
+  function initKota() {
+    if (!motionOn()) return;
+    const draft = gsap.parseEase('draft');
+    // vrijeme (0–1) u kojem 'draft' dosegne zadani udio — da crtica pukne točno kad linija stigne
+    const at = (y: number) => {
+      for (let t = 0; t <= 1; t += 0.005) if (draft(t) >= y) return t;
+      return 1;
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-rv-kota]:not([data-ready])').forEach((root) => {
+      const segs = Array.from(root.querySelectorAll<HTMLElement>('[data-seg]'));
+      if (!segs.length) return;
+      const lines = segs.map((s) => s.querySelector<HTMLElement>('[data-line]')!);
+      const ticksL = segs.map((s) => s.querySelector<SVGElement>('.rk-tick-l')!);
+      const ticksR = segs.map((s) => s.querySelector<SVGElement>('.rk-tick-r')!);
+      const nums = segs.map((s) => s.querySelector<HTMLElement>('[data-num]')!);
+      const counters = segs.map((s) => s.querySelector<HTMLElement>('[data-count]'));
+      const n = segs.length;
+
+      // broj se pojavi kad ga kota dosegne; odbrojava se samo ako ima data-count
+      const count = (tl: gsap.core.Timeline, i: number, t: number) => {
+        tl.to(nums[i], { opacity: 1, duration: 0.2, ease: 'none' }, t);
+        const el = counters[i];
+        if (!el) return;
+        const target = Math.round(parseFloat(el.dataset.count ?? '0'));
+        const o = { v: 0 };
+        tl.to(
+          o,
+          {
+            v: target,
+            duration: 1.1,
+            ease: 'draft',
+            snap: { v: 1 },
+            onStart: () => (el.textContent = fmt(0)),
+            onUpdate: () => (el.textContent = fmt(o.v)),
+            onComplete: () => (el.textContent = fmt(target)),
+          },
+          t,
+        );
+      };
+      const prep = () => {
+        gsap.set(lines, { scaleX: 0 });
+        gsap.set([...ticksL, ...ticksR], { scale: 0, opacity: 1, transformOrigin: '50% 50%' });
+        gsap.set(nums, { opacity: 0 });
+      };
+
+      const mm = gsap.matchMedia();
+
+      // desktop: jedna lančana kota s lijeva na desno, crtice na svakom odmjeru
+      mm.add('(min-width: 48rem)', () => {
+        prep();
+        const D = 0.9;
+        const proxy = { p: 0 };
+        const tl = gsap.timeline({ paused: true });
+        tl.to(
+          proxy,
+          {
+            p: 1,
+            duration: D,
+            ease: 'draft',
+            onUpdate: () => lines.forEach((l, i) => gsap.set(l, { scaleX: gsap.utils.clamp(0, 1, proxy.p * n - i) })),
+          },
+          0,
+        );
+        for (let j = 0; j <= n; j++) {
+          const tick = j === 0 ? ticksL[0] : ticksR[j - 1];
+          tl.to(tick, { scale: 1, duration: 0.22, ease: 'press' }, Math.max(0, D * at(j / n) - 0.03));
+        }
+        for (let i = 0; i < n; i++) count(tl, i, D * at(i / n) + 0.08);
+        ScrollTrigger.create({ trigger: root, start: 'top 85%', once: true, onEnter: () => tl.play() });
+      });
+
+      // mobitel: svaka ćelija svoju malu kotu, u nizu
+      mm.add('(max-width: 47.99rem)', () => {
+        prep();
+        const tl = gsap.timeline({ paused: true });
+        segs.forEach((_, i) => {
+          const t = i * 0.18;
+          tl.to(ticksL[i], { scale: 1, duration: 0.2, ease: 'press' }, t);
+          tl.to(lines[i], { scaleX: 1, duration: 0.6, ease: 'draft' }, t);
+          tl.to(ticksR[i], { scale: 1, duration: 0.2, ease: 'press' }, t + 0.56);
+          count(tl, i, t + 0.1);
+        });
+        ScrollTrigger.create({ trigger: root, start: 'top 88%', once: true, onEnter: () => tl.play() });
+      });
+
+      root.setAttribute('data-ready', '');
+    });
+  }
+
+  /* ── niz recenzija ───────────────────────────────────────── */
+  function initRail(root: HTMLElement) {
     const rail = root.querySelector<HTMLElement>('.rv-rail');
     const controls = root.querySelector<HTMLElement>('[data-rv-controls]');
     if (!rail || !controls) return;
@@ -253,17 +456,13 @@ const total = String(reviews.length).padStart(2, '0');
     const thumb = root.querySelector<HTMLElement>('[data-rv-thumb]');
     const pos = root.querySelector<HTMLElement>('[data-rv-pos]');
     const items = Array.from(rail.querySelectorAll<HTMLElement>(':scope > li'));
-    controls.hidden = false;
 
-    const reduced = () =>
-      !document.documentElement.classList.contains('motion') ||
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const step = () => {
       const a = items[0];
       const b = items[1];
       return a && b ? b.offsetLeft - a.offsetLeft : rail.clientWidth;
     };
-    const pad = (n: number) => String(n).padStart(2, '0');
+    const pad = (k: number) => String(k).padStart(2, '0');
     // gumb ostaje fokusabilan (aria-disabled, ne disabled) da tipkovnica ne izgubi mjesto
     const setOff = (btn: HTMLButtonElement | null, off: boolean) => btn?.setAttribute('aria-disabled', String(off));
 
@@ -271,6 +470,8 @@ const total = String(reviews.length).padStart(2, '0');
     const update = () => {
       raf = 0;
       const max = rail.scrollWidth - rail.clientWidth;
+      // kontrole samo kad ima što listati
+      controls.hidden = max <= 2;
       const x = Math.max(0, rail.scrollLeft);
       const atEnd = x >= max - 2;
       setOff(prev, x <= 2);
@@ -292,12 +493,13 @@ const total = String(reviews.length).padStart(2, '0');
     const go = (btn: HTMLButtonElement | null, dir: 1 | -1) =>
       btn?.addEventListener('click', () => {
         if (btn.getAttribute('aria-disabled') === 'true') return;
-        rail.scrollBy({ left: dir * step(), behavior: reduced() ? 'auto' : 'smooth' });
+        rail.scrollBy({ left: dir * step(), behavior: motionOn() ? 'smooth' : 'auto' });
       });
     go(prev, -1);
     go(next, 1);
     update();
   }
 
-  document.querySelectorAll<HTMLElement>('[data-reviews]').forEach(initReviews);
+  initKota();
+  document.querySelectorAll<HTMLElement>('[data-reviews]').forEach(initRail);
 </script>

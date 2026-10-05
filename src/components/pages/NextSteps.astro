@@ -2,10 +2,9 @@
 /**
  * "Što slijedi" — tri koraka nakon upita, spojena okomitom kotnom linijom.
  * Koristi se na /hvala.
- *  tone   dark (default) | light
+ *  tone   light (default) | dark
  *  title  mono oznaka iznad liste
  */
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import { site } from '@/data/site';
 
 interface Props {
@@ -13,11 +12,11 @@ interface Props {
   tone?: 'dark' | 'light';
   class?: string;
 }
-const { title = 'Što slijedi', tone = 'dark', class: className = '' } = Astro.props;
+const { title = 'Što slijedi', tone = 'light', class: className = '' } = Astro.props;
 
 const items = [
   // isti nazivi koraka kao u formi (FinalCta "Što se događa nakon slanja")
-  { t: 'Nazovemo vas', d: `${site.responseTime}, s broja ${site.phoneDisplay}.`, example: true },
+  { t: 'Nazovemo vas', d: `${site.responseTime}, s broja ${site.phoneDisplay}.` },
   { t: 'Dolazimo izmjeriti', d: 'Mjerimo i fotografiramo krov, besplatno i bez obveze.' },
   { t: 'Pisana ponuda', d: 'Stavku po stavku: materijal, boja, debljina lima i rok.' },
 ];
@@ -35,10 +34,7 @@ const dark = tone === 'dark';
           </span>
           <span class="min-w-0">
             <span class="ns-t">{s.t}</span>
-            <span class="ns-d">
-              {s.d}
-              {s.example && <ExampleTag class="ml-1" />}
-            </span>
+            <span class="ns-d">{s.d}</span>
           </span>
         </li>
       ))

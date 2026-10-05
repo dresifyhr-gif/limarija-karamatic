@@ -1,6 +1,7 @@
 ---
 /**
- * Gornja traka (samo lg+): područje · radno vrijeme · telefon · e-mail.
+ * Gornja traka (samo lg+): područje · radno vrijeme | e-mail.
+ * Telefon je odmah ispod, u zaglavlju — ovdje se ne ponavlja.
  * Obje trake su u landmarku <aside> (axe "region"), da sadržaj ne ostane izvan orijentira.
  * STORM_MODE = true uključuje crvenu traku "Nakon nevremena" (na svim širinama — tada je najvažnija na mobitelu).
  * U CMS-u će to biti prekidač; ovdje je konstanta (prop `storm` služi samo za pregled).
@@ -49,18 +50,7 @@ const { storm = STORM_MODE } = Astro.props;
         {site.hours}
       </li>
     </ul>
-    <ul class="flex items-center" aria-label="Kontakt">
-      <li>
-        <a href={telHref} class="kr-util__link">
-          <span class="text-celik">Tel.</span>
-          <span class="text-linija">{site.phoneDisplay}</span>
-        </a>
-      </li>
-      <li class="kr-util__sep" aria-hidden="true"></li>
-      <li>
-        <a href={`mailto:${site.email}`} class="kr-util__link">{site.email}</a>
-      </li>
-    </ul>
+    <a href={`mailto:${site.email}`} class="kr-util__link">{site.email}</a>
   </div>
 </aside>
 
@@ -78,8 +68,7 @@ const { storm = STORM_MODE } = Astro.props;
     height: 36px;
     transition: color 150ms var(--ease-press);
   }
-  .kr-util__link:hover,
-  .kr-util__link:hover span {
+  .kr-util__link:hover {
     color: #fff;
   }
 </style>

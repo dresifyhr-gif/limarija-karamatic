@@ -1,6 +1,6 @@
 ---
-/** Oznaka "primjer" uz nepotvrđene podatke u prototipu. Nestaje kad je PROTOTYPE = false. */
-import { PROTOTYPE } from '@/data/site';
+/** Oznaka "primjer" uz nepotvrđene podatke u prototipu. Prikazuje se samo kad su PROTOTYPE i SHOW_EXAMPLE_TAGS uključeni. */
+import { PROTOTYPE, SHOW_EXAMPLE_TAGS } from '@/data/site';
 interface Props {
   class?: string;
   text?: string;
@@ -9,7 +9,7 @@ const { class: className = '', text = 'primjer' } = Astro.props;
 ---
 
 {
-  PROTOTYPE && (
+  PROTOTYPE && SHOW_EXAMPLE_TAGS && (
     <span
       class={`inline-flex items-center rounded-[2px] border border-dashed border-current px-1.5 py-px align-middle font-mono text-[0.625rem] font-medium tracking-[0.1em] uppercase ${className}`}
       title="Podatak nije potvrđen — zamijeniti stvarnim prije objave"

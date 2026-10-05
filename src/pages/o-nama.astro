@@ -1,10 +1,10 @@
 ---
 /**
- * /o-nama — "Lim je naš zanat."
- * Ritam: hero (grafit) → priča + fotografija (papir) → vrijednosti (grafit)
- *        → kolaž radova (papir) → u brojkama + završni poziv (grafit + mreža) → footer.
- * Slike su numerirane redom: hero Sl. 01, priča Sl. 02, kolaž od Sl. 03.
- * TODO (klijent): priča radionice, fotografija ekipe i potvrđene brojke — vidi komentare u komponentama.
+ * /o-nama — "Lim je naš zanat." Sve sekcije su SVIJETLE (pozadine se izmjenjuju).
+ * Ritam: hero (papir + mreža) → priča + fotografija (bijela) → tri pravila (papir)
+ *        → standard izvedbe i jamstvo, "sastavnica" (bijela) → kolaž radova (papir)
+ *        → u brojkama + završni poziv (bijela + mreža) → footer.
+ * TODO (klijent): priča radionice i fotografija ekipe — vidi komentare u komponentama.
  */
 import Base from '@/layouts/Base.astro';
 import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
@@ -13,6 +13,7 @@ import Story from '@/components/pages/onama/Story.astro';
 import Values from '@/components/pages/onama/Values.astro';
 import Collage from '@/components/pages/onama/Collage.astro';
 import StatsCta from '@/components/pages/onama/StatsCta.astro';
+import Warranty from '@/components/home/Warranty.astro';
 import heroImg from '@/assets/projects/krov-crijep-lim-uvala-radnik.jpg';
 
 const crumbs = [homeCrumb, { href: '/o-nama', label: 'O nama' }];
@@ -20,7 +21,7 @@ const crumbs = [homeCrumb, { href: '/o-nama', label: 'O nama' }];
 
 <Base
   title="O nama — limari iz Zagreba | Limarija Karamatić"
-  description="Limarija Karamatić iz Zagreba: limeni krovovi, opšavi, dimnjaci i oluci. Mjerimo na krovu, krojimo po mjeri, radimo uredno i dajemo pisano jamstvo."
+  description="Limarija Karamatić: limeni krovovi, opšavi, dimnjaci i oluci. Sjedište u Zagrebu, radimo gdje god se posao isplati. Mjerimo na krovu i dajemo pisano jamstvo."
   schema={[breadcrumbSchema(crumbs, Astro.site)]}
 >
   <PageHero
@@ -39,8 +40,9 @@ const crumbs = [homeCrumb, { href: '/o-nama', label: 'O nama' }];
       ]}
     />
   </PageHero>
-  <Story index="01" figure={2} />
-  <Values index="02" />
-  <Collage index="03" startAt={3} />
-  <StatsCta index="04" />
+  <Story />
+  <Values />
+  <Warranty class="bg-white py-24 sm:py-28 lg:py-32" cta={false} />
+  <Collage />
+  <StatsCta />
 </Base>

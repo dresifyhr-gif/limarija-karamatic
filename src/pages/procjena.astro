@@ -12,8 +12,8 @@ const crumbs = [homeCrumb, { href: '/procjena', label: 'Besplatna procjena' }];
 ---
 
 <Base
-  title="Besplatna procjena krova, Zagreb | Limarija Karamatić"
-  description="Besplatna procjena krova u Zagrebu i okolici. Pošaljite upit u tri kratka koraka ili slike krova na WhatsApp. Pisana ponuda stavku po stavku."
+  title="Besplatna procjena krova | Limarija Karamatić"
+  description="Besplatna procjena krova, Zagreb i šire. Pošaljite upit u tri kratka koraka ili slike krova na WhatsApp. Pisana ponuda stavku po stavku."
   schema={[breadcrumbSchema(crumbs, Astro.site)]}
 >
   <PageHero
@@ -24,11 +24,11 @@ const crumbs = [homeCrumb, { href: '/procjena', label: 'Besplatna procjena' }];
     crumbs={crumbs}
     cta={false}
   />
-  <FinalCta title="" index="" />
+  <FinalCta title="" />
 </Base>
 
 <style>
-  /* forma odmah ispod kompaktnog heroa (oba su grafit + mreža): bez dvostrukog razmaka,
+  /* forma odmah ispod kompaktnog heroa (oba su svijetli papir + mreža): bez dvostrukog razmaka,
      da prvi izbor posla bude vidljiv na prvom ekranu mobitela (QR s kombija) */
   :global(#procjena) {
     padding-top: 0.5rem;

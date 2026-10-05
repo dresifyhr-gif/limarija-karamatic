@@ -2,25 +2,28 @@
 /**
  * Završna sekcija s formom — JEDINA višekratna "forma + izravni kontakt" sekcija na stranici
  * (naslovnica, usluge, radovi, kontakt, procjena, upravitelji). Uvijek id="procjena"
- * (mobilna CTA traka se tu skriva, a linkovi s data-quote-link vode ovamo).
+ * (mobilni dock se tu skriva, a linkovi s data-quote-link vode ovamo).
  *
  * Props (sve opcionalno, zadano = naslovnica):
  *  title?         naslov h2 (default "Ne čekajte da počne kapati."); '' = bez zaglavlja (npr. /procjena, gdje je h1 iznad)
  *  lead?          uvodni red ispod naslova
  *  preselect?     id iz jobTypes ili slug usluge → odabran korak 1 forme
  *  variant?       'standard' | 'zgrada' (forma za upravitelje, prilagođen kontakt i koraci)
- *  index?         mali crveni broj sekcije (default "10"); '' = bez broja
+ *  index?         zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju
  *  headingLevel?  2 | 3 — razina naslova koraka u formi; default 3 kad sekcija ima naslov, inače 2
  * Slot "note": dodatni blok ispod kontakta (npr. "Za ponudu trebamo" na /upravitelji-zgrada).
  *
- * Desktop: lijevo naslov + izravni kontakt (5/12), desno forma (7/12), ispod cijelom širinom
- * "Što se događa nakon slanja" kao kotni lanac. Mobitel: naslov → forma → kontakt → koraci.
+ * Desktop: lijevo naslov + izravni kontakt (5/12), desno forma (7/12). Mobitel: naslov → forma → kontakt.
+ * Izravni kontakt je samo telefon i WhatsApp (poruke idu isključivo preko WhatsAppa).
+ *
+ * Svijetli list (X12): papir + milimetarski papir koji se mekano pojavi i nestane, forma je bijela kartica.
+ * Slot "note" dolazi sa stranice; ako još nosi stare tamne klase (text-linija, text-celik, text-redline),
+ * ovdje se lokalno prevode u tamni tekst na svijetlom, da kontrast ostane AA.
  */
 import Icon from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import RadniNalog from '@/components/form/RadniNalog.astro';
-import { site, services, telHref, waHref, viberHref } from '@/data/site';
+import { site, services, telHref, waHref } from '@/data/site';
 
 interface Props {
   title?: string;
@@ -35,7 +38,6 @@ const {
   lead = 'Besplatna procjena na terenu. Pisana ponuda stavku po stavku.',
   preselect,
   variant = 'standard',
-  index = '10',
 } = Astro.props;
 const zgrada = variant === 'zgrada';
 const hasHead = !!title;
@@ -49,51 +51,40 @@ const waText = zgrada
   : preService
     ? `Pozdrav, trebam procjenu: ${preService.title.toLowerCase()}. Lokacija: `
     : undefined;
-
-const after = zgrada
-  ? [
-      { t: 'Nazovemo vas', d: 'Pregledamo upit i slike, pa dogovorimo izlazak na zgradu.' },
-      { t: 'Mjerimo i snimamo', d: 'Besplatno, na krovu. Fotografiramo stanje za suvlasnike.' },
-      { t: 'Ponuda e-poštom', d: 'Stavku po stavku, spremna za prosljeđivanje suvlasnicima.' },
-    ]
-  : [
-      { t: 'Nazovemo vas', d: 'Pregledamo upit i slike, pa dogovorimo dolazak.' },
-      { t: 'Dolazimo izmjeriti', d: 'Besplatno, na terenu. Pokažemo vam gdje je problem.' },
-      { t: 'Pisana ponuda', d: 'Stavku po stavku: materijal, boja, debljina lima, rok.' },
-    ];
+const waLine = zgrada ? 'Ili pošaljite adresu i 3 slike krova na WhatsApp.' : 'Ili pošaljite 3 slike krova na WhatsApp.';
 ---
 
 <section
   id="procjena"
-  class="fc relative isolate overflow-hidden bg-grafit grid-paper py-20 text-linija sm:py-28 lg:py-32"
+  class="fc relative isolate overflow-hidden bg-papir py-24 text-tinta sm:py-28 lg:py-32"
   aria-labelledby={hasHead ? 'procjena-naslov' : undefined}
   aria-label={hasHead ? undefined : zgrada ? 'Upit za zgradu' : 'Upit za besplatnu procjenu'}
   data-variant={variant}
 >
+  <div
+    class="grid-paper-light pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_bottom,transparent,#000_22%,#000_78%,transparent)]"
+    aria-hidden="true"
+  >
+  </div>
+
   <div class="wrap">
-    <div class="grid gap-y-12 lg:grid-cols-12 lg:grid-rows-[auto_1fr_auto] lg:gap-x-12 lg:gap-y-14 xl:gap-x-16">
+    <div class="grid gap-y-12 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-12 xl:gap-x-16">
       <!-- naslov -->
       {
         hasHead && (
           <header class="lg:col-span-5 lg:row-start-1">
-            <p class="eyebrow mb-5 flex items-center gap-3 text-celik" data-reveal>
-              {index && (
-                <span class="text-redline" aria-hidden="true">
-                  {index}
-                </span>
-              )}
-              {index && <span class="h-px w-8 bg-current opacity-40" aria-hidden="true" />}
-              <span>{eyebrow}</span>
+            <p class="eyebrow mb-4 text-tinta/70" data-reveal>
+              {eyebrow}
             </p>
             <h2
               id="procjena-naslov"
-              class="type-display text-[2.375rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]"
+              class="type-display text-[2.125rem] text-balance sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]"
               data-reveal
             >
               {title}
             </h2>
             {lead && (
-              <p class="mt-6 max-w-md text-lg leading-relaxed text-pretty text-linija sm:text-xl" data-reveal>
+              <p class="mt-5 max-w-md text-lg leading-relaxed text-pretty text-tinta/70" data-reveal>
                 {lead}
               </p>
             )}
@@ -102,86 +93,44 @@ const after = zgrada
       }
 
       <!-- forma -->
-      <div class="min-w-0 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1 lg:pt-1">
+      <div class="min-w-0 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
         <RadniNalog preselect={preselect} variant={variant} headingLevel={headingLevel} />
       </div>
 
-      <!-- izravni kontakt -->
+      <!-- izravni kontakt: telefon + WhatsApp -->
       <div
-        class:list={['lg:col-span-5 lg:col-start-1', hasHead ? 'lg:row-start-2' : 'lg:row-span-2 lg:row-start-1']}
+        class:list={['fc-contact lg:col-span-5 lg:col-start-1', hasHead ? 'lg:row-start-2' : 'lg:row-span-2 lg:row-start-1']}
         data-reveal-group
       >
-        <div class="border-t border-linija/15 pt-7" data-reveal>
-          <p class="eyebrow flex items-center gap-2 text-celik">
-            <Icon name="phone" size={14} />
-            {hasHead ? 'Nazovite' : 'Radije razgovarate? Nazovite'}
-            <ExampleTag class="ml-1" />
-          </p>
+        <div data-reveal>
+          {!hasHead && <p class="mb-3 text-[1.0625rem] font-semibold">Radije razgovarate?</p>}
           <a
             href={telHref}
-            class="fc-tel group mt-3 inline-block font-mono text-[2.375rem] leading-none font-medium tracking-[-0.02em] [word-spacing:-0.3em] text-white tabular-nums xs:text-[2.625rem] sm:text-5xl xl:text-[3.25rem]"
+            class="fc-tel group inline-flex min-h-11 items-center gap-3.5 font-mono text-[1.5rem] leading-none font-medium tracking-[-0.01em] [word-spacing:-0.25em] text-tinta tabular-nums sm:text-[1.75rem]"
             aria-label={`Nazovite ${site.phoneDisplay}`}
           >
+            <Icon name="phone" size={20} class="flex-none text-tinta/55 transition-colors duration-150 group-hover:text-tinta" />
             <span class="fc-tel-u">{site.phoneDisplay}</span>
           </a>
-          <p class="mt-4 flex items-start gap-2.5 text-[0.9375rem] leading-snug text-linija">
-            <Icon name="clock" size={18} class="mt-px flex-none text-celik" />
-            <span>
-              <span class="font-semibold text-white">{site.responseTime}.</span>
-              <span class="block font-mono text-[0.8125rem] text-celik">{site.hours}</span>
-            </span>
+          <p class="mt-2.5 text-[0.9375rem] leading-relaxed text-tinta/70">
+            {site.responseTime}. <span class="whitespace-nowrap">{site.hours}</span>
           </p>
         </div>
 
-        <div class="mt-8" data-reveal>
-          <p class="eyebrow text-celik">Ili pošaljite slike krova</p>
-          <div class="fc-msg mt-3 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
-            <Button href={waHref(waText)} variant="whatsapp" icon="whatsapp" class="w-full sm:w-auto">WhatsApp</Button>
-            <Button href={viberHref} variant="viber" icon="viber" class="fc-viber-btn w-full sm:w-auto">Viber</Button>
-            <!-- računalo: viber:// bez Viber Desktopa ne radi ništa, pa samo tihi red s brojem -->
-            <a href={viberHref} class="fc-viber-txt">
-              <Icon name="viber" size={16} class="text-celik" />
-              <span>Viber <span class="font-mono text-white">{site.phoneDisplay}</span></span>
-            </a>
-          </div>
-          <a
-            href={`mailto:${site.email}`}
-            class="mt-5 inline-flex min-h-11 items-center gap-2.5 text-[0.9375rem] text-linija underline decoration-linija/25 underline-offset-[6px] transition-colors duration-150 hover:text-white hover:decoration-white"
-          >
-            <Icon name="mail" size={18} class="text-celik" />
-            {site.email}
-          </a>
+        <div class="mt-10" data-reveal>
+          <p class="text-[1.0625rem] leading-snug">{waLine}</p>
+          <Button href={waHref(waText)} variant="whatsapp" size="lg" icon="whatsapp" class="mt-4 w-full sm:w-auto">
+            Pošaljite slike
+          </Button>
         </div>
 
         {
           Astro.slots.has('note') && (
-            <div class="mt-10 border-t border-linija/15 pt-7" data-reveal>
+            <div class="fc-note mt-12 border-t border-tinta/12 pt-8" data-reveal>
               <slot name="note" />
             </div>
           )
         }
-      </div>
-
-      <!-- što slijedi: kotni lanac preko cijele širine -->
-      <div class="lg:col-span-12 lg:row-start-3" data-reveal>
-        <div class="border-t border-linija/15 pt-7 sm:border-t-0 sm:pt-0 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 lg:pt-4 xl:gap-x-16">
-          <p class="eyebrow text-celik lg:col-span-3 lg:-mt-1.5">Što se događa nakon slanja</p>
-          <ol class="fc-after mt-5 font-mono text-[0.8125rem] leading-relaxed lg:col-span-9 lg:mt-0">
-            {
-              after.map((s, i) => (
-                <li class="fc-after-i">
-                  <span class="fc-after-n" aria-hidden="true">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span>
-                    <span class="block font-medium tracking-[0.04em] text-white uppercase">{s.t}</span>
-                    <span class="mt-1 block text-celik">{s.d}</span>
-                  </span>
-                </li>
-              ))
-            }
-          </ol>
-        </div>
       </div>
     </div>
   </div>
@@ -190,7 +139,7 @@ const after = zgrada
 <style>
   .fc-tel-u {
     padding-bottom: 0.25rem;
-    background: linear-gradient(var(--color-crvena), var(--color-crvena)) left bottom / 0% 2px no-repeat;
+    background: linear-gradient(var(--color-redline-dark), var(--color-redline-dark)) left bottom / 0% 2px no-repeat;
     transition: background-size 200ms var(--ease-press);
   }
   .fc-tel:hover .fc-tel-u,
@@ -198,100 +147,15 @@ const after = zgrada
     background-size: 100% 2px;
   }
 
-  /* Viber: na dodirnim uređajima gumb, na računalu (fini pokazivač) tihi red s brojem */
-  .fc-viber-txt {
-    display: none;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 2.75rem;
-    padding-inline: 0.25rem;
-    font-size: 0.9375rem;
-    color: var(--color-linija);
-    text-decoration: underline;
-    text-decoration-color: transparent;
-    text-underline-offset: 0.35em;
-    transition: text-decoration-color 150ms var(--ease-press);
+  /* napomena sa stranice: stare tamne klase → tamni tekst na svijetlom listu */
+  .fc-note :global(.text-linija),
+  .fc-note :global(.text-white) {
+    color: var(--color-tinta);
   }
-  .fc-viber-txt:hover {
-    text-decoration-color: currentColor;
+  .fc-note :global(.text-celik) {
+    color: rgb(21 24 27 / 0.7);
   }
-  @media (pointer: fine) and (width >= 64rem) {
-    .fc-msg :global(.fc-viber-btn) {
-      display: none;
-    }
-    .fc-viber-txt {
-      display: inline-flex;
-    }
-  }
-
-  /* koraci nakon slanja — mobitel: okomit niz; od 40rem: tri stupca na kotnoj liniji */
-  .fc-after {
-    position: relative;
-    display: grid;
-    gap: 1.25rem;
-  }
-  .fc-after::before {
-    content: '';
-    position: absolute;
-    left: 0.6875rem;
-    top: 1.5rem;
-    bottom: 1.5rem;
-    width: 1px;
-    background: rgb(213 219 223 / 0.18);
-  }
-  .fc-after-i {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1.375rem 1fr;
-    gap: 1rem;
-  }
-  .fc-after-n {
-    position: relative;
-    display: grid;
-    place-items: center;
-    height: 1.375rem;
-    font-size: 0.6875rem;
-    font-weight: 500;
-    color: var(--color-linija);
-    background: var(--color-grafit);
-    outline: 1px solid rgb(213 219 223 / 0.3);
-  }
-  @media (width >= 40rem) {
-    .fc-after {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 2rem;
-      padding-top: 1.25rem;
-    }
-    /* kotna linija preko sva tri koraka s kosim oznakama na početku svakog */
-    .fc-after::before {
-      left: 0;
-      right: 0;
-      top: 0;
-      bottom: auto;
-      width: auto;
-      height: 1px;
-    }
-    .fc-after-i::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: -1.25rem;
-      width: 1px;
-      height: 9px;
-      margin-top: -4px;
-      background: rgb(213 219 223 / 0.45);
-      transform: rotate(45deg);
-    }
-    .fc-after-i:last-child::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: -1.25rem;
-      width: 1px;
-      height: 9px;
-      margin-top: -4px;
-      background: rgb(213 219 223 / 0.45);
-      transform: rotate(45deg);
-    }
+  .fc-note :global(.text-redline) {
+    color: var(--color-redline-dark);
   }
 </style>

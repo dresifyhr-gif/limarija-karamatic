@@ -1,11 +1,17 @@
 ---
 /**
- * Česta pitanja — višekratna sekcija (naslovnica: sva pitanja iz site.ts; podstranice: 3–5).
- * Ugovor: items?: {q,a}[]; tone?: 'dark' | 'dark2' | 'light' (default light); id? (default 'pitanja');
- *         title?; index? (default '09'); compact?: boolean (default: items ≤ 4).
- *  compact  jedan stupac (najviše ~52rem), h2 manji (text-4xl), kartica "Niste našli odgovor?" kao red
- *           ispod popisa, py-16 — za kratke popise na podstranicama
- *  dark2    grafit-2 s tankim rubom gore i dolje (kad je iza tamne sekcije tamna forma)
+ * Česta pitanja — višekratna sekcija (naslovnica: 5 pitanja preko `items`; podstranice: 3–5).
+ * Ugovor: items?: {q,a}[]; tone?: 'light' | 'paper' | 'dark' | 'dark2' (default light); id? (default 'pitanja');
+ *         title?; index? (zadržano radi kompatibilnosti); compact?: boolean (default: items ≤ 4).
+ *
+ *  Sve varijante su SVIJETLE (tamno je samo zaglavlje, hero, footer i mobilni dock):
+ *   light  bijela (default — sekcija najčešće stoji iznad završne forme na papiru)
+ *   paper  papir
+ *   dark   stari naziv → papir (zadržano da postojeći pozivi ne puknu)
+ *   dark2  stari naziv → papir-2
+ *  compact  manje vertikalnog prostora i manji h2 — za kratke popise na podstranicama.
+ *  Raspored je isti u oba slučaja: desktop naslov + "Niste našli odgovor?" lijevo (sticky), pitanja desno;
+ *  mobitel naslov → pitanja → "Niste našli odgovor?".
  *
  * Harmonika na <details>/<summary>: bez JS-a radi nativno. S pokretom JS animira
  * visinu (≈220 ms, "draft", bez odskoka) i drži otvorenim jedno pitanje.
@@ -13,202 +19,96 @@
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon from '@/components/ui/Icon.astro';
-import Button from '@/components/ui/Button.astro';
 import { faq as defaultFaq, site, telHref, waHref } from '@/data/site';
 
 interface Props {
   items?: { q: string; a: string }[];
-  tone?: 'dark' | 'dark2' | 'light';
+  tone?: 'light' | 'paper' | 'dark' | 'dark2';
   id?: string;
   title?: string;
   index?: string;
   compact?: boolean;
 }
-const {
-  items = defaultFaq,
-  tone = 'light',
-  id = 'pitanja',
-  title = 'Pitanja koja čujemo na svakom krovu.',
-  index = '09',
-} = Astro.props;
+const { items = defaultFaq, tone = 'light', id = 'pitanja', title = 'Pitanja koja čujemo na svakom krovu.' } = Astro.props;
 const compact = Astro.props.compact ?? items.length <= 4;
 
-const dark = tone !== 'light';
-const headTone = dark ? 'dark' : 'light';
-const pad = (n: number) => String(n).padStart(2, '0');
+const bg = tone === 'paper' || tone === 'dark' ? 'bg-papir' : tone === 'dark2' ? 'bg-papir-2' : 'bg-white';
 const waAsk = waHref('Pozdrav, imam pitanje o krovu: ');
 
-const sectionCls = [
-  'faq',
-  compact ? 'faq--compact py-16 sm:py-20' : 'py-20 sm:py-28 lg:py-32',
-  tone === 'dark' && 'faq--dark bg-grafit text-linija',
-  tone === 'dark2' && 'faq--dark bg-grafit-2 text-linija border-y border-linija/10',
-  tone === 'light' && 'faq--light bg-papir text-tinta',
-];
-const line = dark ? 'border-linija/15' : 'border-tinta/15';
+const sectionCls = ['faq text-tinta', bg, compact ? 'faq--compact py-20 sm:py-24 lg:py-28' : 'py-24 sm:py-28 lg:py-32'];
 ---
 
 <section id={id} class:list={sectionCls} data-faq>
-  {
-    compact ? (
-      <div class="wrap">
-        <div class="max-w-[52rem]">
-          <SectionHead class="faq-head" tone={headTone} index={index} eyebrow="Česta pitanja" title={title} />
-          <div class:list={['faq-list mt-10 border-t sm:mt-12', line]} data-faq-list data-reveal-group>
-            {items.map((item, i) => (
-              <details class:list={['faq-item border-b', line]} open={i === 0} data-reveal>
-                <summary class="faq-q">
-                  <span class="faq-line">
-                    <span class="faq-num" aria-hidden="true">{pad(i + 1)}</span>
-                    <span class="faq-qtext">{item.q}</span>
-                  </span>
-                  <span class="faq-pm" aria-hidden="true">
-                    <span />
-                    <span />
-                  </span>
-                </summary>
-                <div class="faq-panel">
-                  <p class="faq-a">{item.a}</p>
-                </div>
-              </details>
-            ))}
-          </div>
+  <div class="wrap grid gap-y-10 sm:gap-y-12 lg:grid-cols-12 lg:gap-x-8">
+    <!-- mobitel: naslov → pitanja → pitajte majstora; desktop: naslov + pitajte majstora lijevo (sticky), pitanja desno -->
+    <div class="contents lg:col-span-5 lg:block">
+      <div class="contents lg:sticky lg:top-28 lg:block">
+        <SectionHead class="faq-head order-1 lg:pr-6" tone="light" eyebrow="Česta pitanja" title={title} />
 
-          <!-- pitajte majstora: jedan red ispod popisa -->
-          <aside
-            class:list={[
-              'faq-ask-row mt-8 flex flex-col gap-x-8 gap-y-4 border p-5 sm:flex-row sm:flex-wrap sm:items-center sm:p-6',
-              dark ? 'border-linija/12 bg-grafit-2' : 'border-tinta/12 bg-white/45',
-              tone === 'dark2' && 'bg-grafit',
-            ]}
-            aria-labelledby={`${id}-ask`}
-            data-reveal
-          >
-            <div class="min-w-0 sm:mr-auto">
-              <p class:list={['eyebrow', dark ? 'text-celik' : 'text-tinta/70']}>Niste našli odgovor?</p>
-              <h3
-                id={`${id}-ask`}
-                class:list={['mt-1.5 text-[1.1875rem] leading-tight font-bold [font-stretch:112%]', dark ? 'text-white' : 'text-tinta']}
-              >
-                Pitajte majstora.
-              </h3>
-            </div>
-            <a
-              href={telHref}
-              class:list={[
-                'faq-tel group inline-flex min-h-11 items-center gap-3 font-mono text-[1.25rem] tracking-[0.02em]',
-                dark ? 'text-white' : 'text-tinta',
-              ]}
-              aria-label={`Nazovite ${site.phoneDisplay}`}
-            >
-              <Icon name="phone" size={18} class={dark ? 'text-celik' : 'text-tinta/70'} />
-              <span class="underline decoration-transparent underline-offset-[0.3em] transition-colors duration-150 group-hover:decoration-current">
-                {site.phoneDisplay}
-              </span>
+        <aside class:list={['order-3', compact ? 'lg:mt-10' : 'lg:mt-14']} aria-labelledby={`${id}-ask`} data-reveal>
+          <h3 id={`${id}-ask`} class="text-[1.125rem] font-semibold">
+            Niste našli odgovor?
+          </h3>
+          <p class="mt-1 text-[1rem] text-tinta/70">Pitajte majstora — telefonom ili porukom.</p>
+          <div class="mt-4 flex flex-col items-start gap-y-1">
+            <a href={telHref} class="faq-link group font-mono text-[1.25rem] tracking-[0.01em]" aria-label={`Nazovite ${site.phoneDisplay}`}>
+              <Icon name="phone" size={19} class="text-tinta/60" />
+              <span class="faq-u">{site.phoneDisplay}</span>
             </a>
-            <Button href={waAsk} variant="whatsapp" icon="whatsapp" class="w-full sm:w-auto">
-              Pitajte preko WhatsAppa
-            </Button>
-          </aside>
-        </div>
+            <a href={waAsk} class="faq-link group font-semibold" target="_blank" rel="noopener">
+              <Icon name="whatsapp" size={20} class="faq-wa" />
+              <span class="faq-u">Pitajte na WhatsAppu</span>
+            </a>
+          </div>
+        </aside>
       </div>
-    ) : (
-      <div class="wrap grid gap-y-12 lg:grid-cols-12 lg:gap-x-8">
-        <!-- mobitel: naslov → pitanja → kartica; desktop: naslov + kartica lijevo (sticky) -->
-        <div class="contents lg:col-span-5 lg:block">
-          <div class="contents lg:sticky lg:top-28 lg:block">
-            <SectionHead class="faq-head order-1" tone={headTone} index={index} eyebrow="Česta pitanja" title={title} />
+    </div>
 
-            <aside
-              class:list={[
-                'faq-ask order-3 max-w-md border p-6 sm:p-7 lg:mt-14',
-                dark ? 'border-linija/12 bg-grafit-2' : 'border-tinta/12 bg-white/45',
-                tone === 'dark2' && 'bg-grafit',
-              ]}
-              aria-labelledby={`${id}-ask`}
-              data-reveal
-            >
-              <p class:list={['eyebrow', dark ? 'text-celik' : 'text-tinta/70']}>Niste našli odgovor?</p>
-              <h3
-                id={`${id}-ask`}
-                class:list={['mt-3 text-[1.3125rem] leading-tight font-bold [font-stretch:112%]', dark ? 'text-white' : 'text-tinta']}
-              >
-                Pitajte majstora.
-              </h3>
-              <a
-                href={telHref}
-                class:list={[
-                  'faq-tel group mt-5 inline-flex min-h-11 items-center gap-3 font-mono text-[1.375rem] tracking-[0.02em] sm:text-2xl',
-                  dark ? 'text-white' : 'text-tinta',
-                ]}
-                aria-label={`Nazovite ${site.phoneDisplay}`}
-              >
-                <Icon name="phone" size={20} class={dark ? 'text-celik' : 'text-tinta/70'} />
-                <span class="underline decoration-transparent underline-offset-[0.3em] transition-colors duration-150 group-hover:decoration-current">
-                  {site.phoneDisplay}
+    <div class="order-2 lg:col-span-7">
+      <div class="faq-list border-t border-tinta/12" data-faq-list data-reveal-group>
+        {
+          items.map((item, i) => (
+            <details class="faq-item border-b border-tinta/12" open={i === 0} data-reveal>
+              <summary class="faq-q">
+                <span class="faq-qtext">{item.q}</span>
+                <span class="faq-pm" aria-hidden="true">
+                  <span />
+                  <span />
                 </span>
-              </a>
-              <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-                <Button href={waAsk} variant="whatsapp" icon="whatsapp">
-                  Pitajte preko WhatsAppa
-                </Button>
+              </summary>
+              <div class="faq-panel">
+                <p class="faq-a">{item.a}</p>
               </div>
-            </aside>
-          </div>
-        </div>
-
-        <div class="order-2 lg:col-span-7">
-          <div class:list={['faq-list border-t', line]} data-faq-list data-reveal-group>
-            {items.map((item, i) => (
-              <details class:list={['faq-item border-b', line]} open={i === 0} data-reveal>
-                <summary class="faq-q">
-                  <span class="faq-line">
-                    <span class="faq-num" aria-hidden="true">{pad(i + 1)}</span>
-                    <span class="faq-qtext">{item.q}</span>
-                  </span>
-                  <span class="faq-pm" aria-hidden="true">
-                    <span />
-                    <span />
-                  </span>
-                </summary>
-                <div class="faq-panel">
-                  <p class="faq-a">{item.a}</p>
-                </div>
-              </details>
-            ))}
-          </div>
-        </div>
+            </details>
+          ))
+        }
       </div>
-    )
-  }
+    </div>
+  </div>
 </section>
 
 <style>
-  /* ── tonovi ── */
-  .faq--light {
+  .faq {
     --q: var(--color-tinta);
-    --a: rgb(21 24 27 / 0.72);
-    --num: rgb(21 24 27 / 0.7);
-    --num-on: var(--color-redline-dark);
+    --a: rgb(21 24 27 / 0.74);
     --box: rgb(21 24 27 / 0.22);
     --box-hover: var(--color-tinta);
   }
-  .faq--dark {
-    --q: #fff;
-    --a: rgb(213 219 223 / 0.78);
-    --num: var(--color-celik);
-    --num-on: var(--color-redline);
-    --box: rgb(213 219 223 / 0.25);
-    --box-hover: var(--color-linija);
-  }
 
-  /* kompaktno: manji naslov (text-4xl), da jedno-dva pitanja ne stoje ispod golemog naslova */
+  /* kompaktno: manji naslov, da tri-četiri pitanja ne stoje ispod golemog naslova */
   .faq--compact :global(.faq-head h2) {
     font-size: 2.125rem;
   }
   @media (width >= 40rem) {
     .faq--compact :global(.faq-head h2) {
-      font-size: 2.25rem;
+      font-size: 2.625rem;
+    }
+  }
+
+  /* dva stupca: naslov u užem stupcu malo manji, da ne stoji u četiri reda */
+  @media (width >= 64rem) {
+    .faq:not(.faq--compact) :global(.faq-head h2) {
+      font-size: clamp(2.5rem, 3.3vw, 3.125rem);
     }
   }
 
@@ -216,9 +116,9 @@ const line = dark ? 'border-linija/15' : 'border-tinta/15';
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 0 1rem;
-    min-height: 4.5rem;
-    padding-block: 1.25rem;
+    gap: 0 1.25rem;
+    min-height: 4.75rem;
+    padding-block: 1.375rem;
     list-style: none;
     cursor: pointer;
     color: var(--q);
@@ -233,36 +133,12 @@ const line = dark ? 'border-linija/15' : 'border-tinta/15';
     .faq-q:hover .faq-pm {
       border-color: var(--box-hover);
     }
-    .faq-q:hover .faq-num {
-      color: var(--num-on);
-    }
   }
   @media (width >= 40rem) {
     .faq-q {
-      gap: 0 1.25rem;
-      padding-block: 1.5rem;
+      gap: 0 2rem;
+      padding-block: 1.75rem;
     }
-  }
-  /* broj i pitanje na istoj osnovnoj liniji */
-  .faq-line {
-    display: grid;
-    grid-template-columns: 2rem 1fr;
-    align-items: baseline;
-    column-gap: 0.75rem;
-  }
-  @media (width >= 40rem) {
-    .faq-line {
-      grid-template-columns: 3rem 1fr;
-      column-gap: 1.25rem;
-    }
-  }
-
-  .faq-num {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    color: var(--num);
-    transition: color 150ms var(--ease-press);
   }
   .faq-qtext {
     font-size: 1.0625rem;
@@ -281,6 +157,7 @@ const line = dark ? 'border-linija/15' : 'border-tinta/15';
   /* plus → minus: okomita crta se zakrene u vodoravnu */
   .faq-pm {
     position: relative;
+    flex: none;
     width: 2.25rem;
     height: 2.25rem;
     border: 1px solid var(--box);
@@ -308,16 +185,16 @@ const line = dark ? 'border-linija/15' : 'border-tinta/15';
   .faq-item[open]:not([data-state='closing']) .faq-pm span:last-child {
     transform: rotate(0deg);
   }
-  .faq-item[open]:not([data-state='closing']) .faq-num {
-    color: var(--num-on);
+  .faq-item[open]:not([data-state='closing']) .faq-pm {
+    border-color: var(--box-hover);
   }
 
   .faq-panel {
     overflow: hidden;
   }
   .faq-a {
-    max-width: 38rem;
-    padding: 0 0.5rem 1.75rem 2.75rem;
+    max-width: 40rem;
+    padding: 0 3.5rem 1.875rem 0;
     font-size: 1rem;
     line-height: 1.65;
     color: var(--a);
@@ -325,9 +202,31 @@ const line = dark ? 'border-linija/15' : 'border-tinta/15';
   }
   @media (width >= 40rem) {
     .faq-a {
-      padding: 0 3.75rem 2rem 4.25rem;
+      padding: 0 4.5rem 2.25rem 0;
       font-size: 1.0625rem;
     }
+  }
+
+  /* pitajte majstora: tihi linkovi (≥ 44 px za dodir) */
+  .faq-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    color: var(--color-tinta);
+  }
+  .faq-u {
+    text-decoration: underline;
+    text-decoration-color: rgb(21 24 27 / 0.2);
+    text-underline-offset: 0.3em;
+    transition: text-decoration-color 150ms var(--ease-press);
+  }
+  .faq-link:hover .faq-u {
+    text-decoration-color: currentColor;
+  }
+  /* WhatsApp zelena samo na znaku (tekst ostaje tinta zbog kontrasta) */
+  .faq-wa {
+    color: #1da851;
   }
 </style>
 

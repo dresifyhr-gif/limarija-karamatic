@@ -1,11 +1,12 @@
 ---
 /**
- * /radovi — arhiva radova s filtrom po vrsti.
+ * /radovi — arhiva radova s filtrom po vrsti. Sve sekcije su SVIJETLE:
+ * hero (papir + mreža) → arhiva (bijela) → završni poziv (papir + mreža) → footer.
  * Filtar: gumbi s aria-pressed, GSAP Flip (draft, bez odskoka); ?vrsta=<kind> odabire filtar pri dolasku.
  * Bez JS-a traka filtra se ne prikazuje i vide se svi radovi (vidi .rf-bar).
  * Mreža: 1 stupac < 30rem, 2 od 30rem, 3 od lg. Kad filtar ostavi nepun zadnji red,
  * pločica "Vaš krov je sljedeći." (.rf-cta) popuni ostatak reda (animira se s karticama).
- * Hero je kompaktan (bez CTA-a): prve fotografije su vidljive već na prvom ekranu.
+ * Hero je kompaktan (bez CTA-a i bez mono retka s brojkama — brojke su u filtru).
  */
 import Base from '@/layouts/Base.astro';
 import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
@@ -13,7 +14,7 @@ import ProjectCard from '@/components/ui/ProjectCard.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import { projects, projectKinds, site, telHref, waHref, type ProjectKind } from '@/data/site';
-import { pad, radova, vrsta } from '../usluge/_parts/media';
+import { pad, radova } from '../usluge/_parts/media';
 
 const crumbs = [homeCrumb, { href: '/radovi', label: 'Radovi' }];
 
@@ -36,7 +37,7 @@ const listSchema = {
 
 <Base
   title="Radovi — krovovi, atike, dimnjaci | Limarija Karamatić"
-  description="Naši radovi u Zagrebu i okolici: limeni i falcani krovovi, opšavi atika, dimnjaci i snjegobrani u antracitu RAL 7016. Fotografije s gradilišta."
+  description="Naši radovi, Zagreb i šire: limeni i falcani krovovi, opšavi atika, dimnjaci i snjegobrani u antracitu RAL 7016. Fotografije s gradilišta."
   schema={[breadcrumbSchema(crumbs, Astro.site), listSchema]}
 >
   <PageHero
@@ -46,15 +47,9 @@ const listSchema = {
     crumbs={crumbs}
     cta={false}
     compact
-  >
-    <p slot="meta" class="rh-meta">
-      <span>{radova(projects.length)}</span>
-      <span>{vrsta(kinds.length)}</span>
-      <span>RAL 7016</span>
-    </p>
-  </PageHero>
+  />
 
-  <section id="arhiva" class="bg-papir pt-8 pb-20 text-tinta sm:pb-28 lg:pt-10 lg:pb-32" aria-labelledby="arhiva-naslov" data-rf>
+  <section id="arhiva" class="bg-white pt-12 pb-24 text-tinta sm:pt-14 sm:pb-28 lg:pt-16 lg:pb-32" aria-labelledby="arhiva-naslov" data-rf>
     <div class="wrap">
       <h2 id="arhiva-naslov" class="sr-only">Arhiva radova</h2>
 
@@ -73,7 +68,7 @@ const listSchema = {
             ))
           }
         </div>
-        <p class="rf-count" aria-live="polite" data-rf-count>
+        <p class="rf-count sr-only" aria-live="polite" data-rf-count>
           Prikazano: {radova(projects.length)}
         </p>
       </div>
@@ -92,17 +87,14 @@ const listSchema = {
         }
         <li class="rf-cta" data-rf-cta>
           <div class="rf-cta-in">
-            <p class="eyebrow flex items-center gap-2 text-celik">
-              <Icon name="camera" size={14} />
-              <span>Besplatna procjena</span>
-            </p>
-            <p class="rf-cta-t type-display text-white">Vaš krov je sljedeći.</p>
+            <p class="eyebrow text-tinta/70">Besplatna procjena</p>
+            <p class="rf-cta-t type-display text-tinta">Vaš krov je sljedeći.</p>
             <p class="rf-cta-d">Pošaljite tri slike krova. Javimo vam što vidimo i kada možemo izaći izmjeriti.</p>
             <div class="rf-cta-btns">
               <Button href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} variant="whatsapp" icon="whatsapp">
                 Pošaljite slike
               </Button>
-              <Button href="/procjena" variant="outline" iconRight="arrow-right" data-quote-link>
+              <Button href="/procjena" variant="outline-dark" iconRight="arrow-right" data-quote-link>
                 Besplatna procjena
               </Button>
             </div>
@@ -112,17 +104,14 @@ const listSchema = {
     </div>
   </section>
 
-  <section class="rc bg-antracit py-16 text-linija sm:py-20 lg:py-24" aria-labelledby="rc-naslov">
+  <section class="rc bg-papir grid-paper-light py-24 text-tinta sm:py-28 lg:py-32" aria-labelledby="rc-naslov">
     <div class="wrap grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
       <div class="lg:col-span-7">
-        <p class="eyebrow flex items-center gap-3 text-linija" data-reveal>
-          <Icon name="ruler" size={14} />
-          <span>Besplatna procjena</span>
-        </p>
-        <h2 id="rc-naslov" class="type-display mt-4 text-[2.125rem] text-balance text-white sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
+        <p class="eyebrow text-tinta/70" data-reveal>Besplatna procjena</p>
+        <h2 id="rc-naslov" class="type-display mt-4 text-[2.125rem] text-balance text-tinta sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
           Izmjerimo i vaš krov.
         </h2>
-        <p class="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-linija" data-reveal>
+        <p class="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-tinta/75" data-reveal>
           Pošaljite tri slike krova ili nas nazovite. Na teren izlazimo besplatno, ponuda stiže na papiru.
         </p>
       </div>
@@ -135,9 +124,9 @@ const listSchema = {
         </div>
         <a
           href={telHref}
-          class="mt-5 inline-flex min-h-11 items-center gap-3 font-mono text-[1.0625rem] text-white underline decoration-linija/30 underline-offset-[6px] transition-colors duration-150 hover:decoration-white lg:float-right"
+          class="mt-5 inline-flex min-h-11 items-center gap-3 font-mono text-[1rem] text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta lg:float-right"
         >
-          <Icon name="phone" size={18} class="text-linija" />
+          <Icon name="phone" size={18} class="text-tinta/60" />
           <span class="sr-only">Nazovite </span>{site.phoneDisplay}
         </a>
       </div>
@@ -146,36 +135,12 @@ const listSchema = {
 </Base>
 
 <style>
-  /* ── hero: jedan mono redak umjesto tablice ── */
-  .rh-meta {
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 0.75rem;
-    row-gap: 0.25rem;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    line-height: 1.25rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-celik);
-  }
-  .rh-meta > span {
-    white-space: nowrap;
-  }
-  .rh-meta > span + span::before {
-    content: '·';
-    margin-right: 0.75rem;
-    color: rgb(213 219 223 / 0.35);
-  }
-
   /* ── filtar ── */
   .rf-bar {
     display: none;
     flex-direction: column;
     gap: 1rem;
     margin-bottom: 2.5rem;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid rgb(21 24 27 / 0.14);
   }
   /* inline skripta u <head> postavlja .motion / .motion-off → JS radi */
   :global(html.motion) .rf-bar,
@@ -217,8 +182,8 @@ const listSchema = {
     gap: 0.625rem;
     height: 2.75rem;
     padding: 0 1rem;
-    border: 1px solid rgb(21 24 27 / 0.2);
-    background: rgb(255 255 255 / 0.35);
+    border: 1px solid rgb(21 24 27 / 0.18);
+    background: #fff;
     font-size: 0.9375rem;
     font-weight: 600;
     color: var(--color-tinta);
@@ -308,8 +273,8 @@ const listSchema = {
     height: 100%;
     min-height: 22rem;
     padding: 1.5rem;
-    background: var(--color-grafit);
-    color: var(--color-linija);
+    background: var(--color-papir);
+    color: var(--color-tinta);
   }
   @media (width >= 64rem) {
     .rf-cta-in {
@@ -332,6 +297,7 @@ const listSchema = {
     margin-top: 1rem;
     font-size: 1rem;
     line-height: 1.55;
+    color: rgb(21 24 27 / 0.75);
     text-wrap: pretty;
   }
   .rf-cta-btns {

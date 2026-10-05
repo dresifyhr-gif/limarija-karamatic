@@ -1,6 +1,6 @@
 ---
 /**
- * /hvala · potvrda upita.
+ * /hvala · potvrda upita. Svijetla stranica: papir + milimetarski papir, bijeli list upita.
  *  - list "Upit za procjenu" (isti jezik kao forma) s velikim pečatom PRIMLJENO
  *  - čita ?upit=1234 (ili KR-1234; staro ?nalog), ?posao=<id iz jobTypes ili slug usluge> (staro ?vrsta) i ?slike=<broj>
  *  - posao "hitno" → odmah gore crveni gumb "Nazovite odmah"; slike > 0 → okvir "Imate još slika?"
@@ -23,31 +23,30 @@ const jobs: Record<string, string> = {
 const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
 ---
 
-<section class="hv relative isolate overflow-hidden bg-grafit grid-paper text-linija" aria-labelledby="hv-title" data-hv data-jobs={JSON.stringify(jobs)}>
+<section class="hv relative isolate overflow-hidden bg-papir grid-paper-light text-tinta" aria-labelledby="hv-title" data-hv data-jobs={JSON.stringify(jobs)}>
   <div class="wrap pt-10 pb-20 sm:pt-14 sm:pb-24 lg:pt-20 lg:pb-24">
     <div class="hv-grid">
       <div class="hv-col hv-col--l">
         <!-- naslov -->
         <div class="hv-head">
-          <p class="eyebrow flex flex-wrap items-center gap-3 text-celik">
-            <Icon name="check" size={14} class="text-redline" />
-            <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
-            <span>Upit <span class="text-linija">#KR-<span data-hv-no>····</span></span></span>
+          <p class="eyebrow flex flex-wrap items-center gap-2.5 text-tinta/70">
+            <Icon name="check" size={14} class="text-tinta" />
+            <span>Upit <span class="text-tinta">#KR-<span data-hv-no>····</span></span></span>
           </p>
-          <h1 id="hv-title" class="type-display mt-5 text-[2.75rem] text-balance text-white xs:text-[3rem] sm:text-[4rem] lg:text-[clamp(3.5rem,5vw,5rem)]">
+          <h1 id="hv-title" class="type-display mt-5 text-[2.75rem] text-balance text-tinta xs:text-[3rem] sm:text-[4rem] lg:text-[clamp(3.5rem,5vw,5rem)]">
             Hvala. Upit je kod nas.
           </h1>
-          <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-pretty text-linija sm:text-xl">
+          <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-pretty text-tinta/80 sm:text-xl">
             Prije poziva pregledamo upit i slike. Ne trebate ništa poduzimati, samo držite mobitel pri ruci.
           </p>
         </div>
 
         <!-- hitno: prikazuje se samo kad je odabrano "Hitno — curi sada" -->
         <div class="hv-urgent" data-hv-urgent hidden>
-          <p class="eyebrow flex items-center gap-2 text-white">
-            <Icon name="clock" size={14} class="text-celik" /> Curi sada?
+          <p class="eyebrow flex items-center gap-2 text-tinta">
+            <Icon name="clock" size={14} class="text-tinta/60" /> Curi sada?
           </p>
-          <p class="mt-3 text-[1.0625rem] leading-relaxed text-pretty text-linija">
+          <p class="mt-3 text-[1.0625rem] leading-relaxed text-pretty text-tinta/80">
             Ne čekajte naš poziv. Nazovite odmah pa dogovorimo zaštitu krova.
           </p>
           <Button href={telHref} size="lg" icon="phone" class="mt-5 w-full sm:w-auto">
@@ -57,14 +56,14 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
 
         <!-- što slijedi -->
         <div class="hv-next">
-          <NextSteps />
+          <NextSteps tone="light" />
         </div>
 
         <a
           href="/"
-          class="hv-back group inline-flex min-h-11 items-center gap-3 self-start font-mono text-[0.75rem] tracking-[0.14em] text-linija uppercase transition-colors duration-150 hover:text-white"
+          class="hv-back group inline-flex min-h-11 items-center gap-3 self-start text-[0.9375rem] font-semibold text-tinta"
         >
-          <span class="grid size-11 place-items-center border border-linija/30 transition-colors duration-150 group-hover:border-white">
+          <span class="grid size-11 place-items-center border border-tinta/25 transition-colors duration-150 group-hover:border-tinta group-hover:bg-tinta group-hover:text-papir">
             <Icon name="arrow-right" size={18} class="rotate-180" />
           </span>
           Natrag na naslovnicu
@@ -74,11 +73,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
       <div class="hv-col hv-col--r">
         <!-- list upita s pečatom -->
         <div class="hv-sheet-wrap">
-          <span class="hv-crop hv-crop--tl" aria-hidden="true"></span>
-          <span class="hv-crop hv-crop--tr" aria-hidden="true"></span>
-          <span class="hv-crop hv-crop--bl" aria-hidden="true"></span>
-          <span class="hv-crop hv-crop--br" aria-hidden="true"></span>
-          <div class="hv-sheet bg-papir text-tinta">
+          <div class="hv-sheet bg-white text-tinta">
             <header class="grid grid-cols-[minmax(0,1fr)_auto] border-b border-tinta/15">
               <div class="px-5 py-4 sm:px-7 sm:py-5">
                 <p class="type-display text-[1.25rem] tracking-[0.01em] uppercase sm:text-[1.5rem]">Upit za procjenu</p>
@@ -127,22 +122,22 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
           </div>
         </div>
 
-        <div class="hv-wa border border-linija/15 bg-grafit-2 p-5 sm:p-7" data-hv-wa-box>
-          <p class="flex items-center gap-2 font-mono text-[0.6875rem] tracking-[0.12em] text-celik uppercase">
-            <Icon name="camera" size={14} class="text-celik" />
+        <div class="hv-wa border border-tinta/12 bg-white p-5 sm:p-7" data-hv-wa-box>
+          <p class="eyebrow flex items-center gap-2 text-tinta/70">
+            <Icon name="camera" size={14} />
             <span data-hv-wa-k>Niste priložili slike?</span>
           </p>
-          <p class="mt-3 text-[1.0625rem] leading-relaxed text-pretty text-linija" data-hv-wa-t>
+          <p class="mt-3 text-[1.0625rem] leading-relaxed text-pretty text-tinta/80" data-hv-wa-t>
             Pošaljite tri slike krova na WhatsApp, uz broj upita. Iz slika često već znamo o čemu se radi.
           </p>
           <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
             <Button href={waDefault} variant="whatsapp" icon="whatsapp" data-hv-wa>Pošaljite slike</Button>
             <a
               href={telHref}
-              class="inline-flex min-h-11 items-center gap-2.5 font-mono text-[1rem] tracking-[0.02em] text-linija transition-colors duration-150 hover:text-white"
+              class="inline-flex min-h-11 items-center gap-2.5 font-mono text-[1rem] tracking-[0.02em] text-tinta underline decoration-transparent underline-offset-[6px] transition-colors duration-150 hover:decoration-current"
               aria-label={`Nazovite ${site.phoneDisplay}`}
             >
-              <Icon name="phone" size={18} class="text-celik" />
+              <Icon name="phone" size={18} class="text-tinta/60" />
               {site.phoneDisplay}
             </a>
           </div>
@@ -170,8 +165,8 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
     order: 2;
     max-width: 34rem;
     padding: 1.25rem 1.25rem 1.375rem;
-    border: 1px solid rgb(213 219 223 / 0.22);
-    background: var(--color-grafit-2);
+    border: 1px solid rgb(21 24 27 / 0.14);
+    background: #fff;
   }
   .hv-urgent[hidden] {
     display: none;
@@ -238,7 +233,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
     container-type: inline-size;
     outline: 1px solid rgb(21 24 27 / 0.12);
     outline-offset: -1px;
-    box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.6);
+    box-shadow: 0 24px 48px -28px rgb(21 24 27 / 0.35);
   }
   .hv-rows {
     padding: 0.5rem 1.25rem 8.75rem;
@@ -264,42 +259,6 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: rgb(21 24 27 / 0.7);
-  }
-  .hv-crop {
-    position: absolute;
-    width: 0.875rem;
-    height: 0.875rem;
-    border-color: rgb(213 219 223 / 0.35);
-    pointer-events: none;
-  }
-  .hv-crop--tl {
-    top: -0.5rem;
-    left: -0.5rem;
-    border-top: 1px solid;
-    border-left: 1px solid;
-  }
-  .hv-crop--tr {
-    top: -0.5rem;
-    right: -0.5rem;
-    border-top: 1px solid;
-    border-right: 1px solid;
-  }
-  .hv-crop--bl {
-    bottom: -0.5rem;
-    left: -0.5rem;
-    border-bottom: 1px solid;
-    border-left: 1px solid;
-  }
-  .hv-crop--br {
-    bottom: -0.5rem;
-    right: -0.5rem;
-    border-bottom: 1px solid;
-    border-right: 1px solid;
-  }
-  @media (width < 40rem) {
-    .hv-crop {
-      display: none;
-    }
   }
 
   /* ── pečat ── */

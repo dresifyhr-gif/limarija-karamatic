@@ -1,6 +1,11 @@
 ---
 /**
- * 03 · Detalj je potpis — foto 7 (kut atike na geru) s tri crvene kote/oznake.
+ * Detalj je potpis — foto 7 (kut atike na geru) s tri crvene kote/oznake.
+ * Koristi se na /usluge/opsav-atike (iza "Što je uključeno"); s naslovnice je maknut.
+ *  id?       id sekcije (default "detalj")
+ *  class?    pozadina i razmaci sekcije (default "bg-papir py-24 sm:py-28 lg:py-32")
+ *  eyebrow?  mala oznaka iznad naslova (default "Detalj · kapa atike")
+ *  title?    naslov h2 (default "Detalj je potpis.")
  * Desktop (md+): SVG pokazne linije od prstena na fotografiji do mono oznaka desno.
  * Mobitel: numerirani prstenovi na fotografiji + numerirani popis ispod.
  * Pozicije su u % fotografije pa prate svaku veličinu.
@@ -10,8 +15,20 @@
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Photo from '@/components/ui/Photo.astro';
 import Icon from '@/components/ui/Icon.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import photo from '@/assets/projects/atika-opsav-kut-detalj.jpg';
+
+interface Props {
+  id?: string;
+  class?: string;
+  eyebrow?: string;
+  title?: string;
+}
+const {
+  id = 'detalj',
+  class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32',
+  eyebrow = 'Detalj · kapa atike',
+  title = 'Detalj je potpis.',
+} = Astro.props;
 
 /*
  * Geometrija (viewBox 1000 × 800): fotografija 3:4 zauzima x 0–600, oznake počinju na x 665.
@@ -28,7 +45,6 @@ const callouts = [
     text: 'Savijen i spojen na licu mjesta, po stvarnom kutu zida.',
     pt: [34.9, 41.41],
     ly: 200,
-    confirmed: true,
   },
   {
     n: '02',
@@ -36,8 +52,6 @@ const callouts = [
     text: 'Brtva zatvara rupu oko vijka, a glava je u boji lima pa se s ulice ne primjećuje.',
     pt: [87.71, 62.66],
     ly: 460,
-    // isto kao "Spojni materijal" u tablici standarda — čeka potvrdu klijenta
-    confirmed: false,
   },
   {
     n: '03',
@@ -45,7 +59,6 @@ const callouts = [
     text: 'Gornji lim uvijek ide preko donjeg. Voda klizi preko spoja, a ne u njega.',
     pt: [51.04, 82.66],
     ly: 700,
-    confirmed: true,
   },
 ].map((c) => {
   const px = (c.pt[0] / 100) * 600;
@@ -60,10 +73,10 @@ const callouts = [
 });
 ---
 
-<section id="detalj" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+<section id={id} class:list={['text-tinta', sectionClass]}>
   <div class="wrap grid gap-12 sm:gap-14 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-0">
     <div class="lg:col-span-4 lg:row-start-1">
-      <SectionHead index="03" eyebrow="Detalj · kapa atike" title="Detalj je potpis." tone="light" />
+      <SectionHead eyebrow={eyebrow} title={title} tone="light" />
       <div class="mt-6 max-w-[34rem] space-y-4 text-lg leading-relaxed text-tinta/75" data-reveal>
         <p>
           Krov ne procuri nasred lima. Procuri u kutu, na preklopu i oko vijka. Zato kutove savijamo na licu
@@ -127,10 +140,7 @@ const callouts = [
                 <p class="type-mono text-[0.75rem] leading-4 font-medium tracking-[0.06em] text-tinta uppercase">
                   {c.title}
                 </p>
-                <p class="mt-1.5 text-[0.9375rem] leading-snug text-tinta/75">
-                  {c.text}
-                  {!c.confirmed && <ExampleTag class="ml-1 -translate-y-px" />}
-                </p>
+                <p class="mt-1.5 text-[0.9375rem] leading-snug text-tinta/75">{c.text}</p>
               </div>
             </li>
           ))
@@ -138,13 +148,10 @@ const callouts = [
       </ol>
     </figure>
 
-    <div class="border-tinta/15 lg:col-span-4 lg:row-start-2 lg:self-end lg:border-t lg:pt-5" data-reveal>
-      <p class="type-mono text-[0.6875rem] leading-4 tracking-[0.1em] text-tinta/70 uppercase">
-        Detalj A · opšav atike · RAL 7016
-      </p>
+    <div class="lg:col-span-4 lg:row-start-2 lg:self-end" data-reveal>
       <a
         href="/radovi/atika-kut-na-geru"
-        class="group/lnk mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta"
+        class="group/lnk inline-flex min-h-11 items-center gap-2 font-semibold text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta"
       >
         Cijeli rad: kut atike na geru
         <Icon

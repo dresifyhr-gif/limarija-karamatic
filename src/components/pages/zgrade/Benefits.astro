@@ -1,109 +1,85 @@
 ---
 /**
- * /upravitelji-zgrada · "Što dobivate" (papir).
- * Mreža 3 × 2 s tankim linijama: pet "priloga" + šesta ćelija je poziv na upit.
- * Nepotvrđene tvrdnje nose <ExampleTag/>.
+ * /upravitelji-zgrada · "Što dobivate" (bijela).
+ * Mreža 3 × 2 s tankim linijama: pet priloga (ikona, naslov, kratak opis) + šesta ćelija je poziv na upit.
+ *  class?  pozadina i razmaci sekcije (default "bg-white py-24 sm:py-28 lg:py-32")
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon, { type IconName } from '@/components/ui/Icon.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 import Button from '@/components/ui/Button.astro';
 import { site, telHref } from '@/data/site';
 
 interface Props {
-  index?: string;
+  class?: string;
 }
-const { index = '01' } = Astro.props;
+const { class: sectionClass = 'bg-white py-24 sm:py-28 lg:py-32' } = Astro.props;
 
-const items: { icon: IconName; title: string; text: string; tag: string; example?: boolean }[] = [
+const items: { icon: IconName; title: string; text: string }[] = [
   {
     icon: 'ruler',
     title: 'Ponuda za suvlasnike',
     text: 'Nakon mjerenja dobivate pisanu ponudu stavku po stavku: materijal, debljina lima, boja i rok. Složenu tako da ide ravno na odluku suvlasnika.',
-    tag: 'Stavku po stavku',
   },
   {
     icon: 'file',
     title: 'Račun na zgradu',
     text: 'Račun glasi na zgradu, s OIB-om zgrade i istim stavkama kao u ponudi. Izvođačima i tvrtkama izdajemo R1 račun.',
-    tag: 'OIB zgrade · R1 za tvrtke',
-    example: true,
   },
   {
     icon: 'building',
     title: 'Plaćanje iz pričuve',
     text: 'Dokumentaciju slažemo tako da se radovi mogu platiti iz zajedničke pričuve, uz odluku suvlasnika.',
-    tag: 'Zajednička pričuva',
-    example: true,
   },
   {
     icon: 'camera',
     title: 'Fotodokumentacija',
     text: 'Krov snimamo prije, tijekom i nakon radova. Suvlasnici vide za što je otišao novac, i ono što se s ulice ne vidi.',
-    tag: 'Prije · tijekom · poslije',
-    example: true,
   },
   {
     icon: 'shield',
     title: 'Siguran rad na visini',
     text: 'Zaštitna oprema i osiguranje na rubu krova. Prolaz ispod mjesta rada ogradimo dok traje posao.',
-    tag: 'Stanari prolaze sigurno',
-    example: true,
   },
 ];
-const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
-<section id="sto-dobivate" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+<section id="sto-dobivate" class:list={['text-tinta', sectionClass]}>
   <div class="wrap">
     <SectionHead
       tone="light"
-      index={index}
       eyebrow="Što dobivate"
       title="Papiri složeni. Krov zatvoren."
-      lead="Upravitelj ne bi trebao loviti majstora za ponudu, račun i fotografije. Dobivate ih složene i spremne za suvlasnike."
+      lead="Ponuda, račun i fotografije stižu složeni i spremni za suvlasnike."
     />
 
     <ul class="bn-grid mt-14 lg:mt-20" data-reveal-group>
       {
-        items.map((it, i) => (
+        items.map((it) => (
           <li class="bn-cell" data-reveal>
-            <div class="flex items-start justify-between gap-4">
-              <span class="font-mono text-[0.75rem] tracking-[0.12em] text-redline-dark" aria-hidden="true">
-                {pad(i + 1)}
-                <span class="text-tinta/70"> / {pad(items.length)}</span>
-              </span>
-              <span class="grid size-11 flex-none place-items-center border border-tinta/20 text-tinta">
-                <Icon name={it.icon} size={22} />
-              </span>
-            </div>
-            <h3 class="mt-8 text-[1.3125rem] leading-tight font-bold text-tinta [font-stretch:112%] sm:text-[1.375rem]">
+            <span class="bn-ico" aria-hidden="true">
+              <Icon name={it.icon} size={22} />
+            </span>
+            <h3 class="mt-6 text-[1.3125rem] leading-tight font-bold text-tinta [font-stretch:112%] sm:text-[1.375rem]">
               {it.title}
             </h3>
-            <p class="mt-3 leading-relaxed text-pretty text-tinta/70">{it.text}</p>
-            <div class="mt-auto pt-6">
-              <p class="flex flex-wrap items-center gap-2 border-t border-dashed border-tinta/20 pt-4 font-mono text-[0.6875rem] tracking-[0.1em] text-tinta/70 uppercase">
-                <span>{it.tag}</span>
-                {it.example && <ExampleTag />}
-              </p>
-            </div>
+            <p class="mt-3 leading-relaxed text-pretty text-tinta/75">{it.text}</p>
           </li>
         ))
       }
 
       <li class="bn-cell bn-cell--cta" data-reveal>
-        <p class="eyebrow text-celik">Upit za zgradu</p>
-        <p class="mt-4 text-[1.5rem] leading-[1.15] font-bold text-balance text-white [font-stretch:115%] sm:text-[1.625rem]">
+        <p class="eyebrow text-tinta/70">Upit za zgradu</p>
+        <p class="mt-4 text-[1.5rem] leading-[1.15] font-bold text-balance text-tinta [font-stretch:115%] sm:text-[1.625rem]">
           Adresa zgrade je dovoljna. Ostalo pitamo mi.
         </p>
-        <div class="mt-auto flex flex-col items-start gap-4 pt-10">
+        <div class="mt-auto flex flex-col items-start gap-3 pt-8">
           <Button href="/procjena" iconRight="arrow-right" data-quote-link>Besplatna procjena</Button>
           <a
             href={telHref}
-            class="inline-flex min-h-11 items-center gap-2.5 font-mono text-[1.0625rem] tracking-[0.02em] text-linija transition-colors duration-150 hover:text-white"
+            class="inline-flex min-h-11 items-center gap-2.5 font-mono text-[1rem] tracking-[0.02em] text-tinta underline decoration-transparent underline-offset-[6px] transition-colors duration-150 hover:decoration-current"
             aria-label={`Nazovite ${site.phoneDisplay}`}
           >
-            <Icon name="phone" size={18} class="text-celik" />
+            <Icon name="phone" size={18} class="text-tinta/60" />
             {site.phoneDisplay}
           </a>
         </div>
@@ -117,8 +93,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 1px;
-    background: rgb(21 24 27 / 0.14);
-    border: 1px solid rgb(21 24 27 / 0.14);
+    background: rgb(21 24 27 / 0.1);
+    border-block: 1px solid rgb(21 24 27 / 0.1);
   }
   @media (width >= 40rem) {
     .bn-grid {
@@ -133,21 +109,34 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .bn-cell {
     display: flex;
     flex-direction: column;
-    padding: 1.5rem 1.375rem 1.375rem;
-    background: var(--color-papir);
+    padding: 1.75rem 0 2rem;
+    background: #fff;
   }
   @media (width >= 40rem) {
     .bn-cell {
-      min-height: 21rem;
-      padding: 2rem 2rem 1.75rem;
+      min-height: 18rem;
+      padding: 2rem 2rem 2.25rem;
     }
   }
   @media (width >= 80rem) {
     .bn-cell {
-      padding: 2.25rem 2.5rem 2rem;
+      padding: 2.25rem 2.5rem 2.5rem;
     }
   }
+  .bn-ico {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(21 24 27 / 0.2);
+    color: var(--color-tinta);
+  }
   .bn-cell--cta {
-    background: var(--color-grafit);
+    background: var(--color-papir);
+  }
+  @media (width < 40rem) {
+    .bn-cell--cta {
+      padding-inline: 1.25rem;
+    }
   }
 </style>

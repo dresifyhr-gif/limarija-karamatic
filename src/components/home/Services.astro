@@ -1,418 +1,204 @@
 ---
 /**
- * 01 · Usluge (id="usluge") — indeks na papiru, kao sastavnica s crteža.
- * Svaka pozicija: broj, naslov, kratki opis, presjek profila (savija se) uz pravu fotografiju.
- * Desktop: redovi indeksa (crtež i fotografija kao par "nacrt → lim"). Linije redova stoje
- *   točno na rubovima .wrap sadržaja; samo hover podloga lagano izlazi van (::before).
- * Mobitel: složene kartice, fotografija gore (4:3), presjek kao umetak u kutu fotografije.
- * "Besplatna procjena" na naslovnici ne učitava stranicu ponovno: skripta označi vrstu posla
- *   u formi (#procjena) i skrola do nje. Bez JS-a (ili bez forme na stranici) link vodi na /procjena.
+ * Usluge (id="usluge", papir) — šest kartica s fotografijom.
+ * Kartica: fotografija 4:3 (data-scan), u donjem lijevom kutu mala papirnata pločica s presjekom
+ * profila (ProfileIcon se savije kad uđe u ekran i na hover), naslov i JEDAN red opisa.
+ * Cijela kartica je jedan link na /usluge/{slug}. Bez popisa stavki i bez drugog linka po kartici.
+ * Raspored: ≥ lg 3 × 2 · md 2 stupca · mobitel 1 stupac kao vodoravni red (fotografija lijevo),
+ *   da cijela sekcija na 390 px stane u ~1,5 ekrana.
  */
-import { services, type Profile } from '@/data/site';
+import { services } from '@/data/site';
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Photo from '@/components/ui/Photo.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
 import Icon from '@/components/ui/Icon.astro';
 
-const profileName: Record<Profile, string> = {
-  crijep: 'Crijep-lim',
-  falc: 'Stojeći falc',
-  uvala: 'Uvala',
-  atika: 'Kapa atike',
-  dimnjak: 'Opšav uz zid',
-  oluk: 'Polukružni oluk',
-  trapez: 'Trapez',
+/* jedan kratki red po usluzi — sažetak `service.short` iz site.ts (bez novih tvrdnji) */
+const line: Record<string, string> = {
+  'limeni-krovovi': 'Crijep-lim i trapez. Novi krov ili zamjena starog crijepa.',
+  'falcani-krovovi': 'Dvostruki stojeći falc bez vidljivih vijaka.',
+  'popravak-krova': 'Krov pušta? Nađemo uzrok, a ne samo mrlju.',
+  'opsav-atike': 'Kape atika s pravim kutovima i preklopima.',
+  dimnjaci: 'Opšav uz krov, oblaganje limom i kape.',
+  'oluci-snjegobrani': 'Oluci, vertikale i snjegobrani.',
 };
-const pad = (n: number) => String(n).padStart(2, '0');
 // fokus kadra kod rezanja portretnih fotki na 4:3
 const focus: Record<string, string> = { dimnjaci: 'object-[50%_30%]' };
-const total = pad(services.length);
 ---
 
-<section id="usluge" class="bg-papir py-20 text-tinta sm:py-28 lg:py-32">
+<section id="usluge" class="bg-papir py-24 text-tinta sm:py-28 lg:py-32">
   <div class="wrap">
-    <div class="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
-      <SectionHead
-        class="lg:col-span-8"
-        tone="light"
-        index="01"
-        eyebrow="Usluge"
-        title="Sve što se na krovu radi limom."
-        lead="Od cijelog novog krova do jednog opšava uz dimnjak. Lim krojimo i savijamo po mjeri vašeg krova, a ne po katalogu."
-      />
-      <aside class="border-l border-tinta/15 pl-5 lg:col-span-4 lg:mb-1.5 lg:justify-self-end lg:pl-6" data-reveal>
-        <p class="eyebrow text-tinta/70">Ne znate što vam treba?</p>
-        <p class="mt-2 max-w-[30ch] text-[0.9375rem] leading-relaxed text-tinta/80">
-          Pošaljite slike krova. Reći ćemo vam što vidimo i što bismo napravili.
-        </p>
-        <a
-          href="#slike"
-          class="group/l -ml-0.5 mt-2 inline-flex h-11 items-center gap-2 px-0.5 text-[0.9375rem] font-semibold text-tinta underline-offset-4 hover:underline"
-        >
-          Kako poslati slike
-          <Icon name="arrow-right" size={18} class="transition-transform duration-150 group-hover/l:translate-x-0.5" />
-        </a>
-      </aside>
+    <div class="grid gap-5 lg:grid-cols-12 lg:items-end lg:gap-8">
+      <SectionHead class="lg:col-span-7" tone="light" eyebrow="Usluge" title="Sve što se na krovu radi limom." />
+      <p
+        class="max-w-[34rem] text-lg leading-relaxed text-pretty text-tinta/70 lg:col-span-5 lg:mb-1.5 lg:justify-self-end"
+        data-reveal
+      >
+        Od cijelog novog krova do jednog opšava uz dimnjak. Lim krojimo i savijamo po mjeri vašeg krova.
+      </p>
     </div>
 
-    <ol class="svc-list mt-14 grid gap-x-6 gap-y-14 sm:grid-cols-2 sm:gap-y-16 lg:mt-20 lg:block" role="list">
+    <ul class="svc-grid mt-12 sm:mt-14 lg:mt-16" role="list" data-reveal-group>
       {
-        services.map((s, i) => (
-          <li class="svc group relative" data-profile-host data-reveal>
-            <span class="svc-rule" aria-hidden="true" />
-
-            <p class="svc-num type-mono" aria-hidden="true">
-              <span class="font-medium text-tinta">{pad(i + 1)}</span>
-              <span class="text-tinta/70">/{total}</span>
-              <span class="svc-num-cap text-tinta/70">
-                <span class="mx-2">—</span>
-                Presjek: {profileName[s.profile]}
-              </span>
-            </p>
-
-            <h3 class="svc-title type-display text-balance">{s.title}</h3>
-
-            <div class="svc-text">
-              <p class="text-pretty text-tinta/75">{s.short}</p>
-              <ul class="svc-inc" role="list">
-                {s.includes.slice(0, 3).map((item) => <li>{item}</li>)}
-              </ul>
-            </div>
-
-            <div class="svc-links">
-              <a href={`/usluge/${s.slug}`} class="svc-detail group/d">
-                Detalji<span class="sr-only">: {s.title}</span>
-                <Icon name="arrow-right" size={18} class="transition-transform duration-150 group-hover/d:translate-x-0.5" />
-              </a>
-              <span class="h-4 w-px bg-tinta/20" aria-hidden="true" />
-              <a href={`/procjena?usluga=${s.slug}`} class="svc-quote group/q" data-svc-quote={s.slug}>
-                Besplatna procjena<span class="sr-only">: {s.title}</span>
-                <Icon name="arrow-right" size={18} class="transition-transform duration-150 group-hover/q:translate-x-0.5" />
-              </a>
-            </div>
-
-            <div class="svc-fig">
-              <div class="svc-photo" data-scan>
-                <Photo
-                  src={s.image}
-                  alt={s.imageAlt}
-                  widths={[320, 480, 640, 800, 960]}
-                  sizes="(min-width: 1280px) 256px, (min-width: 1024px) 224px, (min-width: 640px) 46vw, 92vw"
-                  class="block h-full w-full"
-                  imgClass={`h-full w-full object-cover ${focus[s.slug] ?? ''}`}
-                />
-              </div>
-              <div class="svc-draw">
-                <span class="svc-draw-cap svc-draw-top type-mono" aria-hidden="true">
-                  Presjek
-                </span>
-                <ProfileIcon profile={s.profile} size={64} animate class="svc-icon" />
-                <span class="svc-draw-cap svc-draw-bottom type-mono" aria-hidden="true">
-                  {profileName[s.profile]}
+        services.map((s) => (
+          <li data-reveal>
+            <a href={`/usluge/${s.slug}`} class="svc group/s" data-profile-host>
+              <div class="svc-fig">
+                <div class="svc-photo" data-scan>
+                  <Photo
+                    src={s.image}
+                    alt={s.imageAlt}
+                    widths={[320, 480, 640, 800, 960]}
+                    sizes="(min-width: 1440px) 420px, (min-width: 1024px) 30vw, (min-width: 768px) 46vw, 9.5rem"
+                    class="block h-full w-full"
+                    imgClass={`svc-img h-full w-full object-cover ${focus[s.slug] ?? ''}`}
+                  />
+                </div>
+                <span class="svc-tile" aria-hidden="true">
+                  <ProfileIcon profile={s.profile} size={64} animate class="svc-icon" />
                 </span>
               </div>
-            </div>
+              <div class="svc-body">
+                <h3 class="svc-title">
+                  {s.title}
+                  <Icon name="arrow-right" size={18} class="svc-arrow" />
+                </h3>
+                <p class="svc-line">{line[s.slug] ?? s.short}</p>
+              </div>
+            </a>
           </li>
         ))
       }
-    </ol>
+    </ul>
   </div>
 </section>
 
 <style>
-  /* ── mobitel / tablet: kartice ───────────────────────────── */
-  .svc {
+  .svc-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'fig'
-      'num'
-      'title'
-      'text'
-      'links';
-    align-content: start;
+    gap: 1.25rem;
   }
-  .svc-rule {
-    display: none;
+  @media (width >= 48rem) {
+    .svc-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.5rem;
+      row-gap: 3rem;
+    }
   }
-  .svc-num {
-    grid-area: num;
-    margin-top: 1.25rem;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .svc-title {
-    grid-area: title;
-    margin-top: 0.625rem;
-    font-size: 1.75rem;
-    line-height: 1.02;
-  }
-  .svc-text {
-    grid-area: text;
-    margin-top: 0.75rem;
-    font-size: 1rem;
-    line-height: 1.6;
-    max-width: 40ch;
-  }
-  .svc-inc {
-    display: none;
-  }
-  .svc-links {
-    grid-area: links;
-    margin-top: 0.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    column-gap: 1.125rem;
-  }
-  .svc-detail,
-  .svc-quote {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 2.75rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--color-tinta, #15181b);
-    text-underline-offset: 4px;
-  }
-  .svc-detail:hover,
-  .svc-quote:hover {
-    text-decoration: underline;
-  }
-  /* cijela kartica vodi na detalje; "Besplatna procjena" ostaje iznad */
-  .svc-detail::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-  }
-  .svc-quote {
-    position: relative;
-    z-index: 2;
+  @media (width >= 64rem) {
+    .svc-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      column-gap: 2rem;
+      row-gap: 3.5rem;
+    }
   }
 
+  /* ── kartica: mobitel = vodoravni red ─────────────────────── */
+  .svc {
+    display: grid;
+    grid-template-columns: 9.5rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: 1.125rem;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .svc:focus-visible {
+    outline-offset: 4px;
+  }
   .svc-fig {
-    grid-area: fig;
     position: relative;
   }
   .svc-photo {
     aspect-ratio: 4 / 3;
     overflow: hidden;
-    background: var(--color-papir-2, #e2dfd8);
+    background: var(--color-papir-2);
   }
-  /* umetak s crtežem u donjem lijevom kutu fotografije */
-  .svc-draw {
+  .svc-photo :global(.svc-img) {
+    transition: transform 400ms var(--ease-draft);
+  }
+  /* papirnata pločica s presjekom u donjem lijevom kutu fotografije */
+  .svc-tile {
     position: absolute;
     left: 0;
     bottom: 0;
-    z-index: 3;
+    z-index: 2;
     display: grid;
     place-items: center;
-    width: 4.5rem;
-    height: 4.5rem;
-    background: var(--color-papir, #eeece7);
-    color: var(--color-tinta, #15181b);
+    width: 2.75rem;
+    height: 2.75rem;
+    background: var(--color-papir);
+    color: var(--color-tinta);
     pointer-events: none;
   }
-  .svc-draw :global(.svc-icon) {
-    width: 3.25rem;
-    height: 3.25rem;
+  .svc-tile :global(.svc-icon) {
+    width: 2rem;
+    height: 2rem;
   }
-  .svc-draw-cap {
-    display: none;
+  .svc-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1875rem;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    font-variation-settings: 'wdth' 112;
+    text-wrap: balance;
+  }
+  .svc-title :global(.svc-arrow) {
+    flex-shrink: 0;
+    opacity: 0.55;
+    transition:
+      transform 180ms var(--ease-press),
+      opacity 180ms var(--ease-press);
+  }
+  .svc-line {
+    margin-top: 0.3rem;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: rgb(21 24 27 / 0.7);
+    text-wrap: pretty;
   }
 
-  /* ── desktop: redovi indeksa ─────────────────────────────── */
-  @media (min-width: 64rem) {
-    .svc:last-child {
-      border-bottom: 1px solid rgb(21 24 27 / 0.15);
-    }
+  /* ── md+: okomita kartica (fotografija gore) ───────────────── */
+  @media (width >= 48rem) {
     .svc {
-      isolation: isolate;
-      grid-template-columns: 4.5rem minmax(0, 1fr) auto;
-      grid-template-rows: auto auto 1fr;
-      grid-template-areas:
-        'num title fig'
-        'num text  fig'
-        'num links fig';
-      column-gap: 2rem;
-      padding-block: 2rem;
-      border-top: 1px solid rgb(21 24 27 / 0.15);
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
     }
-    /* hover podloga: jedino što izlazi preko ruba sadržaja; linije ostaju na rubu .wrap */
-    .svc::before {
-      content: '';
-      position: absolute;
-      inset: 0 -1.25rem;
-      z-index: -1;
-      background: transparent;
-      transition: background-color 200ms var(--ease-draft);
-      pointer-events: none;
+    .svc-body {
+      padding-top: 1.25rem;
     }
-    .svc-rule {
-      display: block;
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: -1px;
-      height: 2px;
-      background: var(--color-redline-dark, #b80f15);
-      transform: scaleX(0);
-      transform-origin: 0 50%;
-      transition: transform 380ms var(--ease-draft);
-      pointer-events: none;
-    }
-    .svc-num {
-      margin-top: 0;
-      padding-top: 0.2rem;
-      font-size: 0.8125rem;
-    }
-    .svc-num-cap {
-      display: none;
-    }
-    .svc-title {
-      margin-top: 0;
-      font-size: 2rem;
-      max-width: 16ch;
-    }
-    .svc-text {
-      margin-top: 0.875rem;
-      font-size: 0.9375rem;
-      max-width: 44ch;
-    }
-    .svc-links {
-      align-self: end;
-      margin-top: 1rem;
-      margin-bottom: -0.3rem;
-    }
-
-    /* par: crtež | fotografija */
-    .svc-fig {
-      display: grid;
-      grid-template-columns: 8.5rem 14rem;
-      align-self: start;
-    }
-    .svc-photo {
-      order: 2;
-    }
-    .svc-draw {
-      position: relative;
-      order: 1;
-      width: auto;
-      height: auto;
-      border: 1px solid rgb(21 24 27 / 0.14);
-      border-right: 0;
-      background: transparent;
-      transition: background-color 200ms var(--ease-draft);
-    }
-    .svc-draw :global(.svc-icon) {
+    .svc-tile {
       width: 4rem;
       height: 4rem;
     }
-    .svc-draw-cap {
-      display: block;
-      position: absolute;
-      left: 0.75rem;
-      right: 0.75rem;
-      font-size: 0.625rem;
-      line-height: 1.2;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgb(21 24 27 / 0.72);
-    }
-    .svc-draw-top {
-      top: 0.7rem;
-    }
-    .svc-draw-bottom {
-      bottom: 0.7rem;
-      color: rgb(21 24 27 / 0.82);
-    }
-
-    /* hover/focus: papir potamni, crvena linija se povuče, profil se savije (ProfileIcon) */
-    .svc:hover::before,
-    .svc:focus-within::before {
-      background-color: rgb(226 223 216 / 0.6);
-    }
-    .svc:hover .svc-rule,
-    .svc:focus-within .svc-rule {
-      transform: scaleX(1);
-    }
-    .svc:hover .svc-draw,
-    .svc:focus-within .svc-draw {
-      background-color: var(--color-papir, #eeece7);
-    }
-  }
-
-  @media (min-width: 80rem) {
-    .svc {
-      grid-template-columns: 5.5rem minmax(0, 1.05fr) minmax(0, 1fr) auto;
-      grid-template-rows: auto 1fr;
-      grid-template-areas:
-        'num title text fig'
-        'num links text fig';
-      column-gap: 2.5rem;
+    .svc-tile :global(.svc-icon) {
+      width: 2.875rem;
+      height: 2.875rem;
     }
     .svc-title {
-      font-size: 2.125rem;
+      font-size: 1.5rem;
+      justify-content: space-between;
     }
-    .svc-text {
-      margin-top: 0;
-      padding-top: 0.2rem;
-    }
-    .svc-inc {
-      display: grid;
-      gap: 0.4rem;
-      margin-top: 1.125rem;
-      padding-top: 1rem;
-      border-top: 1px dashed rgb(21 24 27 / 0.2);
-      font-size: 0.8125rem;
-      line-height: 1.45;
-      color: rgb(21 24 27 / 0.75);
-    }
-    .svc-inc li {
-      position: relative;
-      padding-left: 1.125rem;
-    }
-    .svc-inc li::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0.7em;
-      width: 0.5rem;
-      height: 1px;
-      background: currentColor;
-    }
-    .svc-fig {
-      grid-template-columns: 9rem 16rem;
+    .svc-line {
+      margin-top: 0.5rem;
+      font-size: 1rem;
     }
   }
 
-  @media (hover: none) {
-    .svc-rule {
-      display: none;
+  /* hover (miš): fotografija se lagano približi, strelica se pomakne; profil se savije (ProfileIcon) */
+  @media (hover: hover) {
+    .svc:hover :global(.svc-img) {
+      transform: scale(1.03);
     }
+    .svc:hover .svc-title :global(.svc-arrow) {
+      opacity: 1;
+      transform: translateX(3px);
+    }
+  }
+  .svc:focus-visible .svc-title :global(.svc-arrow) {
+    opacity: 1;
+    transform: translateX(3px);
   }
 </style>
-
-<script>
-  import { preselectJob } from '@/lib/form';
-
-  /**
-   * "Besplatna procjena" na kartici usluge: ako je forma na istoj stranici, bez ponovnog učitavanja
-   * označi vrstu posla, skrolaj do forme i fokusiraj naslov koraka (preselectJob iz form.ts),
-   * pa zapiši ?usluga= u URL. Inače (nema forme, nepoznat posao) link normalno vodi na /procjena.
-   */
-  document.querySelectorAll<HTMLAnchorElement>('a[data-svc-quote]').forEach((link) => {
-    link.addEventListener('click', (e) => {
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      const slug = link.dataset.svcQuote ?? '';
-      if (!slug || !preselectJob(slug)) return;
-      e.preventDefault();
-      try {
-        history.replaceState(null, '', '?usluga=' + encodeURIComponent(slug) + '#procjena');
-      } catch {}
-    });
-  });
-</script>

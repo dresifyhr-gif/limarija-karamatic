@@ -5,7 +5,17 @@
  * ni u heru, ni u galeriji, ni na karticama radova, ni kao sličica u pločici "Svi radovi".
  */
 import type { ImageMetadata } from 'astro';
-import { faq, projects, reviews, services, type Project, type ProjectKind, type Profile, type Service } from '@/data/site';
+import {
+  faq,
+  projects,
+  reviews,
+  services,
+  type Project,
+  type ProjectKind,
+  type Profile,
+  type Review,
+  type Service,
+} from '@/data/site';
 
 /** Opisni alt za fotografije galerije koje nisu glavna slika nijednog rada ni usluge. */
 const extraAlt: Record<string, string> = {
@@ -47,28 +57,33 @@ export type GalleryImage = { src: ImageMetadata; alt: string; href?: string; hre
 
 /**
  * Raspored fotografija na stranici usluge:
- *  1. hero = service.image (ako je to naslovna slika rada, potpis heroja vodi na taj rad)
- *  2. kartice radova te usluge — samo oni čija naslovna slika još nije prikazana
- *  3. galerija = preostale slike usluge i njenih radova (najviše 4)
- *  4. sličice u pločici "Svi radovi" = naslovne slike drugih radova koje još nisu prikazane
+ *  1. hero = service.image (ako je to naslovna slika rada, ispod heroja je poveznica na taj rad)
+ *  2. kartice radova te usluge — samo oni čija naslovna slika još nije prikazana (najviše 3, jedan red)
+ *  3. galerija = preostale slike usluge i njenih radova (najviše 3)
+ *  4. sličice = naslovne slike drugih radova koje još nisu prikazane
+ *  reserved: fotografije koje stranica prikazuje drugdje (npr. DetailSignature na /usluge/opsav-atike)
  */
-export function servicePhotos(service: Service) {
-  const used = new Set<ImageMetadata>([service.image]);
+export function servicePhotos(service: Service, reserved: ImageMetadata[] = []) {
+  const used = new Set<ImageMetadata>([service.image, ...reserved]);
   const own = projects.filter((p) => p.service === service.slug);
   const heroProject = projectOf(service.image, (p) => p.service === service.slug);
 
-  const cards = own.filter((p) => !used.has(p.image));
+  const cards = own.filter((p) => !used.has(p.image)).slice(0, 3);
   cards.forEach((p) => used.add(p.image));
 
+  /* poveznica na rad samo uz prvu fotografiju tog rada (bez dvaput istog natpisa) */
+  const linked = new Set<string>();
   const gallery: GalleryImage[] = galleryOf([...service.gallery, ...own.flatMap((p) => p.gallery)], used)
-    .slice(0, 4)
+    .slice(0, 3)
     .map((src, k) => {
       const p = projectOf(src, (x) => x.service === service.slug);
-      return {
-        src,
-        alt: altFor(src, `${service.title}, fotografija s gradilišta ${k + 2}`),
-        ...(p && p.image !== service.image ? { href: `/radovi/${p.slug}`, hrefLabel: p.heroTitle ?? p.title } : {}),
-      };
+      const img: GalleryImage = { src, alt: altFor(src, `${service.title}, fotografija s gradilišta ${k + 2}`) };
+      if (p && p.image !== service.image && !linked.has(p.slug)) {
+        linked.add(p.slug);
+        img.href = `/radovi/${p.slug}`;
+        img.hrefLabel = p.heroTitle ?? p.title;
+      }
+      return img;
     });
   gallery.forEach((g) => used.add(g.src));
 
@@ -98,13 +113,16 @@ export function faqFor(service: Service, max = 5): { q: string; a: string }[] {
     .slice(0, Math.max(max, service.faq.length));
 }
 
-/* ── Recenzija koja najbolje odgovara usluzi (sve su PRIMJERI dok klijent ne da prave) ── */
+/* ── Recenzija koja najbolje odgovara usluzi ──────────────────
+   Samo STVARNE recenzije iz site.ts. Dok je popis prazan, vraća undefined
+   i stranica prikazuje samo ocjenu i brojke (bez citata i imena). */
 const reviewHint: Record<string, RegExp> = {
   dimnjaci: /dimnjak/i,
-  'popravak-krova': /curil|uzrok/i,
+  'popravak-krova': /curi|uzrok/i,
   'opsav-atike': /atik/i,
 };
-export function reviewFor(slug?: string) {
+export function reviewFor(slug?: string): Review | undefined {
+  if (!reviews.length) return undefined;
   const re = slug ? reviewHint[slug] : undefined;
   return (re && reviews.find((r) => re.test(r.text))) || reviews[0];
 }

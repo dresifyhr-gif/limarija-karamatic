@@ -1,64 +1,62 @@
 ---
 /**
- * 02 · Radovi — vodoravni rail izdvojenih projekata.
+ * Radovi (id="radovi", bijelo) — vodoravni rail izdvojenih projekata.
  * Native CSS scroll-snap (bez biblioteke), bez autoplaya.
- * Kontrole (isti raspored kao rail recenzija, D11):
- *   [mono brojač "01 / 09"] [1 px staza linija/15 + 1 px klizač bijela/80 (ne crvena)] [‹][›] 44 px
- * Bez JS-a cijeli red kontrola je skriven (atribut hidden, skripta ga makne) — bez skripte ništa
- * od toga ne bi radilo. Na kraju/početku raila gumb dobiva aria-disabled="true" (ne `disabled`)
- * da fokus tipkovnice ne padne na <body>.
+ * Kontrole (tek s JS-om, atribut hidden): tanka linija napretka (1 px, bijela/80 — ne crvena)
+ *   i strelice ‹ › 44 px od md naviše. Bez brojača; jedan mono red po kartici.
+ * Na kraju/početku raila gumb dobiva aria-disabled="true" (ne `disabled`) da fokus ne padne na <body>.
  * Sve kartice su lazy; reveal.ts prije scana čeka da se slika učita.
- * Fotografije: kad je naslovna fotografija projekta već velika negdje drugdje na naslovnici
- * (hero, Detalj), kartica pokazuje drugu fotografiju iz galerije istog projekta.
+ *
+ * Fotografije se na naslovnici ne ponavljaju: kartica uzima prvu fotografiju projekta koja još
+ * nije prikazana (Usluge, Kako radimo). Projekt bez nove fotografije se preskače;
+ * prvo izdvojeni radovi, pa ostali; najviše dva iste vrste.
  */
 import type { ImageMetadata } from 'astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
 import ProjectCard from '@/components/ui/ProjectCard.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { projects } from '@/data/site';
+import { projects, services, type Project } from '@/data/site';
+import processPoster from '@/assets/projects/krov-crijep-lim-spoj-radnik.jpg';
 
-const featured = projects.filter((p) => p.featured);
-const total = String(featured.length).padStart(2, '0');
-
-/* slug → indeks u project.gallery. Naslovne su već prikazane na naslovnici:
- *  krov-crijep-lim-zalazak → hero ("Ovo nije crtež."); atika-kut-na-geru → sekcija Detalj odmah ispod;
- *  falcani-krov-izlaz → red "Falcani krovovi" u Uslugama. */
-const altCover: Record<string, number> = {
-  'krov-crijep-lim-zalazak': 1,
-  'atika-kut-na-geru': 1,
-  'falcani-krov-izlaz': 1,
-};
-const cover = (p: (typeof featured)[number]): ImageMetadata | undefined => {
-  const i = altCover[p.slug];
-  return i !== undefined ? p.gallery[i] : undefined;
-};
+const MAX = 6;
+const shown = new Set<string>(
+  [
+    ...services.map((s) => s.image), // Usluge
+    processPoster, // Kako radimo
+  ]
+    .filter((i): i is ImageMetadata => !!i)
+    .map((i) => i.src),
+);
+const perKind = new Map<string, number>();
+const cards: { project: Project; image: ImageMetadata }[] = [];
+for (const p of [...projects.filter((p) => p.featured), ...projects.filter((p) => !p.featured)]) {
+  if (cards.length >= MAX) break;
+  if ((perKind.get(p.kind) ?? 0) >= 2) continue;
+  const image = [p.image, ...p.gallery].find((i) => !shown.has(i.src));
+  if (!image) continue;
+  shown.add(image.src);
+  perKind.set(p.kind, (perKind.get(p.kind) ?? 0) + 1);
+  cards.push({ project: p, image });
+}
 
 const btn =
-  'grid h-11 w-11 place-items-center border border-linija/30 text-white transition-[border-color,background-color,color,opacity] duration-150 ease-[var(--ease-press)] hover:border-white hover:bg-white hover:text-grafit aria-disabled:cursor-default aria-disabled:opacity-30 aria-disabled:hover:border-linija/30 aria-disabled:hover:bg-transparent aria-disabled:hover:text-white';
+  'grid h-11 w-11 place-items-center border border-tinta/20 text-tinta transition-[border-color,background-color,color,opacity] duration-150 ease-[var(--ease-press)] hover:border-tinta hover:bg-tinta hover:text-white aria-disabled:cursor-default aria-disabled:opacity-30 aria-disabled:hover:border-tinta/20 aria-disabled:hover:bg-transparent aria-disabled:hover:text-tinta';
+const allLink =
+  'group/all inline-flex min-h-11 items-center gap-2 text-[0.9375rem] font-semibold text-tinta underline-offset-4 hover:underline';
 ---
 
-<section id="radovi" class="bg-grafit py-20 text-linija sm:py-28 lg:py-32" data-rail>
+<section id="radovi" class="bg-white py-24 text-tinta sm:py-28 lg:py-32" data-rail>
   <div class="wrap">
-    <div class="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
       <SectionHead
-        index="02"
         eyebrow="Radovi"
         title="Ovo nije render."
-        lead="Pravi krovovi, pravi detalji. Sve fotografije su s naših gradilišta u Zagrebu i okolici."
-        tone="dark"
+        lead="Pravi krovovi s naših gradilišta."
+        tone="light"
       />
-      <a
-        href="/radovi"
-        class="group/all hidden shrink-0 items-center gap-3 pb-1.5 text-white lg:inline-flex"
-        data-reveal
-      >
-        <span class="type-mono text-[0.8125rem] tracking-[0.1em] uppercase">Svi radovi</span>
-        <span
-          class="grid h-11 w-11 place-items-center border border-linija/30 transition-colors duration-150 group-hover/all:border-white group-hover/all:bg-white group-hover/all:text-grafit"
-          aria-hidden="true"
-        >
-          <Icon name="arrow-right" size={18} />
-        </span>
+      <a href="/radovi" class:list={[allLink, 'hidden shrink-0 lg:mb-1.5 lg:inline-flex']} data-reveal>
+        Svi radovi
+        <Icon name="arrow-right" size={18} class="transition-transform duration-150 group-hover/all:translate-x-0.5" />
       </a>
     </div>
   </div>
@@ -69,14 +67,14 @@ const btn =
       class="rail-track overflow-x-auto overscroll-x-contain"
       role="region"
       tabindex="0"
-      aria-label={`Izdvojeni radovi, ${featured.length} projekata. Za pomicanje koristite strelice lijevo i desno.`}
+      aria-label={`Izdvojeni radovi, ${cards.length} projekata. Za pomicanje koristite strelice lijevo i desno.`}
       data-rail-track
     >
       <ul class="rail-list flex w-max list-none gap-4 sm:gap-5 lg:gap-6" role="list" data-rail-list>
         {
-          featured.map((project) => (
-            <li class="rail-item w-[78vw] max-w-[22rem] shrink-0 text-white sm:w-[22rem] lg:w-[26rem] lg:max-w-none">
-              <ProjectCard project={project} image={cover(project)} />
+          cards.map(({ project, image }) => (
+            <li class="rail-item w-[78vw] max-w-[22rem] shrink-0 text-tinta sm:w-[22rem] lg:w-[26rem] lg:max-w-none">
+              <ProjectCard project={project} image={image} />
             </li>
           ))
         }
@@ -84,15 +82,11 @@ const btn =
     </div>
   </div>
 
-  <div class="wrap mt-8">
-    <!-- kontrole (isti raspored kao rail recenzija): brojač · tanka linija napretka · strelice; tek s JS-om -->
-    <div class="flex items-center gap-5 sm:gap-6 md:min-h-11" data-rail-controls hidden>
-      <p class="type-mono shrink-0 text-[0.75rem] tracking-[0.08em] text-celik tabular-nums" aria-hidden="true">
-        <span class="text-white" data-rail-count>01</span>
-        <span class="mx-1.5">/</span>{total}
-      </p>
-      <div class="relative h-px flex-1 bg-linija/15" aria-hidden="true">
-        <span class="rail-thumb absolute inset-y-0 left-0 bg-white/80" data-rail-thumb></span>
+  <div class="wrap mt-8 flex items-center gap-6">
+    <!-- tanka linija napretka · strelice (md+); tek s JS-om -->
+    <div class="flex flex-1 items-center gap-6 md:min-h-11" data-rail-controls hidden>
+      <div class="relative h-px flex-1 bg-tinta/12" aria-hidden="true">
+        <span class="rail-thumb absolute inset-y-0 left-0 bg-tinta/70" data-rail-thumb></span>
       </div>
       <div class="hidden items-center gap-2 md:flex">
         <button
@@ -110,13 +104,9 @@ const btn =
         </button>
       </div>
     </div>
-
-    <a
-      href="/radovi"
-      class="mt-8 inline-flex h-12 w-full items-center justify-between border border-linija/30 px-5 text-white transition-colors duration-150 hover:border-white lg:hidden"
-    >
-      <span class="type-mono text-[0.8125rem] tracking-[0.1em] uppercase">Svi radovi</span>
-      <Icon name="arrow-right" size={18} />
+    <a href="/radovi" class:list={[allLink, 'ml-auto shrink-0 lg:hidden']}>
+      Svi radovi
+      <Icon name="arrow-right" size={18} class="transition-transform duration-150 group-hover/all:translate-x-0.5" />
     </a>
   </div>
 </section>
@@ -155,8 +145,6 @@ const btn =
   }
   .rail-item {
     scroll-snap-align: start;
-    /* prigušeni tekst kartice na grafitu: čelik, ne prozirnost (D9) */
-    --pcard-muted: var(--color-celik);
   }
   /* klizač: širina = udio vidljivog, položaj = napredak (skripta) */
   .rail-thumb {
@@ -165,24 +153,18 @@ const btn =
 </style>
 
 <script>
-  const pad = (n: number) => String(n).padStart(2, '0');
-
   document.querySelectorAll<HTMLElement>('[data-rail]').forEach((root) => {
     const track = root.querySelector<HTMLElement>('[data-rail-track]');
     if (!track) return;
     const list = root.querySelector<HTMLElement>('[data-rail-list]') ?? track;
     const items = Array.from(list.children) as HTMLElement[];
     const thumb = root.querySelector<HTMLElement>('[data-rail-thumb]');
-    const count = root.querySelector<HTMLElement>('[data-rail-count]');
     const controls = root.querySelector<HTMLElement>('[data-rail-controls]');
     const prev = root.querySelector<HTMLButtonElement>('[data-rail-prev]');
     const next = root.querySelector<HTMLButtonElement>('[data-rail-next]');
     const reduce = () =>
       !document.documentElement.classList.contains('motion') ||
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    // kontrole tek s JS-om (bez njega ne bi ništa radile)
-    if (controls) controls.hidden = false;
 
     const stepSize = () => {
       const a = items[0];
@@ -197,17 +179,17 @@ const btn =
     const update = () => {
       raf = 0;
       const max = track.scrollWidth - track.clientWidth;
+      // sve stane u ekran → kontrole ne trebaju
+      if (controls) controls.hidden = max <= 2;
       const x = Math.max(0, track.scrollLeft);
-      const atEnd = x >= max - 2;
       if (thumb) {
         const visible = Math.min(1, track.clientWidth / track.scrollWidth);
         const progress = max > 0 ? Math.min(1, x / max) : 0;
         thumb.style.width = `${visible * 100}%`;
         thumb.style.left = `${progress * (1 - visible) * 100}%`;
       }
-      if (count) count.textContent = pad(atEnd ? items.length : Math.min(items.length, Math.round(x / stepSize()) + 1));
       setOff(prev, x <= 2);
-      setOff(next, atEnd);
+      setOff(next, x >= max - 2);
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(update);

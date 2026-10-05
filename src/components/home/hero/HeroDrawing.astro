@@ -1,13 +1,13 @@
 ---
 /**
  * LIST 01 — tehnički crtež kuće iz loga. U HTML-u je u ZAVRŠNOM stanju
- * (tanki crtež preko fotografije); src/lib/hero.ts ga vrati na prazan list
- * i odvrti nacrt → savijanje → polaganje → opšav → izvedeno → fotografija.
+ * (gotov crtež: lim, opšavi, oluk, dimnjak, snjegobrani, kote, pečat); ./intro.ts ga
+ * vrati na prazan list i odvrti nacrt → savijanje → polaganje → opšav → izvedeno.
  *
  * Skupine (hooks za JS):
  *  .hx-ink   linije crteža (DrawSVG), .hx-guide crtkane konstrukcijske linije
  *  .hx-dim   crvene kote (.hx-dl linije, .hx-num brojevi koji se odbrojavaju)
- *  .hx-fill  lim, opšavi, oluk, dimnjak — vidljivo samo tijekom animacije
+ *  .hx-fill  lim, opšavi, oluk, dimnjak, snjegobrani
  *  .hx-beam  greda abkanta s crvenim Λ
  *  .hx-fx    bljeskovi i odsjaj
  *  .hx-stamp pečat "IZVEDENO"
@@ -22,7 +22,6 @@ import { drawing as d } from './geometry';
   aria-hidden="true"
   focusable="false"
   data-hx-svg
-  data-window={JSON.stringify(d.windowPoly)}
 >
   <defs>
     <linearGradient id="hx-metal" gradientUnits="userSpaceOnUse" x1={d.metal.x1} y1={d.metal.y1} x2={d.metal.x2} y2={d.metal.y2}>
@@ -50,7 +49,7 @@ import { drawing as d } from './geometry';
   <!-- konstrukcijske linije -->
   <path class="hx-guide hx-dash" d={d.guides} />
 
-  <!-- lim i dijelovi (samo tijekom animacije) -->
+  <!-- lim i dijelovi -->
   <g class="hx-fill">
     <path class="hx-chimfill" d={d.chimneyFill} />
     <path class="hx-wingroof" d={d.wingRoof} />

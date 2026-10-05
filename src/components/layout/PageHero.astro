@@ -1,21 +1,23 @@
 ---
 /**
- * PageHero — zaglavlje podstranica (usluge, radovi, …). Grafit + milimetarski papir.
+ * PageHero — zaglavlje podstranica (usluge, radovi, …). SVIJETLO: papir + milimetarski papir
+ * (grid-paper-light) i tamna tinta. Tamni su samo zaglavlje, hero naslovnice, footer i mobilni dock.
  *
  * UGOVOR
- *  eyebrow?     string                mono oznaka iznad naslova ("Zagreb i okolica · besplatna procjena")
+ *  eyebrow?     string                mono oznaka iznad naslova ("Zagreb i šire · besplatna procjena")
  *  title        string                H1 (type-display). Jedini h1 na stranici, NE animira se (LCP).
  *                                     Veličina se računa iz duljine: najviše 3 retka < 64rem, 2 retka ≥ 64rem.
  *  lead?        string                uvod ispod naslova
  *  crumbs?      {href,label}[]        putanja; prva stavka je `homeCrumb` ("Naslovnica"), zadnja je
  *                                     trenutna stranica (bez linka, aria-current)
  *  image?       ImageMetadata         portretna fotografija desno (Photo, eager, fetchpriority high, data-scan)
- *  imageAlt?    string                alt fotografije (obavezan uz image), ujedno potpis "Sl. 01"
- *  imageHref?   string                potpis fotografije vodi na rad kojem fotografija pripada
- *  profile?     Profile               presjek lima kao "Detalj A": ProfileIcon (animate) + kotna linija
+ *  imageAlt?    string                alt fotografije (obavezan uz image)
+ *  imageHref?   string                ispod fotografije tiha poveznica "Pogledajte rad" (rad kojem fotografija pripada)
+ *  profile?     Profile               presjek lima: ProfileIcon (animate) + kotna linija
  *  profileLabel? string               natpis uz kotu (default: naziv profila · RAL 7016)
- *  index?       string                crveni broj ispred eyebrowa ("01")
- *  phoneFirst?  boolean               telefon je glavni (crveni) gumb — hitne stranice (popravak krova)
+ *  index?       string                crveni broj ispred eyebrowa ("01") — podstranice ga više ne koriste
+ *  phoneFirst?  boolean               telefon je glavni (crveni) gumb — hitne stranice (popravak krova).
+ *                                     Inače: "Besplatna procjena" (crveno) + "Pošaljite slike" (WhatsApp, obrub).
  *  ctaHref?     string                cilj gumba "Besplatna procjena". Default '/procjena' + data-quote-link:
  *                                     skripta ga prebaci na '#procjena' kad stranica ima svoju formu.
  *  cta?         boolean               prikaži CTA red (default true)
@@ -43,12 +45,11 @@
  */
 import type { ImageMetadata } from 'astro';
 import type { Profile } from '@/data/site';
-import { site, telHref } from '@/data/site';
+import { site, telHref, waHref } from '@/data/site';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import Photo from '@/components/ui/Photo.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 
 export type Crumb = { href: string; label: string };
 
@@ -122,7 +123,7 @@ const hasMedia = !!image || !!profile || hasAside;
 const dimLabel = profile ? (profileLabel ?? `${profileNames[profile]} · RAL 7016`) : '';
 /* gumb za procjenu: na stranici s formom skripta ga prebaci na '#procjena' */
 const quoteLink = ctaHref === '/procjena';
-/* lomi samo na " · " separatorima (bez "ZAGREB I / OKOLICA") */
+/* lomi samo na " · " separatorima (bez "ZAGREB I / ŠIRE") */
 const parts = (t: string) => t.split(' · ');
 
 /* ── veličina H1 prema duljini naslova ──────────────────────────────────────
@@ -165,7 +166,7 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
 
 <section
   class:list={[
-    'ph relative isolate overflow-hidden bg-grafit grid-paper text-linija',
+    'ph relative isolate overflow-hidden bg-papir grid-paper-light text-tinta',
     hasMedia && 'ph--media',
     !hasMedia && 'ph--plain',
     hasExtra && 'ph--extra',
@@ -198,19 +199,19 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
         <div class="ph-headline">
           {
             (eyebrow || index) && (
-              <p class="ph-eyebrow eyebrow flex items-center gap-3 text-celik">
-                {index && <span class="text-redline">{index}</span>}
+              <p class="ph-eyebrow eyebrow flex items-center gap-3 text-tinta/70">
+                {index && <span class="text-redline-dark">{index}</span>}
                 {index && <span class="h-px w-8 bg-current opacity-40" aria-hidden="true" />}
                 {eyebrow && <span class="ph-parts">{parts(eyebrow).map((x, k, a) => <span>{x}{k < a.length - 1 && ' ·'}</span>)}</span>}
               </p>
             )
           }
 
-          <h1 id="ph-title" class="ph-title type-display text-balance text-white" style={titleFit}>{title}</h1>
+          <h1 id="ph-title" class="ph-title type-display text-balance text-tinta" style={titleFit}>{title}</h1>
         </div>
 
         <div class="ph-body">
-          {lead && <p class="ph-lead max-w-[36rem] text-pretty text-linija">{lead}</p>}
+          {lead && <p class="ph-lead max-w-[36rem] text-pretty text-tinta/80">{lead}</p>}
           {hasMeta && (
             <div class="ph-meta">
               <slot name="meta" />
@@ -225,7 +226,7 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
                     <Button href={telHref} size="lg" icon="phone">
                       Nazovite <span class="font-mono tracking-[0.02em]">{site.phoneDisplay}</span>
                     </Button>
-                    <Button href={ctaHref} variant="outline" size="lg" iconRight="arrow-right" {...(quoteLink ? { 'data-quote-link': '' } : {})}>
+                    <Button href={ctaHref} variant="outline-dark" size="lg" iconRight="arrow-right" {...(quoteLink ? { 'data-quote-link': '' } : {})}>
                       Besplatna procjena
                     </Button>
                   </>
@@ -234,21 +235,12 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
                     <Button href={ctaHref} size="lg" iconRight="arrow-right" {...(quoteLink ? { 'data-quote-link': '' } : {})}>
                       Besplatna procjena
                     </Button>
-                    <Button href={telHref} variant="outline" size="lg" icon="phone">
-                      Nazovite <span class="font-mono tracking-[0.02em]">{site.phoneDisplay}</span>
+                    <Button href={waHref()} variant="outline-dark" size="lg" icon="whatsapp" class="ph-wa">
+                      Pošaljite slike
                     </Button>
                   </>
                 )}
               </div>
-            )
-          }
-          {
-            cta && (
-              <p class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.75rem] leading-5 text-celik">
-                <Icon name="clock" size={14} class="text-celik" />
-                <span>{site.responseTime}</span>
-                <ExampleTag />
-              </p>
             )
           }
         </div>
@@ -258,10 +250,6 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
         image && (
           <figure class="ph-media">
             <div class="ph-photo-frame">
-              <span class="ph-crop ph-crop--tl" aria-hidden="true" />
-              <span class="ph-crop ph-crop--tr" aria-hidden="true" />
-              <span class="ph-crop ph-crop--bl" aria-hidden="true" />
-              <span class="ph-crop ph-crop--br" aria-hidden="true" />
               <div class="ph-photo" data-scan>
                 <Photo
                   src={image}
@@ -276,10 +264,6 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
               </div>
               {profile && (
                 <div class="ph-detail ph-detail--over" data-ph-detail>
-                  <p class="ph-detail-cap" aria-hidden="true">
-                    <span>Detalj A</span>
-                    <span>Presjek</span>
-                  </p>
                   <div class="ph-detail-draw">
                     <ProfileIcon profile={profile} size={128} animate class="ph-detail-icon" />
                     <svg class="ph-dim" viewBox="0 0 64 10" fill="none" aria-hidden="true" data-ph-dim>
@@ -292,18 +276,14 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
                 </div>
               )}
             </div>
-            <figcaption class="ph-figcap">
-              <span class="ph-figcap-n text-redline">Sl. 01</span>
-              <span class="ph-figcap-t text-celik">
-                {imageAlt}
-                {imageHref && (
-                  <a href={imageHref} class="ph-figcap-a">
-                    Pogledajte rad
-                    <Icon name="arrow-right" size={14} />
-                  </a>
-                )}
-              </span>
-            </figcaption>
+            {imageHref && (
+              <p class="ph-figcap">
+                <a href={imageHref} class="ph-figcap-a">
+                  Pogledajte rad
+                  <Icon name="arrow-right" size={14} />
+                </a>
+              </p>
+            )}
           </figure>
         )
       }
@@ -312,10 +292,6 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
         !image && profile && (
           <div class="ph-media ph-media--draw">
             <div class="ph-detail ph-detail--solo" data-ph-detail>
-              <p class="ph-detail-cap" aria-hidden="true">
-                <span>Detalj A</span>
-                <span>Presjek</span>
-              </p>
               <div class="ph-detail-draw">
                 <ProfileIcon profile={profile} size={176} animate class="ph-detail-icon" />
                 <svg class="ph-dim" viewBox="0 0 64 10" fill="none" aria-hidden="true" data-ph-dim>
@@ -374,7 +350,7 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
     line-height: 1rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-celik);
+    color: rgb(21 24 27 / 0.7);
   }
   .ph-crumbs li {
     display: inline-flex;
@@ -384,13 +360,13 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
   .ph-crumbs li + li::before {
     content: '/';
     margin-right: 0.25rem;
-    color: rgb(213 219 223 / 0.28);
+    color: rgb(21 24 27 / 0.3);
   }
   .ph-crumbs a {
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
-    color: var(--color-celik);
+    color: rgb(21 24 27 / 0.7);
     text-decoration: underline;
     text-decoration-color: transparent;
     text-underline-offset: 0.4em;
@@ -399,13 +375,13 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
       text-decoration-color 150ms var(--ease-press);
   }
   .ph-crumbs a:hover {
-    color: #fff;
+    color: var(--color-tinta);
     text-decoration-color: currentColor;
   }
   .ph-crumbs [aria-current] {
     display: block;
     overflow: hidden;
-    color: var(--color-linija);
+    color: var(--color-tinta);
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -600,6 +576,11 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
       width: 100%;
     }
   }
+  /* WhatsApp kao tihi drugi gumb: tamni obrub, samo ikona u boji
+     (tamnija zelena: čitljiva na papiru, ≥ 3:1) */
+  .ph-cta :global(.ph-wa > svg:first-child) {
+    color: #16a34a;
+  }
 
   /* ── fotografija ── */
   .ph-photo-frame {
@@ -620,67 +601,22 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
       aspect-ratio: 5 / 4;
     }
   }
-  .ph-crop {
-    position: absolute;
-    width: 0.875rem;
-    height: 0.875rem;
-    border-color: rgb(213 219 223 / 0.35);
-    pointer-events: none;
-  }
-  .ph-crop--tl {
-    top: -0.5rem;
-    left: -0.5rem;
-    border-top: 1px solid;
-    border-left: 1px solid;
-  }
-  .ph-crop--tr {
-    top: -0.5rem;
-    right: -0.5rem;
-    border-top: 1px solid;
-    border-right: 1px solid;
-  }
-  .ph-crop--bl {
-    bottom: -0.5rem;
-    left: -0.5rem;
-    border-bottom: 1px solid;
-    border-left: 1px solid;
-  }
-  .ph-crop--br {
-    bottom: -0.5rem;
-    right: -0.5rem;
-    border-bottom: 1px solid;
-    border-right: 1px solid;
-  }
-  @media (width < 40rem) {
-    .ph-crop {
-      display: none;
-    }
-  }
+  /* tiha poveznica na rad ispod fotografije (dodirna površina 44 px) */
   .ph-figcap {
     display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    line-height: 1.5;
-    letter-spacing: 0.04em;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
   }
-  .ph-figcap-n {
-    flex: none;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-  /* poveznica na rad: dodirna površina 44 px bez povećanja retka */
   .ph-figcap-a {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    margin-block: -0.875rem;
-    margin-left: 0.75rem;
-    padding-block: 0.875rem;
-    color: var(--color-linija);
+    min-height: 2.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(21 24 27 / 0.75);
     text-decoration: underline;
-    text-decoration-color: rgb(213 219 223 / 0.35);
+    text-decoration-color: rgb(21 24 27 / 0.25);
     text-underline-offset: 4px;
     white-space: nowrap;
     transition:
@@ -688,11 +624,11 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
       text-decoration-color 150ms var(--ease-press);
   }
   .ph-figcap-a:hover {
-    color: #fff;
+    color: var(--color-tinta);
     text-decoration-color: currentColor;
   }
   @media (width >= 64rem) {
-    /* potpis izvan toka: donji rub fotografije = donji rub lijevog stupca */
+    /* izvan toka: donji rub fotografije = donji rub lijevog stupca */
     .ph-media {
       position: relative;
     }
@@ -701,17 +637,14 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
       top: 100%;
       left: 0;
       right: 0;
-      justify-content: flex-end;
-      text-align: right;
-      padding-left: 30%;
     }
   }
 
-  /* ── Detalj A: presjek lima s kotnom linijom ── */
+  /* ── presjek lima s kotnom linijom (papirna pločica) ── */
   .ph-detail {
-    color: #fff;
-    background: var(--color-grafit-2);
-    border: 1px solid rgb(213 219 223 / 0.16);
+    color: var(--color-tinta);
+    background: var(--color-papir);
+    border: 1px solid rgb(21 24 27 / 0.12);
   }
   .ph-detail--over {
     position: absolute;
@@ -758,25 +691,10 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
       margin-left: auto;
     }
   }
-  .ph-detail-cap {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--font-mono);
-    font-size: 0.5625rem;
-    line-height: 1;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--color-celik);
-  }
-  @media (width >= 40rem) {
-    .ph-detail-cap {
-      font-size: 0.625rem;
-    }
-  }
   .ph-detail-draw {
     display: grid;
     justify-items: center;
-    margin: 0.25rem auto 0;
+    margin: 0 auto;
     width: 6rem;
   }
   @media (width >= 40rem) {
@@ -797,14 +715,14 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
     height: auto;
     margin-top: 0.125rem;
     overflow: visible;
-    stroke: var(--color-redline);
+    stroke: var(--color-redline-dark);
   }
   .ph-dim path {
     vector-effect: non-scaling-stroke;
     stroke-width: 1px;
   }
   .ph-dim-ext {
-    stroke: rgb(213 219 223 / 0.45);
+    stroke: rgb(21 24 27 / 0.4);
   }
   .ph-detail-label {
     margin-top: 0.5rem;
@@ -814,7 +732,7 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
     letter-spacing: 0.1em;
     text-align: center;
     text-transform: uppercase;
-    color: var(--color-linija);
+    color: rgb(21 24 27 / 0.72);
   }
   @media (width >= 40rem) {
     .ph-detail-label {

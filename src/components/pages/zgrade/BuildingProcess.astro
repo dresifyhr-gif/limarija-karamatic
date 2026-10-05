@@ -1,50 +1,43 @@
 ---
 /**
- * /upravitelji-zgrada · četiri koraka za zgrade (papir-2: korak u vrijednosti nakon papira "Što dobivate"),
- * složeni kao kotni lanac.
+ * /upravitelji-zgrada · četiri koraka za zgrade (papir, iza bijele "Što dobivate"), složeni kao kotni lanac.
+ *  class?  pozadina i razmaci sekcije (default "bg-papir py-24 sm:py-28 lg:py-32")
  * Desktop: vodoravni lanac s kotnim zarezima; mobitel: okomiti.
  * Pokret (samo pod .motion): crvena linija se jednom povuče preko lanca (draft) —
  * jedina crvena stvar u pokretu na ekranu.
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
 
 interface Props {
-  index?: string;
+  class?: string;
 }
-const { index = '02' } = Astro.props;
+const { class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32' } = Astro.props;
 
 const steps = [
   {
     t: 'Pregled krova',
     d: 'Izlazimo na zgradu, mjerimo i fotografiramo krov. Upravitelj dobiva fotografije i opis stanja.',
-    k: 'Besplatno',
   },
   {
     t: 'Ponuda za suvlasnike',
     d: 'Pisana ponuda stavku po stavku, spremna za odluku suvlasnika i plaćanje iz pričuve.',
-    k: 'Na papiru',
   },
   {
     t: 'Izvedba po dogovoru',
     d: 'Termin usklađujemo s upraviteljem. Prolaz ispod osiguramo, a krov i dvorište čistimo svaki dan.',
-    k: 'Uredno',
   },
   {
     t: 'Primopredaja',
     d: 'Zajedno prolazimo krov. Dobivate fotografije prije i poslije, račun na zgradu i pisano jamstvo.',
-    k: 'Jamstvo',
-    example: true,
   },
 ];
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
-<section id="koraci" class="bg-papir-2 py-20 text-tinta sm:py-28 lg:py-32">
+<section id="koraci" class:list={['text-tinta', sectionClass]}>
   <div class="wrap">
     <SectionHead
       tone="light"
-      index={index}
       eyebrow="Kako radimo sa zgradama"
       title="Od pregleda do primopredaje."
       lead="Četiri koraka, svaki s papirom koji upravitelj može pokazati suvlasnicima."
@@ -59,18 +52,11 @@ const pad = (n: number) => String(n).padStart(2, '0');
         steps.map((s, i) => (
           <li class="bp-step" data-reveal>
             <span class="bp-tick" aria-hidden="true" />
-            <p class="bp-k">
-              <span class="text-redline-dark" aria-hidden="true">{pad(i + 1)}</span>
-              <span class="text-tinta/70" aria-hidden="true">/</span>
-              <span>{s.k}</span>
-            </p>
+            <p class="bp-k" aria-hidden="true">{pad(i + 1)}</p>
             <h3 class="mt-3 text-[1.3125rem] leading-tight font-bold text-tinta [font-stretch:112%] sm:text-[1.4375rem]">
               {s.t}
             </h3>
-            <p class="mt-3 max-w-[22rem] leading-relaxed text-pretty text-tinta/70">
-              {s.d}
-              {s.example && <ExampleTag class="ml-1" />}
-            </p>
+            <p class="mt-3 max-w-[22rem] leading-relaxed text-pretty text-tinta/75">{s.d}</p>
           </li>
         ))
       }

@@ -1,27 +1,13 @@
 ---
 /**
- * Crtaći list u heru: okvir, traka s fazom i "Ponovi", pozornica s
- * fotografijom 17 (ispod) i crtežom (iznad), zaglavlje lista i natpis.
- *
- * U HTML-u je ZAVRŠNO stanje: fotografija u punom okviru, bez crteža preko nje,
- * jedna bijela oznaka koja leži točno na snjegobranu i natpis.
- *
- * LCP: fotografija je UVIJEK naslikana (eager, fetchpriority high, nikad opacity 0).
- * Tijekom uvoda je pokriva neprozirni list (.hx-cover) — u njemu se otvori prozor
- * u obliku krova (clip-path s rupom), a .hx-veil omogući pretapanje lima u fotografiju.
+ * Crtaći list u heru: okvir, traka s fazom i "Ponovi", pozornica s crtežom i zaglavlje lista.
+ * Samo crtež (bez fotografije). U HTML-u je ZAVRŠNO stanje: GOTOV CRTEŽ — položen lim,
+ * crvena linija strehe, oluk, kapa dimnjaka, snjegobrani, pečat IZVEDENO, kote i zaglavlje.
+ * To je i stanje bez JS-a, s reduced-motion i pri ponovnom posjetu.
  */
-import { Picture } from 'astro:assets';
-import Icon from '@/components/ui/Icon.astro';
 import HeroDrawing from './HeroDrawing.astro';
-import { projects } from '@/data/site';
 
-const project = projects.find((p) => p.slug === 'krov-crijep-lim-zalazak')!;
-const FINAL_PHASE = '06 · Pravi krov';
-
-/* Oznaka na fotografiji: koordinate u izrezu 1200 × 960 (izrez od vrha).
- * SVG koristi isti viewBox i "xMidYMin slice" = object-fit: cover + object-position 50% 0,
- * pa oznaka uvijek leži na istom snjegobranu, na svakoj širini. */
-const note = { dot: [996, 768], knee: [896, 660], end: [626, 660] } as const;
+const FINAL_PHASE = '05 · Izvedeno';
 ---
 
 <figure class="hx-sheet" data-hx-sheet>
@@ -30,9 +16,7 @@ const note = { dot: [996, 768], knee: [896, 660], end: [626, 660] } as const;
       <span class="hx-readout-k">Faza</span>
       <span data-hx-phase data-final={FINAL_PHASE}>{FINAL_PHASE}</span>
     </p>
-    <p class="hx-sheetid" aria-hidden="true">
-      <span class="hidden md:inline lg:hidden">Limarija Karamatić · </span>List 01 · M 1:50
-    </p>
+    <p class="hx-sheetid" aria-hidden="true">List 01 · M 1:50</p>
     <button type="button" class="hx-replay" data-hx-replay hidden aria-label="Ponovi animaciju crteža">
       <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"
         ><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -44,55 +28,17 @@ const note = { dot: [996, 768], knee: [896, 660], end: [626, 660] } as const;
   </div>
 
   <div class="hx-stage" data-hx-stage>
-    <div class="hx-photo" data-hx-photo>
-      <Picture
-        src={project.image}
-        alt={project.alt}
-        width={1200}
-        height={960}
-        fit="cover"
-        position="top"
-        widths={[480, 720, 960, 1200]}
-        sizes="(min-width: 1440px) 760px, (min-width: 1024px) 52vw, calc(100vw - 2.5rem)"
-        formats={['avif', 'webp']}
-        quality={55}
-        loading="eager"
-        decoding="async"
-        fetchpriority="high"
-      />
-      <svg
-        class="hx-note"
-        viewBox="0 0 1200 960"
-        preserveAspectRatio="xMidYMin slice"
-        aria-hidden="true"
-        focusable="false"
-        data-hx-note
-      >
-        <path class="hx-note-l" d={`M${note.dot.join(' ')}L${note.knee.join(' ')}H${note.end[0]}`} />
-        <circle class="hx-note-dot" cx={note.dot[0]} cy={note.dot[1]} r="5" />
-        <text class="hx-note-t" x={note.end[0] + 2} y={note.end[1] - 12}>SNJEGOBRANI · 3 REDA</text>
-      </svg>
-    </div>
-
-    <div class="hx-veil" data-hx-veil aria-hidden="true"></div>
-    <div class="hx-cover" data-hx-cover aria-hidden="true"></div>
-
     <div class="hx-art hx-drawing">
       <HeroDrawing />
     </div>
 
     <div class="hx-tb hx-art" aria-hidden="true">
       <span class="hx-tb-name">Limarija Karamatić</span>
-      <span>Krov · crijep-lim</span><span>RAL 7016</span>
+      <span>Krov · stojeći falc</span><span>RAL 7016</span>
       <span>List 01</span><span>M 1:50</span>
     </div>
-
-    <figcaption class="hx-caption-wrap hx-art">
-      <a class="hx-caption" href={`/radovi/${project.slug}`}>
-        <strong>Ovo nije crtež.</strong>
-        <span class="hx-caption-meta">Pravi krov · {project.location} · <span class="hx-cap-mat">crijep-lim </span>RAL&nbsp;7016</span>
-        <Icon name="arrow-right" size={16} class="hx-caption-arrow" />
-      </a>
-    </figcaption>
   </div>
+  <figcaption class="sr-only">
+    Tehnički crtež kuće s limenim krovom u antracitu: opšav zabata, oluk, kapa dimnjaka i snjegobrani.
+  </figcaption>
 </figure>

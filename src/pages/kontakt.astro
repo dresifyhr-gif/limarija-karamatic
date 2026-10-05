@@ -1,7 +1,8 @@
 ---
 /**
- * /kontakt — prvi ekran ima sve radnje na dodir (ContactSheet u heru: telefon, WhatsApp, Viber, e-pošta,
- * radno vrijeme), zatim područje rada i podaci o tvrtki (papir) i forma za procjenu (FinalCta, #procjena).
+ * /kontakt — prvi ekran ima sve radnje na dodir (ContactSheet u heru: WhatsApp, telefon, e-pošta,
+ * radno vrijeme). Poruke idu samo na WhatsApp. Zatim "Gdje radimo" (site.areaLine, bez karte) i podaci o
+ * tvrtki (bijela), pa forma za procjenu (FinalCta, #procjena). Sve sekcije su svijetle.
  */
 import Base from '@/layouts/Base.astro';
 import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
@@ -9,19 +10,20 @@ import FinalCta from '@/components/home/FinalCta.astro';
 import ContactSheet from '@/components/pages/kontakt/ContactSheet.astro';
 import ContactRows from '@/components/pages/kontakt/ContactRows.astro';
 import HeroFacts from '@/components/pages/HeroFacts.astro';
+import { site } from '@/data/site';
 
 const crumbs = [homeCrumb, { href: '/kontakt', label: 'Kontakt' }];
 ---
 
 <Base
-  title="Kontakt — telefon, WhatsApp, Viber | Limarija Karamatić"
-  description="Nazovite ili pošaljite slike krova na WhatsApp ili Viber. Besplatna procjena krova u Zagrebu i okolici. Radno vrijeme, područje rada i podaci o tvrtki."
+  title="Kontakt — telefon i WhatsApp | Limarija Karamatić"
+  description="Nazovite ili pošaljite slike krova na WhatsApp. Besplatna procjena krova — sjedište u Zagrebu, radimo gdje god se posao isplati. Radno vrijeme i podaci o tvrtki."
   schema={[breadcrumbSchema(crumbs, Astro.site)]}
 >
   <PageHero
-    eyebrow="Kontakt · Zagreb i okolica"
+    eyebrow={`Kontakt · ${site.area}`}
     title="Javite se. Dolazimo izmjeriti."
-    lead="Najbrže je telefonom ili porukom."
+    lead="Najbrže je telefonom ili porukom na WhatsApp."
     crumbs={crumbs}
     cta={false}
   >
@@ -30,13 +32,12 @@ const crumbs = [homeCrumb, { href: '/kontakt', label: 'Kontakt' }];
       items={[
         { k: 'Procjena', v: 'Besplatno, na terenu' },
         { k: 'Ponuda', v: 'Pisana, stavku po stavku' },
-        { k: 'Slike krova', v: 'WhatsApp ili Viber' },
+        { k: 'Slike krova', v: 'Na WhatsApp' },
       ]}
     />
   </PageHero>
-  <ContactRows index="01" />
+  <ContactRows />
   <FinalCta
-    index="02"
     title="Ili pošaljite upit."
     lead="Tri kratka koraka. Javljamo se, dogovorimo izlazak i dobivate pisanu ponudu."
   />

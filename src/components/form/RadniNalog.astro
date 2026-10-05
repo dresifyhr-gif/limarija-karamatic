@@ -45,47 +45,15 @@ const f = (name: string) => `${id}-${name}`;
 ---
 
 <div class="rn @container/rn relative" id={id} data-variant={variant}>
-  <!-- kutni rezovi lista (crtački detalj) -->
-  <span class="rn-crop rn-crop-tl" aria-hidden="true"></span>
-  <span class="rn-crop rn-crop-tr" aria-hidden="true"></span>
-  <span class="rn-crop rn-crop-bl" aria-hidden="true"></span>
-  <span class="rn-crop rn-crop-br" aria-hidden="true"></span>
-
-  <div class="rn-sheet relative bg-papir text-tinta outline outline-1 -outline-offset-1 outline-tinta/12">
-    <!-- zaglavlje lista -->
-    <header class="grid grid-cols-[minmax(0,1fr)_auto] border-b border-tinta/15">
-      <div class="px-5 py-4 @[36rem]/rn:px-7 @[36rem]/rn:py-5">
-        <p class="type-display text-[1.125rem] tracking-[0.01em] uppercase @[24rem]/rn:text-[1.25rem] @[36rem]/rn:text-[1.5rem]">
-          {zgrada ? 'Upit za zgradu' : 'Upit za procjenu'}
-        </p>
-        <p class="mt-1.5 font-mono text-[0.6875rem] leading-snug tracking-[0.06em] text-tinta/70 uppercase">
-          Besplatno · bez obveze
-        </p>
-      </div>
-      <dl class="flex border-l border-tinta/15 font-mono">
-        <div class="flex flex-col justify-center px-4 @[36rem]/rn:px-5">
-          <dt class="text-[0.625rem] tracking-[0.14em] text-tinta/70 uppercase">Br.</dt>
-          <dd class="mt-1 text-[0.8125rem] font-medium whitespace-nowrap tabular-nums">
-            KR-<span data-rn-no>····</span>
-          </dd>
-        </div>
-        <div class="hidden flex-col justify-center border-l border-tinta/15 px-4 @[24rem]/rn:flex @[36rem]/rn:px-5" data-rn-js hidden>
-          <dt class="text-[0.625rem] tracking-[0.14em] text-tinta/70 uppercase">Korak</dt>
-          <dd class="mt-1 text-[0.8125rem] font-medium whitespace-nowrap tabular-nums">
-            0<span data-rn-stepno>1</span> / 03
-          </dd>
-        </div>
-      </dl>
-    </header>
-
-    <!-- kotni lanac koraka -->
-    <ol class="rn-dims grid grid-cols-3 px-5 pt-5 pb-1 @[36rem]/rn:px-7 @[36rem]/rn:pt-6" aria-label="Koraci" data-rn-js hidden>
+  <div class="rn-sheet relative bg-white text-tinta">
+    <!-- kotni lanac koraka (jedini pokazatelj napretka; samo s JS-om) -->
+    <ol class="rn-dims grid grid-cols-3" aria-label="Koraci" data-rn-js hidden>
       {
         stepNames.map((t, i) => (
           <li class="rn-dim" data-rn-dim={i + 1}>
             <span class="rn-dim-label">
               <span class="rn-dim-n">{pad(i + 1)}</span>
-              <span class="rn-dim-t">{t}</span>
+              <span class="rn-dim-t sr-only">{t}</span>
             </span>
             <span class="rn-dim-line" aria-hidden="true" />
           </li>
@@ -119,13 +87,12 @@ const f = (name: string) => `${id}-${name}`;
         <!-- KORAK 1 -->
         <fieldset class="rn-step" data-step="1" aria-labelledby={f('h1')}>
           <div class="rn-step-head">
-            <p class="rn-kicker" aria-hidden="true">Korak 01</p>
             <H id={f('h1')} class="rn-h" tabindex="-1" data-rn-heading>Što treba?</H>
             <p class="rn-lead">Odaberite jedno. Detalje dogovaramo na krovu.</p>
           </div>
           <div class="rn-chips grid gap-2 @[30rem]/rn:grid-cols-2" data-rn-group="vrsta">
             {
-              jobs.map((j, i) => (
+              jobs.map((j) => (
                 <label
                   class:list={[
                     'rn-chip',
@@ -144,14 +111,13 @@ const f = (name: string) => `${id}-${name}`;
                     aria-describedby={f('vrsta-err')}
                     class="sr-only"
                   />
-                  <span class="rn-chip-n" aria-hidden="true">
-                    {pad(i + 1)}
+                  <span class="rn-chip-box" aria-hidden="true">
+                    <svg class="rn-chip-tick" viewBox="0 0 24 24" width="14" height="14">
+                      <path d="m4.5 12.5 4.5 4.5L19.5 6.5" />
+                    </svg>
                   </span>
-                  {j.id === 'hitno' && <span class="rn-dot" aria-hidden="true" />}
                   <span class="rn-chip-t">{j.label}</span>
-                  <svg class="rn-chip-tick" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                    <path d="m4.5 12.5 4.5 4.5L19.5 6.5" />
-                  </svg>
+                  {j.id === 'hitno' && <span class="rn-dot ml-auto" aria-hidden="true" />}
                 </label>
               ))
             }
@@ -173,7 +139,6 @@ const f = (name: string) => `${id}-${name}`;
         <!-- KORAK 2 -->
         <fieldset class="rn-step" data-step="2" aria-labelledby={f('h2')}>
           <div class="rn-step-head">
-            <p class="rn-kicker" aria-hidden="true">Korak 02</p>
             <H id={f('h2')} class="rn-h" tabindex="-1" data-rn-heading>{zgrada ? 'Koja zgrada?' : 'Gdje i koliko?'}</H>
             <p class="rn-lead">
               {zgrada ? 'Adresa je dovoljna — krov izmjerimo i fotografiramo na terenu.' : 'Otprilike je dovoljno — sve izmjerimo na terenu.'}
@@ -280,7 +245,7 @@ const f = (name: string) => `${id}-${name}`;
                     {zgrada ? 'Krov, atika, mjesto gdje curi u stubište. S mobitela je sasvim dovoljno.' : 'Krov izvana, mjesto gdje curi, dimnjak. S mobitela je sasvim dovoljno.'}
                   </span>
                 </span>
-                <span class="rn-drop-c font-mono text-[0.75rem] text-tinta/70 tabular-nums" data-rn-photocount data-rn-js hidden>0 / 6</span>
+                <span class="rn-drop-c font-mono text-[0.75rem] text-tinta/70 tabular-nums" data-rn-photocount hidden>0 / 6</span>
               </label>
               <p class="mt-2 font-mono text-[0.75rem] text-tinta/70 empty:hidden" data-rn-photonote aria-live="polite"></p>
               <ul class="rn-thumbs" data-rn-thumbs hidden aria-label="Dodane fotografije"></ul>
@@ -301,7 +266,6 @@ const f = (name: string) => `${id}-${name}`;
         <!-- KORAK 3 -->
         <fieldset class="rn-step" data-step="3" aria-labelledby={f('h3')}>
           <div class="rn-step-head">
-            <p class="rn-kicker" aria-hidden="true">Korak 03</p>
             <H id={f('h3')} class="rn-h" tabindex="-1" data-rn-heading>Kontakt</H>
             <p class="rn-lead">Nazovemo vas da dogovorimo dolazak.</p>
           </div>
@@ -410,21 +374,10 @@ const f = (name: string) => `${id}-${name}`;
         </p>
       </div>
 
-      <!-- crtež + sažetak: mobitel ispod gumba (kao sastavnica lista), desktop desni stupac -->
-      <aside class="rn-aside" aria-label="Sažetak upita">
-        <div class="rn-aside-in">
-          <figure class="rn-fig">
-            <NalogDrawing class="w-full" />
-            <figcaption class="rn-figcap" data-rn-js hidden>Upit · crtež se slaže sa svakim korakom</figcaption>
-          </figure>
-          <dl class="rn-sum" data-rn-js hidden>
-            <div><dt>Posao</dt><dd data-rn-sum="vrsta" class="is-empty">—</dd></div>
-            <div><dt>{zgrada ? 'Adresa' : 'Mjesto'}</dt><dd data-rn-sum="mjesto" class="is-empty">—</dd></div>
-            <div><dt>Krov</dt><dd data-rn-sum="velicina" class="is-empty">—</dd></div>
-            <div><dt>Foto</dt><dd data-rn-sum="foto" class="is-empty">—</dd></div>
-          </dl>
-        </div>
-      </aside>
+      <!-- crtež kuće: dobiva sloj sa svakim korakom (gore desno, uz naslov koraka) -->
+      <div class="rn-aside" aria-hidden="true">
+        <NalogDrawing class="w-full" />
+      </div>
     </form>
   </div>
 </div>
@@ -437,8 +390,17 @@ const f = (name: string) => `${id}-${name}`;
 <style is:global>
   /* ── Radni nalog (sve klase s prefiksom rn-) ────────────────── */
   .rn {
-    --rn-line: rgb(21 24 27 / 0.14);
+    --rn-line: rgb(21 24 27 / 0.1);
     --rn-pad: 1.25rem;
+    --rn-field: #f6f5f1;
+  }
+  /* bijela kartica na papiru: tanki rub + mekana sjena (bez "plutanja") */
+  .rn-sheet {
+    outline: 1px solid rgb(21 24 27 / 0.08);
+    outline-offset: -1px;
+    box-shadow:
+      0 1px 2px rgb(21 24 27 / 0.04),
+      0 18px 40px -22px rgb(21 24 27 / 0.22);
   }
   @container rn (width >= 36rem) {
     .rn-sheet {
@@ -446,41 +408,22 @@ const f = (name: string) => `${id}-${name}`;
     }
   }
 
-  /* kutni rezovi */
-  .rn-crop {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-color: rgb(213 219 223 / 0.35);
-    pointer-events: none;
-    display: none;
-  }
-  @media (width >= 40rem) {
-    .rn-crop {
-      display: block;
-    }
-  }
-  .rn-crop-tl { top: -10px; left: -10px; border-top: 1px solid; border-left: 1px solid; }
-  .rn-crop-tr { top: -10px; right: -10px; border-top: 1px solid; border-right: 1px solid; }
-  .rn-crop-bl { bottom: -10px; left: -10px; border-bottom: 1px solid; border-left: 1px solid; }
-  .rn-crop-br { bottom: -10px; right: -10px; border-bottom: 1px solid; border-right: 1px solid; }
-  .rn-crop { border-color: rgb(213 219 223 / 0.35); }
-
   /* kotni lanac */
   .rn-dims {
+    padding: 1.25rem var(--rn-pad) 0.25rem;
     transition: grid-template-columns 0.2s var(--ease-press);
   }
-  @container rn (width < 30rem) {
-    .rn[data-step='1'] .rn-dims { grid-template-columns: 2.2fr 1fr 1fr; }
-    .rn[data-step='2'] .rn-dims { grid-template-columns: 1fr 2.6fr 1fr; }
-    .rn[data-step='3'] .rn-dims { grid-template-columns: 1fr 1fr 2fr; }
+  @container rn (width >= 36rem) {
+    .rn-dims {
+      padding-top: 1.5rem;
+    }
   }
   .rn-dim {
     position: relative;
     display: flex;
     flex-direction: column;
     gap: 0.625rem;
-    color: rgb(21 24 27 / 0.7);
+    color: rgb(21 24 27 / 0.6);
     transition: color 0.2s var(--ease-press);
   }
   .rn-dim-label {
@@ -545,149 +488,53 @@ const f = (name: string) => `${id}-${name}`;
     height: 2px;
     top: 3.5px;
   }
-  @container rn (width < 30rem) {
-    .rn-dim:not(.is-active) .rn-dim-t {
-      display: none;
-    }
-    .rn-dim-label {
-      padding-inline: 0.375rem 0;
-    }
-  }
 
-  /* tijelo: koraci → navigacija → sažetak (mobitel: sažetak dolazi zadnji, kao sastavnica lista);
-     od 40rem sažetak ide u desni stupac uz korake, navigacija preko cijele širine */
+
+  /* tijelo: koraci → navigacija. Crtež kuće stoji gore desno, uz naslov koraka
+     (i na mobitelu, da se slojevi vide dok se forma ispunjava). */
   .rn-form {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    --rn-fig: 5.5rem;
+  }
+  @container rn (width >= 30rem) {
+    .rn-form {
+      --rn-fig: 8rem;
+    }
+  }
+  @container rn (width >= 40rem) {
+    .rn-form {
+      --rn-fig: 10.5rem;
+    }
   }
   .rn-steps {
     padding: 1.5rem var(--rn-pad) 1.75rem;
   }
-  .rn-aside {
-    border-top: 1px solid var(--rn-line);
-    padding: 1rem var(--rn-pad);
-  }
-  .rn-aside-in {
-    display: grid;
-    grid-template-columns: 6rem minmax(0, 1fr);
-    gap: 1.25rem;
-    align-items: center;
-  }
   @container rn (width >= 40rem) {
-    .rn-form {
-      grid-template-columns: minmax(0, 1fr) 14rem;
-    }
     .rn-steps {
-      grid-column: 1;
-      grid-row: 1;
       padding-top: 1.75rem;
-      min-height: 29rem;
-    }
-    .rn-aside {
-      grid-column: 2;
-      grid-row: 1;
-      border-top: 0;
-      border-left: 1px solid var(--rn-line);
-      padding: 1.75rem 1.5rem;
-    }
-    .rn-aside-in {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-      position: sticky;
-      top: 6rem;
-    }
-    .rn-nav {
-      grid-column: 1 / -1;
-      grid-row: 2;
+      padding-bottom: 2rem;
+      min-height: 27rem;
     }
   }
-  /* bez JS-a: crtež samo kao ilustracija, sva tri koraka redom */
-  .rn:not(.is-stepped) .rn-aside-in {
-    grid-template-columns: 6rem;
+  .rn-aside {
+    position: absolute;
+    top: 1.25rem;
+    right: var(--rn-pad);
+    width: var(--rn-fig);
+    pointer-events: none;
   }
   @container rn (width >= 40rem) {
-    .rn:not(.is-stepped) .rn-aside-in {
-      grid-template-columns: 1fr;
+    .rn-aside {
+      top: 1.5rem;
     }
   }
+  /* bez JS-a: sva tri koraka redom */
   .rn:not(.is-stepped) .rn-step + .rn-step {
     margin-top: 2.25rem;
     padding-top: 2rem;
     border-top: 1px solid var(--rn-line);
-  }
-
-  .rn-fig {
-    margin: 0;
-  }
-  .rn-fig svg {
-    padding: 0.5rem 0.25rem;
-  }
-  @container rn (width >= 40rem) {
-    .rn-fig svg {
-      padding: 1.25rem 1rem 1rem;
-      border: 1px solid var(--rn-line);
-      background-color: rgb(255 255 255 / 0.35);
-    }
-  }
-  .rn-figcap {
-    display: none;
-    margin-top: 0.75rem;
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgb(21 24 27 / 0.7);
-    line-height: 1.4;
-  }
-  @container rn (width >= 40rem) {
-    .rn-figcap:not([hidden]) {
-      display: block;
-    }
-  }
-
-  .rn-sum {
-    font-family: var(--font-mono);
-    margin: 0;
-  }
-  .rn-sum > div {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding-block: 0.3rem;
-    border-bottom: 1px dotted rgb(21 24 27 / 0.22);
-  }
-  .rn-sum > div:last-child {
-    border-bottom: 0;
-  }
-  .rn-sum dt {
-    font-size: 0.625rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgb(21 24 27 / 0.7);
-    flex: none;
-  }
-  .rn-sum dd {
-    margin: 0;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-align: right;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .rn-sum dd.is-empty {
-    color: rgb(21 24 27 / 0.7);
-    font-weight: 400;
-  }
-  @container rn (width >= 40rem) {
-    .rn-sum > div {
-      padding-block: 0.5rem;
-    }
-    .rn-sum dd {
-      font-size: 0.8125rem;
-    }
   }
 
   /* crtež */
@@ -753,14 +600,12 @@ const f = (name: string) => `${id}-${name}`;
   }
   .rn-step-head {
     margin-bottom: 1.5rem;
+    padding-right: calc(var(--rn-fig) + 1rem);
+    min-height: calc(var(--rn-fig) * 0.7);
   }
-  .rn-kicker {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-redline-dark);
-    margin-bottom: 0.5rem;
+  .rn:not(.is-stepped) .rn-step + .rn-step .rn-step-head {
+    padding-right: 0;
+    min-height: 0;
   }
   .rn-h {
     font-stretch: 125%;
@@ -797,7 +642,7 @@ const f = (name: string) => `${id}-${name}`;
     padding: 0.75rem 0.875rem 0.75rem 1rem;
     border: 1px solid rgb(21 24 27 / 0.2);
     border-radius: 2px;
-    background: rgb(255 255 255 / 0.55);
+    background: var(--rn-field);
     cursor: pointer;
     user-select: none;
     transition:
@@ -813,13 +658,18 @@ const f = (name: string) => `${id}-${name}`;
   .rn-chip:active {
     transform: translateY(1px);
   }
-  .rn-chip-n {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.04em;
-    color: rgb(21 24 27 / 0.7);
+  /* kvadratić kao na papirnatom obrascu; kvačica se pojavi kad je odabrano */
+  .rn-chip-box {
+    position: relative;
+    display: grid;
+    place-items: center;
     flex: none;
-    min-width: 1.25rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 1px solid rgb(21 24 27 / 0.35);
+    transition:
+      border-color 0.15s var(--ease-press),
+      background-color 0.15s var(--ease-press);
   }
   .rn-chip-t {
     font-size: 1rem;
@@ -828,13 +678,9 @@ const f = (name: string) => `${id}-${name}`;
     min-width: 0;
   }
   .rn-chip-tick {
-    position: absolute;
-    left: 0.875rem;
-    top: 50%;
-    margin-top: -9px;
     fill: none;
     stroke: currentColor;
-    stroke-width: 2.25;
+    stroke-width: 2.5;
     stroke-linecap: square;
     opacity: 0;
     transform: scale(0.6);
@@ -847,16 +693,19 @@ const f = (name: string) => `${id}-${name}`;
     border-color: var(--color-tinta);
     color: var(--color-papir);
   }
-  .rn-chip-n {
-    transition: opacity 0.15s var(--ease-press);
-  }
-  .rn-chip:has(:checked) .rn-chip-n {
-    opacity: 0;
+  .rn-chip:has(:checked) .rn-chip-box {
+    border-color: rgb(238 236 231 / 0.5);
   }
   .rn-chip:has(:checked) .rn-chip-tick {
     color: var(--color-redline);
     opacity: 1;
     transform: none;
+  }
+  .rn-chip:hover .rn-chip-box {
+    border-color: rgb(21 24 27 / 0.6);
+  }
+  .rn-chip:has(:checked):hover .rn-chip-box {
+    border-color: rgb(238 236 231 / 0.5);
   }
   .rn-chip:has(:focus-visible),
   .rn-pill:has(:focus-visible),
@@ -924,26 +773,23 @@ const f = (name: string) => `${id}-${name}`;
     display: block;
     margin-bottom: 0.5rem;
     padding: 0;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    line-height: 1rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgb(21 24 27 / 0.78);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--color-tinta);
   }
   .rn-opt {
-    letter-spacing: 0.04em;
-    text-transform: none;
-    color: rgb(21 24 27 / 0.7);
+    font-weight: 400;
+    color: rgb(21 24 27 / 0.62);
   }
   .rn-input {
     display: block;
     width: 100%;
     height: 3.25rem;
     padding: 0 0.9375rem;
-    border: 1px solid rgb(21 24 27 / 0.22);
+    border: 1px solid rgb(21 24 27 / 0.24);
     border-radius: 2px;
-    background: rgb(255 255 255 / 0.6);
+    background: var(--rn-field);
     color: var(--color-tinta);
     font-size: 1.0625rem;
     transition:
@@ -955,6 +801,7 @@ const f = (name: string) => `${id}-${name}`;
   }
   .rn-input:hover {
     border-color: rgb(21 24 27 / 0.45);
+    background: #fff;
   }
   .rn-input:focus-visible {
     outline: 2px solid var(--color-tinta);
@@ -1013,7 +860,7 @@ const f = (name: string) => `${id}-${name}`;
     padding: 0 1rem;
     border: 1px solid rgb(21 24 27 / 0.2);
     border-radius: 2px;
-    background: rgb(255 255 255 / 0.55);
+    background: var(--rn-field);
     font-family: var(--font-mono);
     font-size: 0.875rem;
     white-space: nowrap;
@@ -1047,7 +894,7 @@ const f = (name: string) => `${id}-${name}`;
     padding: 0.875rem 1rem;
     border: 1px dashed rgb(21 24 27 / 0.35);
     border-radius: 2px;
-    background: rgb(255 255 255 / 0.35);
+    background: var(--rn-field);
     cursor: pointer;
     transition:
       border-color 0.15s var(--ease-press),
@@ -1055,7 +902,7 @@ const f = (name: string) => `${id}-${name}`;
   }
   .rn-drop:hover {
     border-color: var(--color-tinta);
-    background: rgb(255 255 255 / 0.7);
+    background: #fff;
   }
   .rn-drop-ic {
     display: grid;
@@ -1063,8 +910,8 @@ const f = (name: string) => `${id}-${name}`;
     flex: none;
     width: 2.75rem;
     height: 2.75rem;
-    border: 1px solid rgb(21 24 27 / 0.2);
-    background: var(--color-papir);
+    border: 1px solid rgb(21 24 27 / 0.16);
+    background: #fff;
   }
   .rn.is-stepped .rn-file {
     position: absolute;
@@ -1150,7 +997,7 @@ const f = (name: string) => `${id}-${name}`;
   .rn-nav {
     padding: 1rem var(--rn-pad);
     border-top: 1px solid var(--rn-line);
-    background: rgb(226 223 216 / 0.45);
+    background: rgb(238 236 231 / 0.55);
   }
   .rn-nav-row {
     display: flex;
@@ -1294,7 +1141,7 @@ const f = (name: string) => `${id}-${name}`;
     outline: 1px solid var(--color-redline-dark);
     outline-offset: -8px;
     color: var(--color-redline-dark);
-    background: rgb(238 236 231 / 0.82);
+    background: rgb(255 255 255 / 0.86);
     transform: rotate(-6deg);
     mix-blend-mode: multiply;
   }

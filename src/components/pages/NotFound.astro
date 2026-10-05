@@ -1,6 +1,6 @@
 ---
 /**
- * 404 · "Nije po mjeri."
+ * 404 · "Nije po mjeri." Svijetli list: papir + milimetarski papir, tamna tinta.
  * Crtež: iscrtkani nacrt i stvarni lim koji je "sjeo" krivo (−6°, pomak), s crvenom kotom ± 404 mm.
  * Pokret (samo pod .motion, jednom): lim se pojavi točno na nacrtu, pa sklizne u krivi položaj (press),
  * zatim se povuče crvena kota (draft). Bez JS-a/pokreta crtež je odmah u završnom stanju.
@@ -11,40 +11,39 @@ import { site, telHref } from '@/data/site';
 const links = [
   { href: '/', label: 'Naslovnica', hint: 'Počnite ispočetka' },
   { href: '/usluge', label: 'Usluge', hint: 'Krovovi, opšavi, dimnjaci, oluci' },
-  { href: '/kontakt', label: 'Kontakt', hint: 'Telefon, WhatsApp, Viber' },
+  { href: '/kontakt', label: 'Kontakt', hint: 'Telefon i WhatsApp' },
 ];
 const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
 ---
 
-<section class="nf relative isolate overflow-hidden bg-grafit grid-paper text-linija" aria-labelledby="nf-title" data-nf>
+<section class="nf relative isolate overflow-hidden bg-papir grid-paper-light text-tinta" aria-labelledby="nf-title" data-nf>
   <div class="wrap pt-10 pb-20 sm:pt-16 sm:pb-24 lg:pt-24 lg:pb-32">
     <div class="nf-grid">
       <div class="nf-head">
-        <p class="eyebrow flex items-center gap-3 text-celik">
-          <span class="text-redline">404</span>
+        <p class="eyebrow flex items-center gap-3 text-tinta/70">
+          <span class="text-redline-dark">404</span>
           <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>
           <span>Stranica nije pronađena</span>
         </p>
-        <h1 id="nf-title" class="type-display mt-5 text-[3rem] text-balance text-white xs:text-[3.375rem] sm:text-[4.5rem] lg:text-[clamp(4.5rem,6.4vw,6.5rem)]">
+        <h1 id="nf-title" class="type-display mt-5 text-[3rem] text-balance text-tinta xs:text-[3.375rem] sm:text-[4.5rem] lg:text-[clamp(4.5rem,6.4vw,6.5rem)]">
           Nije po mjeri.
         </h1>
-        <p class="mt-6 max-w-[30rem] text-lg leading-relaxed text-pretty text-linija sm:text-xl">
+        <p class="mt-6 max-w-[30rem] text-lg leading-relaxed text-pretty text-tinta/80 sm:text-xl">
           Ova stranica ne postoji ili je premještena. Na krovu nam se to ne događa.
         </p>
       </div>
 
       <nav class="nf-links" aria-label="Kamo dalje">
-        <ul class="border-t border-linija/15">
+        <ul class="border-t border-tinta/15">
           {
-            links.map((l, i) => (
+            links.map((l) => (
               <li>
                 <a href={l.href} class="nf-link group">
-                  <span class="font-mono text-[0.75rem] tracking-[0.12em] text-redline" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
                   <span class="min-w-0">
-                    <span class="block text-[1.25rem] leading-tight font-bold text-white [font-stretch:115%] sm:text-[1.5rem]">
+                    <span class="block text-[1.25rem] leading-tight font-bold text-tinta [font-stretch:115%] sm:text-[1.5rem]">
                       {l.label}
                     </span>
-                    <span class="mt-1 block text-[0.9375rem] text-celik">{l.hint}</span>
+                    <span class="mt-1 block text-[0.9375rem] text-tinta/70">{l.hint}</span>
                   </span>
                   <span class="nf-arrow" aria-hidden="true">
                     <Icon name="arrow-right" size={20} />
@@ -54,9 +53,9 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
             ))
           }
         </ul>
-        <p class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.9375rem] text-celik">
+        <p class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.9375rem] text-tinta/70">
           Ili odmah nazovite:
-          <a href={telHref} class="inline-flex min-h-11 items-center font-mono text-[1.0625rem] tracking-[0.02em] text-white underline decoration-linija/30 underline-offset-[6px] hover:decoration-white">
+          <a href={telHref} class="inline-flex min-h-11 items-center font-mono text-[1.0625rem] tracking-[0.02em] text-tinta underline decoration-tinta/30 underline-offset-[6px] hover:decoration-tinta">
             {site.phoneDisplay}
           </a>
         </p>
@@ -95,11 +94,6 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
             <text x="426" y="395" text-anchor="end" class="nf-t nf-t--red" data-nf-label>± 404 mm</text>
           </g>
         </svg>
-        <figcaption class="nf-cap">
-          <span>List 404</span>
-          <span>Mjerilo 1 : 1</span>
-          <span class="text-linija">Status: nije po mjeri</span>
-        </figcaption>
       </figure>
     </div>
   </div>
@@ -146,12 +140,12 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
 
   .nf-link {
     display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr) 2.75rem;
+    grid-template-columns: minmax(0, 1fr) 2.75rem;
     align-items: center;
     column-gap: 1rem;
     min-height: 4.5rem;
     padding: 1rem 0;
-    border-bottom: 1px solid rgb(213 219 223 / 0.15);
+    border-bottom: 1px solid rgb(21 24 27 / 0.12);
     -webkit-tap-highlight-color: transparent;
   }
   .nf-arrow {
@@ -159,8 +153,8 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
     place-items: center;
     width: 2.75rem;
     height: 2.75rem;
-    border: 1px solid rgb(213 219 223 / 0.3);
-    color: var(--color-linija);
+    border: 1px solid rgb(21 24 27 / 0.25);
+    color: var(--color-tinta);
     transition:
       border-color 180ms var(--ease-press),
       background-color 180ms var(--ease-press),
@@ -168,8 +162,9 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
   }
   .nf-link:hover .nf-arrow,
   .nf-link:focus-visible .nf-arrow {
-    border-color: #fff;
-    color: #fff;
+    border-color: var(--color-tinta);
+    background: var(--color-tinta);
+    color: var(--color-papir);
     transform: translateX(3px);
   }
 
@@ -180,19 +175,19 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
     overflow: visible;
   }
   .nf-axis path {
-    stroke: rgb(138 147 155 / 0.45);
+    stroke: rgb(21 24 27 / 0.3);
     stroke-width: 1;
     stroke-dasharray: 18 4 2 4;
   }
   .nf-ghost {
     fill: none;
-    stroke: rgb(213 219 223 / 0.7);
+    stroke: rgb(21 24 27 / 0.6);
     stroke-width: 1.25;
     stroke-dasharray: 7 5;
   }
   .nf-plate {
-    fill: #2b3135;
-    stroke: var(--color-linija);
+    fill: var(--color-antracit);
+    stroke: var(--color-tinta);
     stroke-width: 1.5;
   }
   .nf-hem {
@@ -205,19 +200,19 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
   }
   .nf-ext {
     fill: none;
-    stroke: rgb(213 219 223 / 0.5);
+    stroke: rgb(21 24 27 / 0.45);
     stroke-width: 1;
   }
   .nf-red {
     fill: none;
-    stroke: var(--color-redline);
+    stroke: var(--color-redline-dark);
     stroke-width: 1.75;
   }
   .nf-t {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.12em;
-    fill: var(--color-celik);
+    fill: rgb(21 24 27 / 0.65);
   }
   .nf-t--plate {
     fill: rgb(213 219 223 / 0.8);
@@ -226,7 +221,7 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
     font-size: 15px;
     font-weight: 500;
     letter-spacing: 0.02em;
-    fill: var(--color-redline);
+    fill: var(--color-redline-dark);
   }
   @media (width < 40rem) {
     .nf-t {
@@ -239,20 +234,6 @@ const seams = Array.from({ length: 9 }, (_, i) => 60 + 38 * (i + 1));
       font-size: 23px;
     }
   }
-  .nf-cap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-    margin-top: 1.25rem;
-    padding-top: 0.875rem;
-    border-top: 1px solid rgb(213 219 223 / 0.15);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-celik);
-  }
-
   /* prije animacije (samo uz pokret) */
   :global(.motion) .nf-sheet,
   :global(.motion) .nf-dim {

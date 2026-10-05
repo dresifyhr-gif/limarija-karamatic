@@ -1,23 +1,21 @@
 ---
 /**
- * /kontakt · "list za kontakt" u desnom stupcu PageHera (slot "aside").
- * Prvi ekran mora imati sve radnje na dodir: telefon (veliki mono broj), WhatsApp, Viber, e-pošta.
- * Ispod: radno vrijeme i vrijeme odgovora kao mono redovi. Nepotvrđeno → <ExampleTag/>.
- *
- * Viber: na uređajima s mišem (pointer: fine) viber:// link bez Viber Desktopa ne radi ništa,
- * pa se ondje umjesto gumba prikazuje broj + "Kopiraj broj" (gumb se pojavi tek uz JS i Clipboard API).
+ * /kontakt · "list za kontakt" u desnom stupcu PageHera (slot "aside"). Bijeli list na papiru.
+ * Prvi ekran ima sve radnje na dodir: WhatsApp (slike krova), telefon (veliki mono broj), e-pošta.
+ * Poruke idu samo na WhatsApp. Ispod: radno vrijeme i vrijeme odgovora.
  */
 import Icon from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
-import ExampleTag from '@/components/ui/ExampleTag.astro';
-import { site, telHref, waHref, viberHref } from '@/data/site';
+import { site, telHref, waHref } from '@/data/site';
 ---
 
 <div class="cs relative w-full lg:ml-auto lg:max-w-[30rem]">
-  <p class="cs-cap">
-    <span class="flex items-center gap-2"><Icon name="phone" size={14} /> Kontakt</span>
-    <ExampleTag />
-  </p>
+  <div class="cs-msg">
+    <Button href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} variant="whatsapp" icon="whatsapp" class="w-full">
+      Pošaljite slike
+    </Button>
+    <p class="cs-hint">Tri slike krova i mjesto. Javimo vam što vidimo.</p>
+  </div>
 
   <a href={telHref} class="cs-tel group" aria-label={`Nazovite ${site.phoneDisplay}`}>
     <span class="cs-k">Nazovite</span>
@@ -25,24 +23,8 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     <span class="cs-call" aria-hidden="true"><Icon name="phone" size={22} /></span>
   </a>
 
-  <div class="cs-msg">
-    <Button href={waHref()} variant="whatsapp" icon="whatsapp">Pošaljite slike</Button>
-    <Button href={viberHref} variant="viber" icon="viber" class="cs-vb-btn">Viber</Button>
-    <div class="cs-vb-line">
-      <span class="cs-vb-ico" aria-hidden="true"><Icon name="viber" size={18} /></span>
-      <span class="min-w-0">
-        <span class="block text-[0.9375rem] font-semibold text-white">Viber</span>
-        <span class="block font-mono text-[0.875rem] tracking-[0.02em] text-celik">{site.phoneDisplay}</span>
-      </span>
-      <button type="button" class="cs-copy" data-copy={site.phoneDisplay} hidden>
-        <span data-copy-label>Kopiraj broj</span>
-      </button>
-      <span class="sr-only" aria-live="polite" data-copy-status></span>
-    </div>
-  </div>
-
   <a href={`mailto:${site.email}`} class="cs-mail group">
-    <Icon name="mail" size={18} class="flex-none text-celik" />
+    <Icon name="mail" size={18} class="flex-none text-tinta/60" />
     <span class="min-w-0 break-all">{site.email}</span>
     <Icon name="arrow-up-right" size={18} class="cs-mail-arrow ml-auto flex-none" />
   </a>
@@ -68,24 +50,10 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
 <style>
   .cs {
     container-type: inline-size;
-    background: var(--color-grafit-2);
-    border: 1px solid rgb(213 219 223 / 0.16);
+    background: #fff;
+    border: 1px solid rgb(21 24 27 / 0.12);
+    color: var(--color-tinta);
   }
-  .cs-cap {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.875rem 1.25rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.16);
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    line-height: 1rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-celik);
-  }
-
   /* ── telefon: cijeli red je jedan cilj dodira ── */
   .cs-tel {
     display: grid;
@@ -97,8 +65,8 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     column-gap: 1rem;
     row-gap: 0.5rem;
     padding: 1.125rem 1.25rem 1.25rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.12);
-    color: #fff;
+    border-bottom: 1px solid rgb(21 24 27 / 0.1);
+    color: var(--color-tinta);
     -webkit-tap-highlight-color: transparent;
   }
   .cs-k {
@@ -108,7 +76,7 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     line-height: 1rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-celik);
+    color: rgb(21 24 27 / 0.7);
   }
   .cs-num {
     grid-area: num;
@@ -132,11 +100,12 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     place-items: center;
     width: 3.25rem;
     height: 3.25rem;
-    border: 1px solid rgb(213 219 223 / 0.35);
-    color: #fff;
+    border: 1px solid rgb(21 24 27 / 0.25);
+    color: var(--color-tinta);
     transition:
       background-color 180ms var(--ease-press),
-      border-color 180ms var(--ease-press);
+      border-color 180ms var(--ease-press),
+      color 180ms var(--ease-press);
   }
   .cs-tel:hover .cs-num,
   .cs-tel:focus-visible .cs-num {
@@ -146,76 +115,19 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
   .cs-tel:focus-visible .cs-call {
     background: var(--color-crvena);
     border-color: var(--color-crvena);
+    color: #fff;
   }
 
-  /* ── poruke: 2 gumba (dodir) ili WhatsApp + Viber broj s kopiranjem (miš) ── */
-  /* dodir: WhatsApp i Viber u jednom redu kad stanu (≥ 390 px), inače jedan ispod drugog */
+  /* ── poruke: samo WhatsApp ── */
   .cs-msg {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
     padding: 1.25rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    border-bottom: 1px solid rgb(21 24 27 / 0.1);
   }
-  .cs-msg > :global(a) {
-    flex: 1 1 10.75rem;
-    padding-inline: 1rem;
-  }
-  .cs-msg > :global(a.cs-vb-btn) {
-    flex: 1 1 6.25rem;
-  }
-  .cs-vb-line {
-    display: none;
-  }
-  @media (pointer: fine) {
-    .cs-msg {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .cs-msg > :global(a) {
-      flex: none;
-    }
-    .cs-msg :global(.cs-vb-btn) {
-      display: none;
-    }
-    .cs-vb-line {
-      display: flex;
-      align-items: center;
-      gap: 0.875rem;
-      min-height: 2.75rem;
-      padding-top: 0.25rem;
-    }
-  }
-  .cs-vb-ico {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 2.75rem;
-    height: 2.75rem;
-    background: var(--color-viber-btn);
-    color: #fff;
-  }
-  .cs-copy {
-    margin-left: auto;
-    flex: none;
-    min-height: 2.75rem;
-    padding: 0 1rem;
-    border: 1px solid rgb(213 219 223 / 0.35);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-linija);
-    transition:
-      border-color 150ms var(--ease-press),
-      color 150ms var(--ease-press);
-  }
-  .cs-copy:hover {
-    border-color: var(--color-linija);
-    color: #fff;
-  }
-  .cs-copy[hidden] {
-    display: none;
+  .cs-hint {
+    margin-top: 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: rgb(21 24 27 / 0.7);
   }
 
   /* ── e-pošta ── */
@@ -225,20 +137,19 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     gap: 0.75rem;
     min-height: 3.5rem;
     padding: 0.5rem 1.25rem;
-    border-bottom: 1px solid rgb(213 219 223 / 0.12);
+    border-bottom: 1px solid rgb(21 24 27 / 0.1);
     font-size: 0.9375rem;
     font-weight: 600;
-    color: var(--color-linija);
-    transition: color 150ms var(--ease-press);
-  }
-  .cs-mail:hover {
-    color: #fff;
+    color: var(--color-tinta);
   }
   .cs-mail :global(.cs-mail-arrow) {
-    color: var(--color-celik);
-    transition: transform 150ms var(--ease-press);
+    color: rgb(21 24 27 / 0.5);
+    transition:
+      transform 150ms var(--ease-press),
+      color 150ms var(--ease-press);
   }
   .cs-mail:hover :global(.cs-mail-arrow) {
+    color: var(--color-tinta);
     transform: translate(2px, -2px);
   }
 
@@ -252,7 +163,7 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     line-height: 1.4;
   }
   .cs-meta > div + div {
-    border-top: 1px dashed rgb(213 219 223 / 0.12);
+    border-top: 1px solid rgb(21 24 27 / 0.08);
   }
   .cs-meta dt {
     font-family: var(--font-mono);
@@ -260,17 +171,15 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     line-height: 1.25rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--color-celik);
+    color: rgb(21 24 27 / 0.7);
   }
   .cs-meta dd {
-    font-family: var(--font-mono);
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     line-height: 1.25rem;
-    color: var(--color-linija);
+    color: var(--color-tinta);
   }
 
   @media (width >= 40rem) {
-    .cs-cap,
     .cs-tel,
     .cs-msg,
     .cs-mail,
@@ -282,37 +191,3 @@ import { site, telHref, waHref, viberHref } from '@/data/site';
     }
   }
 </style>
-
-<script>
-  function initCopy() {
-    if (!navigator.clipboard?.writeText) return;
-    document.querySelectorAll<HTMLButtonElement>('[data-copy]:not([data-copy-ready])').forEach((btn) => {
-      btn.setAttribute('data-copy-ready', '');
-      btn.hidden = false;
-      const label = btn.querySelector<HTMLElement>('[data-copy-label]');
-      const status = btn.parentElement?.querySelector<HTMLElement>('[data-copy-status]');
-      const original = label?.textContent ?? '';
-      let t: number | undefined;
-      btn.addEventListener('click', async () => {
-        try {
-          await navigator.clipboard.writeText((btn.dataset.copy ?? '').replace(/\s+/g, ' '));
-          if (label) label.textContent = 'Kopirano';
-          if (status) status.textContent = 'Broj je kopiran.';
-          window.clearTimeout(t);
-          t = window.setTimeout(() => {
-            if (label) label.textContent = original;
-            if (status) status.textContent = '';
-          }, 2000);
-        } catch {
-          /* bez dozvole: broj je ionako vidljiv */
-        }
-      });
-    });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCopy, { once: true });
-  } else {
-    initCopy();
-  }
-</script>

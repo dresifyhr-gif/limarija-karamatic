@@ -12,7 +12,7 @@ import UtilityBar from '@/components/layout/UtilityBar.astro';
 import Header from '@/components/layout/Header.astro';
 import Footer from '@/components/layout/Footer.astro';
 import MobileCtaBar from '@/components/layout/MobileCtaBar.astro';
-import { site, areas, PROTOTYPE } from '@/data/site';
+import { site, PROTOTYPE } from '@/data/site';
 import ogDefault from '@/assets/projects/krov-crijep-lim-zalazak.jpg';
 
 interface Props {
@@ -64,7 +64,8 @@ const business = {
   ],
   ...(site.googleReviewsUrl ? { sameAs: [site.googleReviewsUrl] } : {}),
   address: { '@type': 'PostalAddress', addressLocality: site.city, addressCountry: 'HR' },
-  areaServed: areas.map((a) => ({ '@type': 'City', name: a })),
+  // sjedište u Zagrebu, rade gdje god se posao isplati
+  areaServed: { '@type': 'Country', name: 'Hrvatska' },
   priceRange: '€€',
 };
 ---

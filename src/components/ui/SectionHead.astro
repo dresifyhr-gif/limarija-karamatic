@@ -30,8 +30,6 @@ const red = tone === 'dark' ? 'text-redline' : 'text-redline-dark';
 
 <header class:list={['max-w-3xl', align === 'center' && 'mx-auto text-center', className]}>
   <p class:list={['eyebrow mb-4 flex items-center gap-3', muted, align === 'center' && 'justify-center']} data-reveal>
-    {index && <span class={red}>{index}</span>}
-    {index && <span class="h-px w-8 bg-current opacity-40" aria-hidden="true"></span>}
     <span>{eyebrow}</span>
   </p>
   <Tag class:list={['type-display text-[2.125rem] sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)] text-balance', strong]} data-reveal>
