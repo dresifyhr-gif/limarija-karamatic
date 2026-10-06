@@ -1,0 +1,18 @@
+---
+/**
+ * Oznaka statusa. tone: neutral | info | success | warning | danger | muted.
+ *   <Badge tone="info">Novo</Badge>
+ *   <Badge tone={LEAD_STATUS_TONE[lead.status]}>{LEAD_STATUS_LABEL[lead.status]}</Badge>   (iz '@/lib/admin/labels')
+ */
+import type { BadgeTone } from '@/lib/admin/labels';
+
+interface Props {
+  tone?: BadgeTone;
+  /** bez točkice */
+  plain?: boolean;
+  class?: string;
+}
+const { tone = 'neutral', plain = false, class: className = '' } = Astro.props;
+---
+
+<span class:list={['a-badge', tone !== 'neutral' && `a-badge--${tone}`, plain && 'a-badge--plain', className]}><slot /></span>

@@ -1,0 +1,52 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Badge from '@/components/admin/Badge.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import { listServices } from '@/lib/server/repo/services';
+import { thumbUrl } from '@/lib/server/images';
+
+export const prerender = false;
+
+const services = await listServices();
+const thumbs = await Promise.all(services.map((s) => thumbUrl(s.cover, 160)));
+---
+
+<Admin title="Usluge" active="usluge">
+  <PageHeader title="Usluge" description="Šest usluga na stranici. Ovdje mijenjate fotografije, tekstove, popis radova i pitanja za svaku uslugu." />
+
+  <p class="a-hint mb-3 flex items-center gap-1.5 px-0.5"><AdminIcon name="grip" size={16} /> povucite za redoslijed na naslovnici i u izborniku</p>
+  <Card flush>
+    <ul role="list" data-service-list>
+      {
+        services.map((s, i) => (
+          <li class="cb-row" data-sort-item data-id={s.slug}>
+            <button type="button" class="cb-handle" data-sort-handle aria-label={`Promijeni redoslijed: ${s.title}`}>
+              <AdminIcon name="grip" size={20} />
+            </button>
+            <a href={`/admin/usluge/${s.slug}`} class="cb-thumb" tabindex="-1" aria-hidden="true">
+              {thumbs[i] && <img src={thumbs[i]} alt="" width="64" height="84" decoding="async" />}
+            </a>
+            <a href={`/admin/usluge/${s.slug}`} class="cb-row__main">
+              <span class="cb-row__title">{s.title}</span>
+              <span class="a-muted cb-clamp2 text-[0.8125rem]">{s.short}</span>
+              <span class="a-hint">
+                {s.gallery.length + 1} fotogr. · {s.includes.length} stavki · {s.faq.length} pitanja
+              </span>
+            </a>
+            {s.overridden.length > 0 && <Badge tone="info" class="hidden sm:inline-flex">Prilagođeno</Badge>}
+            <AdminIcon name="chevron-right" size={18} class="flex-none text-tinta/40" />
+          </li>
+        ))
+      }
+    </ul>
+  </Card>
+</Admin>
+
+<script>
+  import { makeSortable, saveOrder } from '@/components/admin/content/client';
+  const list = document.querySelector<HTMLElement>('[data-service-list]');
+  if (list) makeSortable(list, { onChange: (items) => saveOrder('/api/admin/services/reorder', { slugs: items.map((i) => i.dataset.id) }) });
+</script>

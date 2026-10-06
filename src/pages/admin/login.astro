@@ -1,0 +1,201 @@
+---
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@/styles/global.css';
+import '@/styles/admin.css';
+import Logo from '@/components/ui/Logo.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import { readSession } from '@/lib/server/auth';
+
+export const prerender = false;
+
+const rawNext = Astro.url.searchParams.get('next') ?? '/admin';
+const next = /^\/admin(\/|$|\?)/.test(rawNext) && !rawNext.startsWith('//') && !rawNext.startsWith('/admin/login') ? rawNext : '/admin';
+
+let session = null;
+try {
+  session = await readSession(Astro);
+} catch {}
+if (session) return Astro.redirect(next, 303);
+
+// samo poznati kodovi (tuđa poveznica ne može ispisati proizvoljan tekst)
+const LOGIN_ERRORS: Record<string, string> = {
+  podaci: 'Pogrešno korisničko ime ili lozinka.',
+  limit: 'Previše neuspjelih pokušaja. Pokušajte ponovno za 15 min.',
+  zakljucano: 'Prijava je privremeno zaključana zbog mnogo neuspjelih pokušaja. Pokušajte za sat vremena.',
+  prazno: 'Upišite korisničko ime i lozinku.',
+  baza: 'Baza trenutno nije dostupna. Pokušajte za nekoliko minuta.',
+  greska: 'Prijava trenutno nije moguća. Pokušajte ponovno.',
+};
+const errCode = Astro.url.searchParams.get('greska') ?? '';
+const error = errCode ? (LOGIN_ERRORS[errCode] ?? LOGIN_ERRORS.greska) : '';
+const odjava = Astro.url.searchParams.get('odjava');
+const loggedOut = odjava !== null;
+Astro.response.headers.set('cache-control', 'no-store');
+---
+
+<!doctype html>
+<html lang="hr" class="admin">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0e1013" />
+    <title>Prijava · Admin · Karamatić</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body class="login grid-paper a-dark min-h-dvh bg-grafit text-white">
+    <main class="mx-auto flex min-h-dvh w-full max-w-[25rem] flex-col justify-center px-5 py-10">
+      <div class="mb-8 grid justify-items-start gap-5">
+        <Logo variant="full" tone="light" class="text-[30px] sm:text-[34px]" />
+        <div class="grid gap-1.5">
+          <p class="type-mono text-[11px] tracking-[0.16em] text-white/55 uppercase">Administracija</p>
+          <h1 class="type-display text-[1.75rem] leading-none">Prijava</h1>
+        </div>
+      </div>
+
+      <form method="post" action="/api/admin/login" class="card grid gap-4 p-5 sm:p-6" data-login novalidate>
+        <input type="hidden" name="next" value={next} />
+        <div class="a-field">
+          <label class="a-label" for="username">Korisničko ime</label>
+          <input
+            id="username"
+            name="username"
+            class="a-input"
+            autocomplete="username"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            required
+            maxlength="100"
+          />
+        </div>
+        <div class="a-field">
+          <label class="a-label" for="password">Lozinka</label>
+          <div class="relative">
+            <input id="password" name="password" type="password" class="a-input pr-12" autocomplete="current-password" required maxlength="200" />
+            <button type="button" class="eye" data-eye aria-label="Prikaži lozinku" aria-pressed="false">
+              <span data-eye-on><AdminIcon name="eye" size={20} /></span>
+              <span data-eye-off hidden><AdminIcon name="eye-off" size={20} /></span>
+            </button>
+          </div>
+        </div>
+        <p class="msg" data-msg role="alert" hidden={!error}>
+          <AdminIcon name="alert" size={18} class="flex-none" />
+          <span data-msg-text>{error}</span>
+        </p>
+        {loggedOut && !error && <p class="a-hint" data-loggedout>{odjava === 'sve' ? 'Odjavljeni ste sa svih uređaja.' : 'Odjavljeni ste.'}</p>}
+        <button type="submit" class="a-btn a-btn--primary a-btn--block mt-1">Prijava</button>
+      </form>
+
+      <p class="mt-6 text-[0.8125rem] leading-relaxed text-white/50">
+        Nakon 5 pogrešnih pokušaja prijava je zaključana 15 minuta. Lozinku mijenjate u Postavkama.
+      </p>
+    </main>
+  </body>
+</html>
+
+<style>
+  .login {
+    color-scheme: dark;
+  }
+  .card {
+    background: #fff;
+    color: var(--color-tinta);
+    border-radius: 3px;
+    box-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.06),
+      0 30px 60px -30px rgb(0 0 0 / 0.8);
+  }
+  .card :focus-visible {
+    outline-color: var(--color-redline-dark);
+  }
+  .eye {
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    width: 44px;
+    display: grid;
+    place-items: center;
+    color: rgb(21 24 27 / 0.6);
+    background: transparent;
+    border: 0;
+    border-radius: 3px;
+  }
+  .eye:hover {
+    color: var(--color-tinta);
+  }
+  .msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 3px;
+    background: rgb(184 15 21 / 0.06);
+    border: 1px solid rgb(184 15 21 / 0.3);
+    color: var(--color-redline-dark);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+  .msg[hidden] {
+    display: none;
+  }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-login]')!;
+  const msg = form.querySelector<HTMLElement>('[data-msg]')!;
+  const msgText = form.querySelector<HTMLElement>('[data-msg-text]')!;
+  const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  const pw = form.querySelector<HTMLInputElement>('#password')!;
+  const user = form.querySelector<HTMLInputElement>('#username')!;
+
+  (user.value ? pw : user).focus();
+  if (new URLSearchParams(location.search).has('greska')) history.replaceState(null, '', location.pathname + `?next=${encodeURIComponent((form.elements.namedItem('next') as HTMLInputElement).value)}`);
+
+  const eye = form.querySelector<HTMLButtonElement>('[data-eye]')!;
+  eye.addEventListener('click', () => {
+    const show = pw.type === 'password';
+    pw.type = show ? 'text' : 'password';
+    eye.setAttribute('aria-pressed', String(show));
+    eye.setAttribute('aria-label', show ? 'Sakrij lozinku' : 'Prikaži lozinku');
+    eye.querySelector<HTMLElement>('[data-eye-on]')!.hidden = show;
+    eye.querySelector<HTMLElement>('[data-eye-off]')!.hidden = !show;
+  });
+
+  const showError = (t: string) => {
+    msgText.textContent = t;
+    msg.hidden = false;
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!user.value.trim() || !pw.value) return showError('Upišite korisničko ime i lozinku.');
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    msg.hidden = true;
+    form.querySelector('[data-loggedout]')?.remove();
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: user.value.trim(), password: pw.value, next: (form.elements.namedItem('next') as HTMLInputElement).value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        location.replace(data.next || '/admin');
+        return;
+      }
+      showError(data.error || 'Prijava nije uspjela.');
+      pw.select();
+    } catch {
+      showError('Nema veze s poslužiteljem. Provjerite internet.');
+    }
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+  });
+</script>

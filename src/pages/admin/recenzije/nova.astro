@@ -1,0 +1,12 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import ReviewForm from '@/components/admin/content/ReviewForm.astro';
+
+export const prerender = false;
+---
+
+<Admin title="Nova recenzija" active="recenzije">
+  <PageHeader title="Nova recenzija" back={{ href: '/admin/recenzije', label: 'Recenzije' }} />
+  <ReviewForm />
+</Admin>

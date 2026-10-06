@@ -1,0 +1,159 @@
+---
+/**
+ * Forma usluge (slug je fiksan). PUT /api/admin/services/:slug — šalje sva polja.
+ * Neobavezni naslovi (lead, includesTitle…) prazni = zadano iz site.ts (null).
+ * "Vrati izvorno" (data-reset="polje,polje") šalje null za ta polja i osvježi stranicu.
+ */
+import '@/components/admin/content/content.css';
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import Textarea from '@/components/admin/Textarea.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import ImageUploader from '@/components/admin/ImageUploader.astro';
+import ListEditor from './ListEditor.astro';
+import QaEditor from './QaEditor.astro';
+import SaveBar from './SaveBar.astro';
+import type { AdminService } from '@/lib/server/repo/services';
+import type { ImageRef } from '@/lib/types';
+
+type Thumbed = ImageRef & { thumb?: string | null };
+interface Props {
+  service: AdminService;
+  cover: Thumbed | null;
+  gallery: Thumbed[];
+}
+const { service: s, cover, gallery } = Astro.props;
+const ov = new Set<string>(s.overridden);
+const any = (...f: string[]) => f.some((x) => ov.has(x));
+const reset = (fields: string) => fields;
+---
+
+<form class="cb-form" data-guard data-service-form data-slug={s.slug} novalidate>
+  <Card title="Naslovna fotografija" description="Prikazuje se na kartici usluge i na vrhu stranice usluge.">
+    {any('cover') && <button slot="actions" type="button" class="cb-reset" data-reset={reset('cover')}>Vrati izvornu</button>}
+    <div class="max-w-[15rem]">
+      <ImageUploader name="cover" value={cover} single withAlt maxEdge={2400} hint="Uspravna fotografija izgleda najbolje" />
+    </div>
+  </Card>
+
+  <Card title="Tekstovi">
+    {any('title', 'short', 'intro') && <button slot="actions" type="button" class="cb-reset" data-reset={reset('title,short,intro')}>Vrati izvorne</button>}
+    <div class="cb-grid">
+      <Input name="title" label="Naziv usluge" value={s.title} required maxlength="120" autocomplete="off" />
+      <Textarea name="short" label="Kratki opis" value={s.short} rows={3} maxlength="400" hint="Jedna do dvije rečenice; vidi se na kartici usluge." />
+      <Textarea name="intro" label="Uvod" value={s.intro} rows={6} maxlength="4000" hint="Prvi odlomak na stranici usluge." />
+    </div>
+  </Card>
+
+  <Card title="Što uključuje">
+    {any('includes') && <button slot="actions" type="button" class="cb-reset" data-reset={reset('includes')}>Vrati izvorno</button>}
+    <ListEditor name="includes" label="Stavke" items={s.includes} maxLength={300} placeholder="npr. Demontaža starog pokrova" />
+  </Card>
+
+  <Card title="Galerija" description="Dodatne fotografije na stranici usluge. Redoslijed strelicama.">
+    {any('gallery') && <button slot="actions" type="button" class="cb-reset" data-reset={reset('gallery')}>Vrati izvornu</button>}
+    <ImageUploader name="gallery" value={gallery} withAlt max={24} maxEdge={2400} />
+  </Card>
+
+  <Card title="Česta pitanja o usluzi" description="Prikazuju se na dnu stranice usluge.">
+    {any('faq') && <button slot="actions" type="button" class="cb-reset" data-reset={reset('faq')}>Vrati izvorna</button>}
+    <QaEditor name="faq" label="Pitanja" items={s.faq} />
+  </Card>
+
+  <details class="a-card cb-details" data-advanced>
+    <summary>
+      <span class="grid gap-0.5">
+        <span>Napredno</span>
+        <span class="a-hint font-normal">Naslovi sekcija i tekst za Google</span>
+      </span>
+      <AdminIcon name="chevron-down" size={20} class="cb-chev text-tinta/60" />
+    </summary>
+    <div class="cb-details__body">
+      <div class="cb-note">
+        <AdminIcon name="info" size={18} class="mt-0.5 flex-none text-tinta/60" />
+        <span>Prazno polje znači da se koristi izvorni tekst. Naslov za Google neka bude do 60 znakova, opis do 155.</span>
+      </div>
+      <Input name="h1" label="Glavni naslov stranice (H1)" value={s.h1} required maxlength="120" autocomplete="off" />
+      <Input name="lead" label="Podnaslov" value={s.lead ?? ''} maxlength="400" placeholder={s.short} autocomplete="off" />
+      <Input name="chip" label="Kratko ime (u formi za upit)" value={s.chip} required maxlength="40" autocomplete="off" />
+      <Input name="seoTitle" label="Naslov za Google" value={s.seoTitle} required maxlength="120" autocomplete="off" />
+      <Textarea name="seoDescription" label="Opis za Google" value={s.seoDescription} rows={3} required maxlength="300" />
+      <div class="cb-grid cb-grid--2">
+        <Input name="includesTitle" label="Naslov: što uključuje" value={s.includesTitle ?? ''} maxlength="160" placeholder="zadano" autocomplete="off" />
+        <Input name="galleryTitle" label="Naslov: galerija" value={s.galleryTitle ?? ''} maxlength="160" placeholder="zadano" autocomplete="off" />
+        <Input name="galleryLead" label="Podnaslov galerije" value={s.galleryLead ?? ''} maxlength="300" placeholder="zadano" autocomplete="off" />
+        <Input name="faqTitle" label="Naslov: pitanja" value={s.faqTitle ?? ''} maxlength="160" placeholder="zadano" autocomplete="off" />
+        <Input name="relatedTitle" label="Naslov: ostale usluge" value={s.relatedTitle ?? ''} maxlength="160" placeholder="zadano" autocomplete="off" />
+      </div>
+    </div>
+  </details>
+
+  <SaveBar cancelHref="/admin/usluge" />
+</form>
+
+<script>
+  import { api, confirmDialog, errorMessage, formData, showErrors, toast } from '@/lib/admin/ui';
+  import { save, allowLeave } from '@/components/admin/content/client';
+  import type { AdminService } from '@/lib/server/repo/services';
+
+  const form = document.querySelector<HTMLFormElement>('[data-service-form]');
+  if (form) {
+    const slug = form.dataset.slug!;
+    const advanced = form.querySelector<HTMLDetailsElement>('[data-advanced]')!;
+    const opt = (v: unknown) => String(v ?? '').trim() || null;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = formData(form) as Record<string, any>;
+      if (!d.cover) {
+        showErrors(form, { cover: 'Usluga mora imati naslovnu fotografiju.' });
+        toast('Dodajte naslovnu fotografiju.', 'error');
+        return;
+      }
+      const body = {
+        title: d.title,
+        short: d.short,
+        intro: d.intro,
+        includes: d.includes ?? [],
+        cover: d.cover,
+        gallery: d.gallery ?? [],
+        faq: d.faq ?? [],
+        h1: d.h1,
+        lead: opt(d.lead),
+        chip: d.chip,
+        seoTitle: d.seoTitle,
+        seoDescription: d.seoDescription,
+        includesTitle: opt(d.includesTitle),
+        galleryTitle: opt(d.galleryTitle),
+        galleryLead: opt(d.galleryLead),
+        faqTitle: opt(d.faqTitle),
+        relatedTitle: opt(d.relatedTitle),
+      };
+      await save(form, () => api<AdminService>(`/api/admin/services/${slug}`, { method: 'PUT', body }));
+      const bad = advanced.querySelector<HTMLElement>('[aria-invalid="true"]');
+      if (bad && !form.querySelector('[aria-invalid="true"]:not([data-advanced] *)')) {
+        advanced.open = true;
+        bad.focus();
+      }
+    });
+
+    form.addEventListener('click', async (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-reset]');
+      if (!btn) return;
+      const fields = btn.dataset.reset!.split(',');
+      const ok = await confirmDialog({
+        title: 'Vratiti izvorni sadržaj?',
+        message: 'Ovaj dio usluge vraća se na tekst i fotografije s kojima je stranica izrađena. Nespremljene promjene na stranici se gube.',
+        confirmLabel: 'Vrati izvorno',
+      });
+      if (!ok) return;
+      try {
+        await api(`/api/admin/services/${slug}`, { method: 'PUT', body: Object.fromEntries(fields.map((f) => [f, null])) });
+        allowLeave();
+        location.href = `${location.pathname}?poruka=${encodeURIComponent('Vraćeno na izvorno.')}`;
+      } catch (err) {
+        toast(errorMessage(err), 'error');
+      }
+    });
+  }
+</script>

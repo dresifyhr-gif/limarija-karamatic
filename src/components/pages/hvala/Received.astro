@@ -1,17 +1,19 @@
 ---
 /**
  * /hvala · potvrda upita. Svijetla stranica: papir + milimetarski papir, bijeli list upita.
- *  - list "Upit za procjenu" (isti jezik kao forma) s velikim pečatom PRIMLJENO
- *  - čita ?upit=1234 (ili KR-1234; staro ?nalog), ?posao=<id iz jobTypes ili slug usluge> (staro ?vrsta) i ?slike=<broj>
+ *  - list "Upit za procjenu" (isti jezik kao forma); status "Primljeno · slijedi poziv" (bez pečata — vlasnik ne želi pečate/oznake)
+ *  - čita ?upit=1234 (ili U-1234 / KR-1234; staro ?nalog), ?posao=<id iz jobTypes ili slug usluge> (staro ?vrsta) i ?slike=<broj>
  *  - posao "hitno" → odmah gore crveni gumb "Nazovite odmah"; slike > 0 → okvir "Imate još slika?"
  *  - "Što slijedi" u 3 koraka, WhatsApp za slike, povratak na naslovnicu
- * Pokret (samo pod .motion): pečat se jednom utisne (press, 0,24 s). Bez JS-a pečat je već na listu.
  * Podaci se čitaju samo iz broja upita, vrste posla i broja slika; osobni podaci iz URL-a se nikad ne ispisuju.
  */
 import Icon from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
 import NextSteps from '@/components/pages/NextSteps.astro';
-import { site, telHref, waHref, jobTypes, services } from '@/data/site';
+import { jobTypes } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref, waHref, services } = await getContent();
 
 // samo poznate vrijednosti (nikad slobodan tekst iz URL-a)
 const jobs: Record<string, string> = {
@@ -31,7 +33,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
         <div class="hv-head">
           <p class="eyebrow flex flex-wrap items-center gap-2.5 text-tinta/70">
             <Icon name="check" size={14} class="text-tinta" />
-            <span>Upit <span class="text-tinta">#KR-<span data-hv-no>····</span></span></span>
+            <span>Upit <span class="text-tinta">#U-<span data-hv-no>····</span></span></span>
           </p>
           <h1 id="hv-title" class="type-display mt-5 text-[2.75rem] text-balance text-tinta xs:text-[3rem] sm:text-[4rem] lg:text-[clamp(3.5rem,5vw,5rem)]">
             Hvala. Upit je kod nas.
@@ -71,7 +73,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
       </div>
 
       <div class="hv-col hv-col--r">
-        <!-- list upita s pečatom -->
+        {/* list upita */}
         <div class="hv-sheet-wrap">
           <div class="hv-sheet bg-white text-tinta">
             <header class="grid grid-cols-[minmax(0,1fr)_auto] border-b border-tinta/15">
@@ -83,7 +85,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
               </div>
               <dl class="flex flex-col justify-center border-l border-tinta/15 px-4 font-mono sm:px-6">
                 <dt class="text-[0.625rem] tracking-[0.14em] text-tinta/70 uppercase">Br.</dt>
-                <dd class="mt-1 text-[0.875rem] font-medium whitespace-nowrap tabular-nums">KR-<span data-hv-no>····</span></dd>
+                <dd class="mt-1 text-[0.875rem] font-medium whitespace-nowrap tabular-nums">U-<span data-hv-no>····</span></dd>
               </dl>
             </header>
 
@@ -110,15 +112,6 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
               </div>
             </dl>
 
-            <!-- pečat: u HTML-u je već utisnut (završno stanje) -->
-            <div class="hv-stamp" data-hv-stamp aria-hidden="true">
-              <span class="hv-stamp-in">
-                <span class="hv-stamp-top">Limarija · Karamatić</span>
-                <span class="hv-stamp-word">Primljeno</span>
-                <span class="hv-stamp-bot">KR-<span data-hv-no>····</span> · <span data-hv-date-short>{site.city}</span></span>
-              </span>
-            </div>
-            <p class="sr-only">Status upita: primljeno.</p>
           </div>
         </div>
 
@@ -236,12 +229,15 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
     box-shadow: 0 24px 48px -28px rgb(21 24 27 / 0.35);
   }
   .hv-rows {
-    padding: 0.5rem 1.25rem 8.75rem;
+    padding: 0.5rem 1.25rem 1.5rem;
   }
   @media (width >= 40rem) {
     .hv-rows {
-      padding: 0.75rem 1.75rem 11.5rem;
+      padding: 0.75rem 1.75rem 2rem;
     }
+  }
+  .hv-rows > div:last-child {
+    border-bottom: 0;
   }
   .hv-rows > div {
     display: grid;
@@ -260,84 +256,9 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
     text-transform: uppercase;
     color: rgb(21 24 27 / 0.7);
   }
-
-  /* ── pečat ── */
-  .hv-stamp {
-    position: absolute;
-    right: 1rem;
-    bottom: 1.75rem;
-    transform: rotate(-7deg);
-    transform-origin: 60% 60%;
-    color: var(--color-redline-dark);
-    mix-blend-mode: multiply;
-    pointer-events: none;
-  }
-  @media (width >= 40rem) {
-    .hv-stamp {
-      right: 1.75rem;
-      bottom: 2.75rem;
-    }
-  }
-  .hv-stamp-in {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.5rem 1rem 0.625rem;
-    border: 3px solid currentColor;
-    outline: 1px solid currentColor;
-    outline-offset: 3px;
-    border-radius: 3px;
-  }
-  .hv-stamp-top,
-  .hv-stamp-bot {
-    font-family: var(--font-mono);
-    font-size: 0.5625rem;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .hv-stamp-top {
-    padding-bottom: 0.375rem;
-    border-bottom: 1px solid currentColor;
-    width: 100%;
-    text-align: center;
-  }
-  .hv-stamp-bot {
-    padding-top: 0.375rem;
-    border-top: 1px solid currentColor;
-    width: 100%;
-    text-align: center;
-  }
-  .hv-stamp-word {
-    padding: 0.3rem 0 0.2rem;
-    /* pečat raste s listom: nikad širi od ~80 % lista */
-    font-size: min(3.125rem, 8.4cqi);
-    font-weight: 800;
-    font-stretch: 125%;
-    line-height: 1;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-  @media (width >= 40rem) {
-    .hv-stamp-in {
-      padding: 0.625rem 1.375rem 0.75rem;
-      border-width: 4px;
-    }
-    .hv-stamp-top,
-    .hv-stamp-bot {
-      font-size: 0.6875rem;
-    }
-  }
-  :global(.motion) .hv-stamp {
-    opacity: 0;
-  }
 </style>
 
 <script>
-  import { gsap, motionOn } from '@/lib/motion';
-
   /** 1 slika · 2–4 slike · 5+ slika */
   const photosLabel = (n: number) => {
     const d = n % 10;
@@ -351,18 +272,18 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
       root.setAttribute('data-hv-ready', '');
       const params = new URLSearchParams(location.search);
 
-      // broj upita: samo 4–6 znamenki (s ili bez "KR-"); ?nalog je stari naziv
-      const m = (params.get('upit') ?? params.get('nalog') ?? '').trim().match(/^(?:KR-?)?(\d{4,6})$/i);
+      // broj upita: samo 4–6 znamenki (s ili bez "U-"/"KR-"); ?nalog je stari naziv
+      const m = (params.get('upit') ?? params.get('nalog') ?? '').trim().match(/^(?:KR-?|U-?)?(\d{4,6})$/i);
       const no = m ? m[1] : null;
       const wa = root.querySelector<HTMLAnchorElement>('[data-hv-wa]');
       if (no) {
         root.querySelectorAll<HTMLElement>('[data-hv-no]').forEach((el) => (el.textContent = no));
         if (wa) {
           // encodeURIComponent (ne URLSearchParams): razmak mora biti %20, ne "+"
-          const text = `Pozdrav, šaljem slike krova uz upit #KR-${no}.`;
+          const text = `Pozdrav, šaljem slike krova uz upit #U-${no}.`;
           wa.href = `${wa.href.split('?')[0]}?text=${encodeURIComponent(text)}`;
         }
-        document.title = `Upit KR-${no} je primljen | Limarija Karamatić`;
+        document.title = `Upit U-${no} je primljen | Limarija Karamatić`;
       }
 
       // vrsta posla: samo poznati id-jevi (?vrsta je stari naziv)
@@ -397,14 +318,6 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
         (el) => (el.textContent = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getFullYear()).slice(2)}`),
       );
 
-      // pečat: jedan otisak (press), jednom
-      const stamp = root.querySelector<HTMLElement>('[data-hv-stamp]');
-      if (!stamp || !motionOn()) return;
-      gsap.fromTo(
-        stamp,
-        { opacity: 0, scale: 1.35, rotation: -2 },
-        { opacity: 1, scale: 1, rotation: -7, duration: 0.24, ease: 'press', delay: 0.85 },
-      );
     });
   }
 

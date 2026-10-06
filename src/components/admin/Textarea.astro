@@ -1,0 +1,30 @@
+---
+/** <Textarea name="note" label="Opis" rows={5} value={p.note} hint="…" /> */
+import type { HTMLAttributes } from 'astro/types';
+import Field from './Field.astro';
+
+type Props = HTMLAttributes<'textarea'> & {
+  name: string;
+  label?: string;
+  hint?: string;
+  error?: string;
+  value?: string | null;
+  class?: string;
+  fieldClass?: string;
+};
+const { name, label, hint, error, value, class: className = '', fieldClass, id, required, rows = 4, ...rest } = Astro.props;
+const inputId = id ?? `f-${name.replace(/[^\w-]/g, '-')}`;
+---
+
+<Field label={label} for={inputId} name={name} hint={hint} error={error} required={!!required} class={fieldClass}>
+  <textarea
+    id={inputId}
+    name={name}
+    rows={rows}
+    class:list={['a-textarea', className]}
+    required={required}
+    aria-invalid={error ? 'true' : undefined}
+    aria-describedby={hint ? `${inputId}-hint` : undefined}
+    {...rest}>{value ?? ''}</textarea
+  >
+</Field>

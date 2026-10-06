@@ -1,0 +1,37 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Button from '@/components/admin/Button.astro';
+import Badge from '@/components/admin/Badge.astro';
+import ProjectForm from '@/components/admin/content/ProjectForm.astro';
+import { getProject, listProjects } from '@/lib/server/repo/projects';
+import { listServices } from '@/lib/server/repo/services';
+import { thumbUrl } from '@/lib/server/images';
+import { formatDateTime } from '@/lib/admin/labels';
+
+export const prerender = false;
+
+const id = Number(Astro.params.id);
+const project = Number.isInteger(id) && id > 0 ? await getProject(id) : null;
+if (!project) return Astro.redirect(`/admin/radovi?poruka=${encodeURIComponent('Rad ne postoji ili je obrisan.')}&vrsta=greska`, 303);
+
+const [projects, services] = await Promise.all([listProjects(), listServices()]);
+const images = await Promise.all(project.images.map(async (i) => ({ ...i, thumb: await thumbUrl(i, 360) })));
+---
+
+<Admin title={project.title} active="radovi">
+  <PageHeader title={project.title} back={{ href: '/admin/radovi', label: 'Radovi' }} description={`Zadnja promjena ${formatDateTime(project.updatedAt)}`}>
+    <Fragment slot="actions">
+      {!project.published && <Badge tone="muted">Skriveno</Badge>}
+      {project.published && project.images.length > 0 && (
+        <Button href={`/radovi/${project.slug}`} target="_blank" variant="secondary" size="sm" icon="external">Na stranici</Button>
+      )}
+    </Fragment>
+  </PageHeader>
+  <ProjectForm
+    project={project}
+    images={images}
+    services={services.map((s) => ({ value: s.slug, label: s.title }))}
+    slugs={projects.filter((p) => p.id !== project.id).map((p) => p.slug)}
+  />
+</Admin>

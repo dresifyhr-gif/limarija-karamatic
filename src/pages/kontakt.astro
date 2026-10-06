@@ -10,7 +10,9 @@ import FinalCta from '@/components/home/FinalCta.astro';
 import ContactSheet from '@/components/pages/kontakt/ContactSheet.astro';
 import ContactRows from '@/components/pages/kontakt/ContactRows.astro';
 import HeroFacts from '@/components/pages/HeroFacts.astro';
-import { site } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site } = await getContent();
 
 const crumbs = [homeCrumb, { href: '/kontakt', label: 'Kontakt' }];
 ---

@@ -1,0 +1,90 @@
+---
+/**
+ * Filtri popisa (Svi / Novo / …) kao vodoravna traka; na mobitelu klizi.
+ *   <FilterTabs label="Status" items={[{ href: '/admin/upiti', label: 'Svi', count: 12, active: true }]} />
+ */
+interface Item {
+  href: string;
+  label: string;
+  count?: number;
+  active?: boolean;
+}
+interface Props {
+  items: Item[];
+  label: string;
+  class?: string;
+}
+const { items, label, class: className = '' } = Astro.props;
+---
+
+<nav class:list={['ft', className]} aria-label={label}>
+  <ul role="list">
+    {
+      items.map((i) => (
+        <li>
+          <a href={i.href} class:list={['ft__a', i.active && 'is-active']} aria-current={i.active ? 'page' : undefined}>
+            {i.label}
+            {i.count !== undefined && <span class="ft__n">{i.count}</span>}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<style>
+  .ft {
+    margin-inline: -1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ft::-webkit-scrollbar {
+    display: none;
+  }
+  .ft ul {
+    display: flex;
+    gap: 0.375rem;
+    padding: 0 1rem;
+    width: max-content;
+  }
+  @media (width >= 40rem) {
+    .ft {
+      margin-inline: 0;
+    }
+    .ft ul {
+      padding: 0;
+    }
+  }
+  .ft__a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 40px;
+    padding: 0 0.85rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-tinta);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      border-color 150ms var(--ease-draft),
+      background 150ms var(--ease-draft);
+  }
+  .ft__a:hover {
+    border-color: var(--color-tinta);
+  }
+  .ft__a.is-active {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: #fff;
+  }
+  .ft__n {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.7;
+  }
+</style>

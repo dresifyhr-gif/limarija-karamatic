@@ -1,0 +1,130 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Field from '@/components/admin/Field.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from '@/components/admin/content/SaveBar.astro';
+
+export const prerender = false;
+
+const fields = [
+  { name: 'current', label: 'Trenutna lozinka', auto: 'current-password', hint: '' },
+  { name: 'next', label: 'Nova lozinka', auto: 'new-password', hint: 'Najmanje 10 znakova. Najbolje nekoliko riječi koje pamtite.' },
+  { name: 'repeat', label: 'Ponovite novu lozinku', auto: 'new-password', hint: '' },
+];
+---
+
+<Admin title="Lozinka" active="postavke">
+  <PageHeader title="Lozinka" back={{ href: '/admin/postavke', label: 'Postavke' }} description="Nakon promjene ostajete prijavljeni na ovom uređaju, a svi ostali uređaji se odjavljuju." />
+
+  <form class="cb-form" data-guard data-password-form novalidate>
+    <!-- korisničko ime za upravitelje lozinki -->
+    <input type="text" name="username" autocomplete="username" value={Astro.locals.admin?.username ?? ''} hidden readonly data-guard-ignore />
+    <Card title="Promjena lozinke">
+      <div class="cb-grid max-w-md">
+        {
+          fields.map((f) => (
+            <Field label={f.label} for={`pw-${f.name}`} name={f.name} hint={f.hint || undefined}>
+              <div class="pw">
+                <input id={`pw-${f.name}`} name={f.name} type="password" class="a-input" autocomplete={f.auto} maxlength="200" required spellcheck="false" autocapitalize="off" />
+                <button type="button" class="pw__eye" data-eye aria-label="Prikaži lozinku" aria-pressed="false">
+                  <AdminIcon name="eye" size={20} />
+                </button>
+              </div>
+            </Field>
+          ))
+        }
+      </div>
+    </Card>
+    <SaveBar label="Promijeni lozinku" cleanText="Upišite lozinke" cancelHref="/admin/postavke" />
+  </form>
+
+  <form method="post" action="/api/admin/logout" class="mt-6" data-logout-all>
+    <input type="hidden" name="sve" value="1" />
+    <Card title="Odjava sa svih uređaja">
+      <p class="a-hint mb-4 max-w-md">
+        Ako ste se prijavili na tuđem mobitelu ili računalu, ili ste izgubili mobitel, ovdje odjavite sve uređaje odjednom (i ovaj). Zatim se ponovno
+        prijavite.
+      </p>
+      <button type="submit" class="a-btn a-btn--secondary">
+        <AdminIcon name="logout" size={18} />
+        Odjavi sve uređaje
+      </button>
+    </Card>
+  </form>
+</Admin>
+
+<style>
+  .pw {
+    position: relative;
+  }
+  .pw .a-input {
+    padding-right: 3.25rem;
+  }
+  .pw__eye {
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: rgb(21 24 27 / 0.55);
+  }
+  .pw__eye[aria-pressed='true'] {
+    color: var(--color-tinta);
+  }
+</style>
+
+<script>
+  import { api, showErrors, toast } from '@/lib/admin/ui';
+  import { save } from '@/components/admin/content/client';
+
+  document.querySelector<HTMLFormElement>('[data-logout-all]')?.addEventListener('submit', (e) => {
+    if (!confirm('Odjaviti sve uređaje, uključujući ovaj?')) e.preventDefault();
+  });
+
+  const form = document.querySelector<HTMLFormElement>('[data-password-form]');
+  if (form) {
+    form.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-eye]');
+      if (!b) return;
+      const input = b.previousElementSibling as HTMLInputElement;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      b.setAttribute('aria-pressed', String(show));
+      b.setAttribute('aria-label', show ? 'Sakrij lozinku' : 'Prikaži lozinku');
+    });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = (n: string) => form.querySelector<HTMLInputElement>(`[name="${n}"]`)!.value;
+      const errors: Record<string, string> = {};
+      if (!v('current')) errors.current = 'Upišite trenutnu lozinku.';
+      if (v('next').length < 10) errors.next = 'Najmanje 10 znakova.';
+      else if (v('next') === v('current')) errors.next = 'Nova lozinka mora biti drukčija od trenutne.';
+      if (!errors.next && v('repeat') !== v('next')) errors.repeat = 'Lozinke se ne podudaraju.';
+      if (Object.keys(errors).length) {
+        showErrors(form, errors);
+        toast('Provjerite označena polja.', 'error');
+        return;
+      }
+      const ok = await save(form, () => api('/api/admin/password', { method: 'POST', body: { current: v('current'), next: v('next') } }), {
+        publicContent: false,
+        success: 'Lozinka je promijenjena. Ostali uređaji su odjavljeni.',
+      });
+      if (ok) {
+        form.querySelectorAll<HTMLInputElement>('input[type="password"], input[data-eye-shown]').forEach((i) => (i.value = ''));
+        form.querySelectorAll<HTMLInputElement>('.pw input').forEach((i) => {
+          i.value = '';
+          i.type = 'password';
+        });
+        form.dispatchEvent(new CustomEvent('kr:guard-reset'));
+      }
+    });
+  }
+</script>

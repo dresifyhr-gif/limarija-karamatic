@@ -18,7 +18,10 @@ import Logo from '@/components/ui/Logo.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import MotionToggle from './MotionToggle.astro';
-import { nav, services, site, telHref, waHref } from '@/data/site';
+import { nav } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, services, telHref, waHref } = await getContent();
 
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 /* "page" za točnu stranicu, "true" za roditeljsku sekciju (npr. Usluge na /usluge/dimnjaci) */
@@ -488,10 +491,10 @@ const homeLabel = `${site.name} — naslovnica`;
   /* ── /hvala: WhatsApp u zaglavlju nosi broj upita ─────── */
   const thanksWa = document.querySelectorAll<HTMLAnchorElement>('a[data-thanks-wa]');
   if (thanksWa.length) {
-    const m = (new URLSearchParams(location.search).get('upit') ?? '').trim().match(/^(?:#?KR-?)?([A-Z0-9]{3,8})$/i);
+    const m = (new URLSearchParams(location.search).get('upit') ?? '').trim().match(/^(?:#?(?:KR|U)-?)?([A-Z0-9]{3,8})$/i);
     if (m) {
       // encodeURIComponent (ne URLSearchParams): razmak mora biti %20, ne "+"
-      const text = `Pozdrav, šaljem slike krova uz upit #KR-${m[1].toUpperCase()}.`;
+      const text = `Pozdrav, šaljem slike krova uz upit #U-${m[1].toUpperCase()}.`;
       thanksWa.forEach((a) => (a.href = `${a.href.split('?')[0]}?text=${encodeURIComponent(text)}`));
     }
   }

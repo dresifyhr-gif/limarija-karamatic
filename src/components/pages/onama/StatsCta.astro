@@ -6,7 +6,9 @@
  */
 import Button from '@/components/ui/Button.astro';
 import StatLine from '@/components/ui/StatLine.astro';
-import { site, telHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref } = await getContent();
 
 interface Props {
   class?: string;

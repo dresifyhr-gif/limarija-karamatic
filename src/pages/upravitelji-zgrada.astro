@@ -13,12 +13,13 @@ import Benefits from '@/components/pages/zgrade/Benefits.astro';
 import Works from '@/components/pages/zgrade/Works.astro';
 import BuildingProcess from '@/components/pages/zgrade/BuildingProcess.astro';
 import HeroFacts from '@/components/pages/HeroFacts.astro';
-import { faq } from '@/data/site';
+import { getContent } from '@/lib/content';
 import heroImg from '@/assets/projects/atika-opsav-susjedni-krov.jpg';
 
+const { faq } = await getContent();
 const crumbs = [homeCrumb, { href: '/upravitelji-zgrada', label: 'Za upravitelje zgrada' }];
 
-// 4 pitanja (kompaktni FAQ): 2 lokalna (za upravitelje i izvođače) + 2 iz site.ts
+// 4 pitanja (kompaktni FAQ): 2 lokalna (za upravitelje i izvođače) + 2 iz admina (Česta pitanja)
 const pick = (start: string) => faq.find((f) => f.q.startsWith(start));
 const items = [
   {

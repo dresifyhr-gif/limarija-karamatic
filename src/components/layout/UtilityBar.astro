@@ -7,7 +7,9 @@
  * U CMS-u će to biti prekidač; ovdje je konstanta (prop `storm` služi samo za pregled).
  */
 import Icon from '@/components/ui/Icon.astro';
-import { site, telHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref } = await getContent();
 
 const STORM_MODE = false;
 

@@ -15,20 +15,11 @@ import Reviews from '@/components/home/Reviews.astro';
 import Managers from '@/components/home/Managers.astro';
 import Faq from '@/components/home/Faq.astro';
 import FinalCta from '@/components/home/FinalCta.astro';
-import { faq } from '@/data/site';
+import { getContent } from '@/lib/content';
 
-/* Pet pitanja na naslovnici: cijena, besplatna procjena, trajanje, jamstvo, kiša i zima.
- * Biraju se po tekstu pitanja (ne po indeksu), da preslagivanje u site.ts ništa ne pomakne. */
-const homeQuestions = [
-  'Koliko košta limeni krov po m²?',
-  'Je li procjena stvarno besplatna?',
-  'Koliko traje izrada novog krova?',
-  'Dajete li jamstvo?',
-  'Radite li po kiši i zimi?',
-];
-const homeFaq = homeQuestions
-  .map((q) => faq.find((f) => f.q === q))
-  .filter((f): f is (typeof faq)[number] => !!f);
+/* Pitanja na naslovnici: u adminu označena "na naslovnici" (on_home), redom iz admina.
+ * Početno stanje: cijena, besplatna procjena, trajanje, jamstvo, kiša i zima. */
+const { homeFaq } = await getContent();
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -44,7 +35,7 @@ const faqSchema = {
 <Base
   title="Limarija Karamatić — limeni krovovi, opšavi i oluci | Zagreb"
   description="Limeni i falcani krovovi, popravak krova, opšav atike, dimnjaci, oluci i snjegobrani. Sjedište u Zagrebu — radimo gdje god se posao isplati. Besplatna procjena: nazovite ili pošaljite slike na WhatsApp."
-  schema={[faqSchema]}
+  schema={homeFaq.length ? [faqSchema] : []}
 >
   <Hero />
   <Services />
@@ -52,6 +43,6 @@ const faqSchema = {
   <Process />
   <Reviews />
   <Managers />
-  <Faq items={homeFaq} ask={false} />
+  {homeFaq.length > 0 && <Faq items={homeFaq} ask={false} />}
   <FinalCta />
 </Base>

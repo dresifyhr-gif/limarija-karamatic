@@ -20,7 +20,9 @@
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { faq as defaultFaq, site, telHref, waHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, faq: defaultFaq, telHref, waHref } = await getContent();
 
 interface Props {
   items?: { q: string; a: string }[];

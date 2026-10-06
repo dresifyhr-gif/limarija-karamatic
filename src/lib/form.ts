@@ -2,7 +2,9 @@
  * "Upit za procjenu" (komponenta RadniNalog) — logika forme u 3 koraka.
  *
  * Bez JS-a forma je obična: sva tri koraka jedan ispod drugog, POST multipart na /api/upit
- * (TODO backend: Cloudflare Pages Function → e-mail + Telegram, odgovor 303 na /hvala?upit=…).
+ * (server sprema upit i odgovara 303 na /hvala?upit=…).
+ * S JS-om: fotografije se prije slanja smanje u pregledniku (≤ 2048 px JPEG, bez EXIF/GPS) i učitaju jedna po jedna
+ * na /api/upit/foto, a zatim se upit pošalje kao JSON na /api/upit (vraća broj upita).
  * S JS-om (ovdje) postaje koračna: validacija po koraku, crtež kuće dobiva sloj po korak,
  * a na slanje se crta crvena linija strehe i spušta pečat "PRIMLJENO". Napredak pokazuje kotni lanac
  * koraka iznad forme; crtež kuće stoji uz naslov koraka.
@@ -10,6 +12,34 @@
  * Sve je vezano uz korijen forme ([data-rn]) pa radi i s više instanci na stranici.
  */
 import { gsap, motionOn } from '@/lib/motion';
+import { prepareImage } from '@/lib/admin/upload';
+
+/** dulja stranica fotografije uz upit (dovoljno za procjenu, mali prijenos s mobitela) */
+const LEAD_PHOTO_EDGE = 2048;
+type SentPhoto = { url: string; pathname: string; width: number; height: number; sig: string };
+
+/** Smanji i pošalji jednu fotografiju na /api/upit/foto. */
+async function sendPhoto(file: File): Promise<SentPhoto> {
+  const blob = await prepareImage(file, LEAD_PHOTO_EDGE);
+  const fd = new FormData();
+  fd.append('file', blob, 'fotografija.jpg');
+  const res = await fetch('/api/upit/foto', { method: 'POST', body: fd, headers: { accept: 'application/json' } });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.url) throw new Error(data?.error ?? String(res.status));
+  return data as SentPhoto;
+}
+
+/** polje forme → korak u kojem je (za greške sa servera) */
+const FIELD_STEP: Record<string, number> = { vrsta: 1, mjesto: 2, adresa: 2, velicina: 2, napomena: 2, ime: 3, mobitel: 3, email: 3 };
+
+class SubmitError extends Error {
+  constructor(
+    message: string,
+    public fields?: Record<string, string>,
+  ) {
+    super(message);
+  }
+}
 
 const MAX_PHOTOS = 6;
 const STEPS = 3;
@@ -337,6 +367,7 @@ function initForm(form: HTMLFormElement) {
     }
 
     busy = true;
+    clearErr('submit');
     const label = btnSubmit.querySelector('span');
     const original = label?.textContent ?? '';
     btnSubmit.disabled = true;
@@ -345,37 +376,76 @@ function initForm(form: HTMLFormElement) {
     btnBack.disabled = true;
     status.textContent = 'Šaljemo upit…';
 
-    const upit = String(Math.floor(1000 + Math.random() * 9000));
     const job = form.querySelector<HTMLInputElement>('input[name="vrsta"]:checked')?.value ?? '';
-    const data = new FormData(form);
-    data.set('upit', `KR-${upit}`);
-    // fotografije uvijek iz našeg popisa (polje je onemogućeno kad ih je 6, pa ga FormData preskače)
-    data.delete('fotografije');
-    photos.forEach((p) => data.append('fotografije', p.file, p.file.name));
+    // polja forme (bez datoteka) + stranica s koje je upit poslan
+    const payload: Record<string, unknown> = {};
+    for (const [k, v] of new FormData(form).entries()) if (typeof v === 'string') payload[k] = v;
+    payload.stranica = location.pathname;
 
+    let upit = '';
+    let sentPhotos = 0;
     try {
-      // TODO(backend): ovdje ide pravi endpoint — Cloudflare Pages Function
-      //   POST /api/upit  (multipart/form-data: polja + do 6 fotografija)
-      //   → Turnstile provjera → fotografije u R2 → e-mail vlasniku (Resend) + Telegram poruka
-      //   const res = await fetch('/api/upit', { method: 'POST', body: data, headers: { Accept: 'application/json' } });
-      //   if (!res.ok) throw new Error(String(res.status));
-      //   const { upit } = await res.json();
-      void data;
-      await wait(900); // dok nema backenda: simulacija mreže
-    } catch {
+      // 1) fotografije: jedna po jedna (mobilna mreža), neuspjela se preskače — upit ne smije propasti zbog slike
+      const uploaded: SentPhoto[] = [];
+      for (let i = 0; i < photos.length; i++) {
+        const msg = photos.length === 1 ? 'Šaljemo fotografiju…' : `Šaljemo fotografije ${i + 1}/${photos.length}…`;
+        if (label) label.textContent = msg;
+        status.textContent = msg;
+        try {
+          uploaded.push(await sendPhoto(photos[i].file));
+        } catch {
+          /* npr. HEIC u pregledniku koji ga ne zna otvoriti */
+        }
+      }
+      sentPhotos = uploaded.length;
+      payload.fotografije = uploaded;
+      if (photos.length && uploaded.length < photos.length) {
+        const missing = photos.length - uploaded.length;
+        const note = String(payload.napomena ?? '').trim();
+        payload.napomena = [note, `(${missing} ${missing === 1 ? 'fotografija se nije' : 'fotografije se nisu'} uspjele poslati.)`].filter(Boolean).join('\n\n');
+      }
+      if (label) label.textContent = 'Šaljemo…';
+      status.textContent = 'Šaljemo upit…';
+
+      // 2) upit
+      const res = await fetch('/api/upit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.number) throw new SubmitError(data?.error ?? 'Slanje nije uspjelo.', data?.fields);
+      upit = String(data.number);
+    } catch (err) {
       busy = false;
       btnSubmit.disabled = false;
       btnSubmit.removeAttribute('aria-busy');
       btnBack.disabled = false;
       if (label) label.textContent = original;
-      status.textContent = 'Slanje nije uspjelo. Pokušajte ponovno ili nas nazovite.';
+      const fields = err instanceof SubmitError ? err.fields : undefined;
+      if (fields && Object.keys(fields).length) {
+        const names = Object.keys(fields);
+        names.forEach((n) => showErr(n, fields[n]));
+        const step = Math.min(...names.map((n) => FIELD_STEP[n] ?? STEPS));
+        if (step !== current) go(step, step > current ? 1 : -1);
+        const first = form.querySelector<HTMLElement>(`[name="${names[0]}"]`);
+        first?.focus();
+        status.textContent = Object.values(fields).join(' ');
+        return;
+      }
+      const msg =
+        err instanceof SubmitError && err.message !== 'Slanje nije uspjelo.'
+          ? err.message
+          : 'Slanje nije uspjelo. Provjerite internet i pokušajte ponovno ili nas nazovite.';
+      showErr('submit', msg);
+      status.textContent = msg;
       return;
     }
 
     if (label) label.textContent = 'Poslano';
     root.querySelectorAll<HTMLElement>('[data-rn-no]').forEach((el) => (el.textContent = upit));
     root.classList.add('is-sent');
-    status.textContent = `Upit KR-${upit} je primljen. Javljamo se isti radni dan.`;
+    status.textContent = `Upit U-${upit} je primljen. Javljamo se isti radni dan.`;
 
     const stamp = root.querySelector<HTMLElement>('.rn-stamp');
     const eave = drawing?.querySelector<SVGPathElement>('.rn-eave');
@@ -393,7 +463,7 @@ function initForm(form: HTMLFormElement) {
     }
     await wait(1400);
     // samo broj upita, vrsta posla i broj slika — nikad osobni podaci u URL-u
-    const q = new URLSearchParams({ upit, posao: job, slike: String(photos.length) });
+    const q = new URLSearchParams({ upit, posao: job, slike: String(sentPhotos) });
     location.assign(`/hvala?${q}`);
   });
 

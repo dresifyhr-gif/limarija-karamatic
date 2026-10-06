@@ -1,0 +1,30 @@
+---
+/**
+ * Omotač polja: oznaka + kontrola (slot) + pomoć + greška.
+ * Greška se puni i s klijenta: showErrors(form, fields) traži [data-field-error="<name>"].
+ *   <Field label="Naslov" for="title" name="title" hint="Kratko, do 60 znakova"><input id="title" name="title" class="a-input" /></Field>
+ */
+interface Props {
+  label?: string;
+  /** id kontrole (za <label for>) */
+  for?: string;
+  /** ime polja (za poruku greške s API-ja) */
+  name?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+  class?: string;
+}
+const { label, for: htmlFor, name, hint, error, required, class: className = '' } = Astro.props;
+---
+
+<div class:list={['a-field', className]}>
+  {label && (
+    <label class="a-label" for={htmlFor}>
+      {label}{required && <span class="a-req" aria-hidden="true">*</span>}
+    </label>
+  )}
+  <slot />
+  {hint && <p class="a-hint" id={htmlFor ? `${htmlFor}-hint` : undefined}>{hint}</p>}
+  <p class="a-error" data-field-error={name} hidden={!error} role="alert">{error}</p>
+</div>

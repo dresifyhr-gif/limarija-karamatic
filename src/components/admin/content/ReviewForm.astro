@@ -1,0 +1,201 @@
+---
+/**
+ * Forma recenzije (nova i uređivanje). Samo stvarne recenzije klijenata — nova traži potvrdu.
+ * POST /api/admin/reviews · PUT/DELETE /api/admin/reviews/:id
+ */
+import '@/components/admin/content/content.css';
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import Select from '@/components/admin/Select.astro';
+import Textarea from '@/components/admin/Textarea.astro';
+import Toggle from '@/components/admin/Toggle.astro';
+import Button from '@/components/admin/Button.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from './SaveBar.astro';
+import type { AdminReview } from '@/lib/server/repo/reviews';
+
+interface Props {
+  review?: AdminReview | null;
+}
+const { review = null } = Astro.props;
+const isNew = !review;
+const r = review ?? { name: '', place: '', text: '', stars: 5, source: 'Google', reviewDate: null, published: true };
+const SOURCES = ['Google', 'Facebook', 'WhatsApp', 'E-pošta', 'Osobno'];
+const sources = SOURCES.includes(r.source) || !r.source ? SOURCES : [...SOURCES, r.source];
+const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zagreb' }).format(new Date());
+---
+
+<form class="cb-form" data-guard data-review-form data-mode={isNew ? 'new' : 'edit'} data-id={review?.id} novalidate>
+  {
+    isNew && (
+      <div class="cb-note cb-note--warn">
+        <AdminIcon name="info" size={18} class="mt-0.5 flex-none" />
+        <span>Upisujte samo stvarne recenzije klijenata, prepisane kako su napisane (npr. s Google profila). Izmišljene ili primjer-recenzije nisu dopuštene.</span>
+      </div>
+    )
+  }
+
+  <Card title="Recenzija">
+    <div class="cb-grid">
+      <fieldset class="a-field">
+        <legend class="a-label mb-1.5">Ocjena</legend>
+        <div class="stars" role="radiogroup" aria-label="Ocjena od 1 do 5">
+          {
+            [1, 2, 3, 4, 5].map((n) => (
+              <label class="stars__opt" title={`${n} od 5`}>
+                <input type="radio" name="stars" value={String(n)} checked={r.stars === n} aria-label={`${n} od 5`} />
+                <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z" />
+                </svg>
+              </label>
+            ))
+          }
+          <span class="stars__val a-mono" data-stars-val>{r.stars} / 5</span>
+        </div>
+        <p class="a-error" data-field-error="stars" hidden role="alert"></p>
+      </fieldset>
+      <Textarea name="text" label="Tekst recenzije" value={r.text} rows={6} required maxlength="3000" hint="Prepišite točno kako je klijent napisao." />
+      <div class="cb-grid cb-grid--2">
+        <Input name="name" label="Ime klijenta" value={r.name} required maxlength="120" autocomplete="off" hint="Kako je potpisan, npr. Marko P." />
+        <Input name="place" label="Mjesto" value={r.place} maxlength="120" autocomplete="off" placeholder="npr. Zagreb, Dubrava" />
+        <Select name="source" label="Izvor" value={r.source || 'Google'} options={sources} />
+        <Input name="reviewDate" label="Datum recenzije" type="date" value={r.reviewDate ?? ''} max={today} />
+      </div>
+    </div>
+  </Card>
+
+  <Card title="Prikaz na stranici">
+    <div class="grid gap-3">
+      <Toggle name="published" label="Prikaži na stranici" checked={r.published} hint="Kad je isključeno, recenzija se čuva samo u adminu." />
+      {
+        isNew && (
+          <label class="a-toggle">
+            <input type="checkbox" name="confirmReal" data-guard-ignore />
+            <span class="grid gap-0.5">
+              <span class="a-label">Potvrđujem da je ovo stvarna recenzija klijenta</span>
+              <span class="a-hint">Obavezno za dodavanje.</span>
+              <span class="a-error" data-field-error="confirmReal" hidden role="alert" />
+            </span>
+          </label>
+        )
+      }
+    </div>
+  </Card>
+
+  {
+    !isNew && (
+      <Card title="Brisanje" description="Recenzija se trajno briše sa stranice.">
+        <Button variant="danger" icon="trash" data-delete-review>Obriši recenziju</Button>
+      </Card>
+    )
+  }
+
+  <SaveBar label={isNew ? 'Dodaj recenziju' : 'Spremi promjene'} always={isNew} cleanText={isNew ? 'Nova recenzija' : 'Sve je spremljeno'} cancelHref="/admin/recenzije" />
+</form>
+
+<style>
+  .stars {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+  }
+  .stars__opt {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--color-tinta);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stars__opt input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .stars__opt:has(input:focus-visible) {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: -2px;
+  }
+  .stars__opt svg path {
+    fill: currentColor;
+    transition: fill 120ms var(--ease-draft);
+  }
+  /* zvjezdice iza odabrane su prazne */
+  .stars__opt:has(input:checked) ~ .stars__opt svg path {
+    fill: transparent;
+  }
+  .stars__opt:has(input:checked) ~ .stars__opt {
+    color: rgb(21 24 27 / 0.35);
+  }
+  .stars__val {
+    margin-left: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--a-muted);
+  }
+</style>
+
+<script>
+  import { api, formData, showErrors, toast } from '@/lib/admin/ui';
+  import { save, allowLeave, confirmDelete } from '@/components/admin/content/client';
+  import type { AdminReview } from '@/lib/server/repo/reviews';
+
+  const form = document.querySelector<HTMLFormElement>('[data-review-form]');
+  if (form) {
+    const isNew = form.dataset.mode === 'new';
+    const id = form.dataset.id;
+    const val = form.querySelector<HTMLElement>('[data-stars-val]')!;
+    form.addEventListener('change', (e) => {
+      const t = e.target as HTMLInputElement;
+      if (t.name === 'stars') val.textContent = `${t.value} / 5`;
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = formData(form) as Record<string, any>;
+      if (/lorem|ipsum/i.test(`${d.text} ${d.name}`)) {
+        showErrors(form, { text: 'Ovo izgleda kao probni tekst. Upišite stvarnu recenziju.' });
+        toast('Upišite stvarnu recenziju.', 'error');
+        return;
+      }
+      if (isNew && !d.confirmReal) {
+        showErrors(form, { confirmReal: 'Potvrdite da je recenzija stvarna.' });
+        toast('Potvrdite da je recenzija stvarna.', 'error');
+        return;
+      }
+      const body = {
+        name: d.name,
+        place: d.place,
+        text: d.text,
+        stars: Number(d.stars ?? 5),
+        source: d.source,
+        reviewDate: d.reviewDate || null,
+        published: !!d.published,
+      };
+      if (isNew) {
+        const res = await save(form, () => api<AdminReview>('/api/admin/reviews', { method: 'POST', body }), { success: null });
+        if (res) {
+          allowLeave();
+          location.href = `/admin/recenzije?poruka=${encodeURIComponent('Recenzija je dodana.')}`;
+        }
+      } else {
+        await save(form, () => api<AdminReview>(`/api/admin/reviews/${id}`, { method: 'PUT', body }));
+      }
+    });
+
+    form.querySelector<HTMLButtonElement>('[data-delete-review]')?.addEventListener('click', async (e) => {
+      const ok = await confirmDelete({
+        title: 'Obrisati recenziju?',
+        message: 'Recenzija se trajno briše. Ovo se ne može poništiti.',
+        path: `/api/admin/reviews/${id}`,
+        button: e.currentTarget as HTMLButtonElement,
+      });
+      if (ok) {
+        allowLeave();
+        location.href = `/admin/recenzije?poruka=${encodeURIComponent('Recenzija je obrisana.')}`;
+      }
+    });
+  }
+</script>

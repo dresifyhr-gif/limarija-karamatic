@@ -9,7 +9,9 @@
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Photo from '@/components/ui/Photo.astro';
 import Button from '@/components/ui/Button.astro';
-import { projects, type Project } from '@/data/site';
+import { getContent, type ContentProject as Project } from '@/lib/content';
+
+const { projects } = await getContent();
 
 interface Props {
   /** pozadina i razmaci sekcije */
@@ -17,14 +19,32 @@ interface Props {
 }
 const { class: sectionClass = 'bg-papir py-24 sm:py-28 lg:py-32' } = Astro.props;
 
-const pick = (slug: string) => projects.find((p) => p.slug === slug);
+/* odabrani radovi; ako vlasnik neki obriše ili sakrije, mjesto popuni sljedeći rad
+   (izdvojeni prvo) čija naslovna fotografija još nije u kolažu */
+const chosen = new Set<Project>();
+const pick = (slug: string) => {
+  const p = projects.find((x) => x.slug === slug);
+  if (p) chosen.add(p);
+  return p;
+};
+const fill = (p: Project | undefined) => {
+  if (p) return p;
+  const used = new Set([...chosen].map((x) => x.image));
+  const next = [...projects.filter((x) => x.featured), ...projects.filter((x) => !x.featured)].find(
+    (x) => !chosen.has(x) && !used.has(x.image),
+  );
+  if (next) chosen.add(next);
+  return next;
+};
 const [p1, p2, p3, p4, p5] = [
   'krov-crijep-lim-zalazak', // 17
   'atika-kut-na-geru', // 7
   'dimnjak-oblaganje', // 8
   'falcani-krov-izlaz', // 16
   'snjegobrani-odozgo', // 13
-].map(pick) as (Project | undefined)[];
+]
+  .map(pick)
+  .map(fill) as (Project | undefined)[];
 
 type Item = { p?: Project; n: number; ratio: string; sizes: string; cls: string };
 const colA: Item[] = [{ p: p1, n: 1, ratio: 'aspect-[4/5]', sizes: '(min-width: 64rem) 36vw, 100vw', cls: 'cl-o1' }];

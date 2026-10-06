@@ -7,11 +7,13 @@
  * Raspored: ≥ lg 3 × 2 · md 2 stupca · mobitel 1 stupac kao vodoravni red (fotografija lijevo),
  *   da cijela sekcija na 390 px stane u ~1,5 ekrana.
  */
-import { services } from '@/data/site';
+import { getContent } from '@/lib/content';
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Photo from '@/components/ui/Photo.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
 import Icon from '@/components/ui/Icon.astro';
+
+const { services } = await getContent();
 
 /* jedan kratki red po usluzi — sažetak `service.short` iz site.ts (bez novih tvrdnji) */
 const line: Record<string, string> = {

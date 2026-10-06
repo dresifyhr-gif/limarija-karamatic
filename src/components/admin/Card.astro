@@ -1,0 +1,34 @@
+---
+/**
+ * Bijela ploha.
+ *   <Card title="Kontakt" description="Prikazuje se na cijeloj stranici."><slot /> <Fragment slot="actions">…</Fragment></Card>
+ *   <Card flush>…</Card>   → bez unutarnjeg razmaka (za popise .a-row / Table)
+ */
+interface Props {
+  title?: string;
+  eyebrow?: string;
+  description?: string;
+  flush?: boolean;
+  class?: string;
+  id?: string;
+  as?: 'section' | 'div' | 'article';
+}
+const { title, eyebrow, description, flush = false, class: className = '', id, as: Tag = 'section' } = Astro.props;
+const hasHead = !!(title || eyebrow || description || Astro.slots.has('actions'));
+---
+
+<Tag class:list={['a-card', className]} id={id}>
+  {
+    hasHead && (
+      <header class:list={['a-card__head', flush && 'pb-4']}>
+        <div class="grid min-w-0 gap-1">
+          {eyebrow && <p class="a-eyebrow">{eyebrow}</p>}
+          {title && <h2 class="a-h2">{title}</h2>}
+          {description && <p class="a-hint">{description}</p>}
+        </div>
+        {Astro.slots.has('actions') && <div class="flex shrink-0 items-center gap-2"><slot name="actions" /></div>}
+      </header>
+    )
+  }
+  {flush ? <div class:list={[hasHead && 'border-t border-[var(--a-line)]']}><slot /></div> : <div class="a-card__body"><slot /></div>}
+</Tag>

@@ -13,7 +13,9 @@
 import Logo from '@/components/ui/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
 import MotionToggle from './MotionToggle.astro';
-import { site, services, telHref, waHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, services, telHref, waHref } = await getContent();
 
 const year = new Date().getFullYear();
 /* Kratke oznake kao u glavnoj navigaciji; "Besplatna procjena" je već u zaglavlju, doku i obrascu iznad footera */

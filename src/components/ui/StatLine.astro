@@ -13,7 +13,9 @@
  *  class?    razmaci izvana
  */
 import Icon from '@/components/ui/Icon.astro';
-import { stats } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { stats } = await getContent();
 
 interface Props {
   heading?: string | false;

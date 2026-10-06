@@ -1,21 +1,24 @@
 /**
  * Pomoćne funkcije za podstranice (usluge, radovi). Mapa '_parts' nije ruta (Astro preskače '_').
  *
- * PRAVILO: nijedna fotografija (ImageMetadata) ne prikazuje se dvaput na istoj stranici —
+ * PRAVILO: nijedna fotografija (SiteImage) ne prikazuje se dvaput na istoj stranici —
  * ni u heru, ni u galeriji, ni na karticama radova, ni kao sličica u pločici "Svi radovi".
+ * Sadržaj (radovi, usluge, pitanja, recenzije) dolazi iz getContent() i prosljeđuje se ovim funkcijama;
+ * ista fotografija je uvijek isti objekt (i lokalna i s Bloba), pa Set/=== i dalje rade.
  */
-import type { ImageMetadata } from 'astro';
+import type { ProjectKind, Profile } from '@/data/site';
 import {
-  faq,
-  projects,
-  reviews,
-  services,
-  type Project,
-  type ProjectKind,
-  type Profile,
-  type Review,
-  type Service,
-} from '@/data/site';
+  imageAlt,
+  isRemoteImage,
+  type ContentProject,
+  type ContentReview,
+  type ContentService,
+  type FaqItem,
+  type SiteImage,
+} from '@/lib/content';
+
+/** Radovi i usluge iz getContent() (dovoljno je proslijediti cijeli rezultat). */
+export type MediaData = { projects: ContentProject[]; services: ContentService[] };
 
 /** Opisni alt za fotografije galerije koje nisu glavna slika nijednog rada ni usluge. */
 const extraAlt: Record<string, string> = {
@@ -25,24 +28,31 @@ const extraAlt: Record<string, string> = {
   'atika-opsav-alat-siroko': 'Opšav atike oko ravnog krova sa šljunkom',
 };
 
-export function altFor(img: ImageMetadata, fallback: string): string {
+export function altFor(img: SiteImage, fallback: string, { projects, services }: MediaData): string {
   const p = projects.find((x) => x.image === img);
   if (p) return p.alt;
   const s = services.find((x) => x.image === img);
   if (s) return s.imageAlt;
+  const stored = imageAlt(img);
+  if (stored) return stored;
+  if (isRemoteImage(img)) return fallback;
   const key = Object.keys(extraAlt).find((k) => img.src.includes(`/${k}.`));
   return key ? extraAlt[key] : fallback;
 }
 
 /** Jedinstvene slike, bez onih koje su već prikazane na stranici. */
-export function galleryOf(list: ImageMetadata[], ...used: (ImageMetadata | Set<ImageMetadata>)[]): ImageMetadata[] {
-  const skip = new Set<ImageMetadata>();
+export function galleryOf(list: SiteImage[], ...used: (SiteImage | Set<SiteImage>)[]): SiteImage[] {
+  const skip = new Set<SiteImage>();
   used.forEach((u) => (u instanceof Set ? u.forEach((x) => skip.add(x)) : skip.add(u)));
   return [...new Set(list)].filter((img) => !skip.has(img));
 }
 
 /** Rad kojem fotografija pripada (naslovna slika rada, inače prvi rad čija je galerija sadrži). */
-export function projectOf(img: ImageMetadata, prefer?: (p: Project) => boolean): Project | undefined {
+export function projectOf(
+  img: SiteImage,
+  projects: ContentProject[],
+  prefer?: (p: ContentProject) => boolean,
+): ContentProject | undefined {
   const covers = projects.filter((p) => p.image === img);
   const inGallery = projects.filter((p) => p.gallery.includes(img));
   return (
@@ -53,7 +63,7 @@ export function projectOf(img: ImageMetadata, prefer?: (p: Project) => boolean):
   );
 }
 
-export type GalleryImage = { src: ImageMetadata; alt: string; href?: string; hrefLabel?: string };
+export type GalleryImage = { src: SiteImage; alt: string; href?: string; hrefLabel?: string };
 
 /**
  * Raspored fotografija na stranici usluge:
@@ -63,10 +73,11 @@ export type GalleryImage = { src: ImageMetadata; alt: string; href?: string; hre
  *  4. sličice = naslovne slike drugih radova koje još nisu prikazane
  *  reserved: fotografije koje stranica prikazuje drugdje (npr. DetailSignature na /usluge/opsav-atike)
  */
-export function servicePhotos(service: Service, reserved: ImageMetadata[] = []) {
-  const used = new Set<ImageMetadata>([service.image, ...reserved]);
+export function servicePhotos(service: ContentService, data: MediaData, reserved: SiteImage[] = []) {
+  const { projects } = data;
+  const used = new Set<SiteImage>([service.image, ...reserved]);
   const own = projects.filter((p) => p.service === service.slug);
-  const heroProject = projectOf(service.image, (p) => p.service === service.slug);
+  const heroProject = projectOf(service.image, projects, (p) => p.service === service.slug);
 
   const cards = own.filter((p) => !used.has(p.image)).slice(0, 3);
   cards.forEach((p) => used.add(p.image));
@@ -76,8 +87,8 @@ export function servicePhotos(service: Service, reserved: ImageMetadata[] = []) 
   const gallery: GalleryImage[] = galleryOf([...service.gallery, ...own.flatMap((p) => p.gallery)], used)
     .slice(0, 3)
     .map((src, k) => {
-      const p = projectOf(src, (x) => x.service === service.slug);
-      const img: GalleryImage = { src, alt: altFor(src, `${service.title}, fotografija s gradilišta ${k + 2}`) };
+      const p = projectOf(src, projects, (x) => x.service === service.slug);
+      const img: GalleryImage = { src, alt: altFor(src, `${service.title}, fotografija s gradilišta ${k + 2}`, data) };
       if (p && p.image !== service.image && !linked.has(p.slug)) {
         linked.add(p.slug);
         img.href = `/radovi/${p.slug}`;
@@ -103,7 +114,7 @@ const generalFor: Record<string, RegExp[]> = {
 };
 const generalDefault = [/^Je li procjena/, /^Dajete li jamstvo/, /^Koliko traje/];
 
-export function faqFor(service: Service, max = 5): { q: string; a: string }[] {
+export function faqFor(service: ContentService, faq: FaqItem[], max = 5): FaqItem[] {
   const picks = (generalFor[service.slug] ?? generalDefault)
     .map((re) => faq.find((f) => re.test(f.q)))
     .filter((f): f is { q: string; a: string } => !!f);
@@ -114,14 +125,14 @@ export function faqFor(service: Service, max = 5): { q: string; a: string }[] {
 }
 
 /* ── Recenzija koja najbolje odgovara usluzi ──────────────────
-   Samo STVARNE recenzije iz site.ts. Dok je popis prazan, vraća undefined
+   Samo STVARNE (objavljene) recenzije iz admina. Dok je popis prazan, vraća undefined
    i stranica prikazuje samo ocjenu i brojke (bez citata i imena). */
 const reviewHint: Record<string, RegExp> = {
   dimnjaci: /dimnjak/i,
   'popravak-krova': /curi|uzrok/i,
   'opsav-atike': /atik/i,
 };
-export function reviewFor(slug?: string): Review | undefined {
+export function reviewFor(reviews: ContentReview[], slug?: string): ContentReview | undefined {
   if (!reviews.length) return undefined;
   const re = slug ? reviewHint[slug] : undefined;
   return (re && reviews.find((r) => re.test(r.text))) || reviews[0];

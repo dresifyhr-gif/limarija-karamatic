@@ -1,0 +1,184 @@
+---
+/**
+ * Uređivač parova pitanje–odgovor (npr. česta pitanja na stranici usluge).
+ *   <QaEditor name="faq" label="Česta pitanja" items={s.faq} max={20} />
+ * Vrijednost je JSON {q,a}[] u skrivenom polju `name` (data-json → formData()). Prazni parovi se izbacuju.
+ * Polja nose imena `faq.0.q`, `faq.0.a`… da showErrors() može označiti grešku s API-ja.
+ */
+import '@/components/admin/content/content.css';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+
+interface Props {
+  name: string;
+  label: string;
+  hint?: string;
+  items?: { q: string; a: string }[];
+  max?: number;
+}
+const { name, label, hint, items = [], max = 20 } = Astro.props;
+---
+
+<div class="qa a-field" data-qa data-name={name} data-max={max}>
+  <input type="hidden" name={name} value={JSON.stringify(items)} data-json data-qa-value />
+  <div class="flex items-baseline justify-between gap-3">
+    <p class="a-label">{label}</p>
+    <span class="cb-counter" data-qa-count>{items.length}/{max}</span>
+  </div>
+  {hint && <p class="a-hint -mt-0.5">{hint}</p>}
+  <ol class="qa-list" role="list" data-qa-list>
+    {
+      items.map((it, i) => (
+        <li class="qa-row" data-sort-item>
+          <div class="qa-head">
+            <button type="button" class="cb-handle" data-sort-handle aria-label="Promijeni redoslijed (povuci ili strelice)">
+              <AdminIcon name="grip" size={20} />
+            </button>
+            <span class="qa-num a-mono" aria-hidden="true"></span>
+            <button type="button" class="qa-del" data-qa-del aria-label="Ukloni pitanje">
+              <AdminIcon name="trash" size={18} />
+            </button>
+          </div>
+          <div class="qa-fields">
+            <input class="a-input font-semibold" type="text" name={`${name}.${i}.q`} value={it.q} placeholder="Pitanje" maxlength="300" aria-label="Pitanje" data-qa-q data-guard-ignore />
+            <textarea class="a-textarea" name={`${name}.${i}.a`} rows="3" placeholder="Odgovor" maxlength="4000" aria-label="Odgovor" data-qa-a data-guard-ignore>{it.a}</textarea>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+  <button type="button" class="a-btn a-btn--secondary a-btn--sm w-fit" data-qa-add>
+    <AdminIcon name="plus" size={18} />
+    Dodaj pitanje
+  </button>
+  <p class="a-error" data-field-error={name} hidden role="alert"></p>
+  <template data-qa-tpl>
+    <li class="qa-row" data-sort-item>
+      <div class="qa-head">
+            <button type="button" class="cb-handle" data-sort-handle aria-label="Promijeni redoslijed (povuci ili strelice)">
+              <AdminIcon name="grip" size={20} />
+            </button>
+            <span class="qa-num a-mono" aria-hidden="true"></span>
+            <button type="button" class="qa-del" data-qa-del aria-label="Ukloni pitanje">
+              <AdminIcon name="trash" size={18} />
+            </button>
+          </div>
+      <div class="qa-fields">
+        <input class="a-input font-semibold" type="text" placeholder="Pitanje" maxlength="300" aria-label="Pitanje" data-qa-q data-guard-ignore />
+        <textarea class="a-textarea" rows="3" placeholder="Odgovor" maxlength="4000" aria-label="Odgovor" data-qa-a data-guard-ignore></textarea>
+      </div>
+        </li>
+  </template>
+</div>
+
+<style>
+  .qa-list {
+    display: grid;
+    gap: 0.75rem;
+    counter-reset: qa;
+  }
+  .qa-list:empty {
+    display: none;
+  }
+  .qa-list {
+    counter-reset: qa;
+  }
+  .qa-row {
+    counter-increment: qa;
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem 0.85rem;
+    border: 1px solid var(--a-line);
+    border-radius: 3px;
+  }
+  .qa-head {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .qa-num {
+    flex: 1;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--a-muted);
+  }
+  .qa-num::before {
+    content: 'PITANJE ' counter(qa, decimal-leading-zero);
+  }
+  .qa-fields {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .qa-fields .a-textarea {
+    min-height: 5.5rem;
+  }
+  .qa-del {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 48px;
+    margin-right: -0.4rem;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: rgb(21 24 27 / 0.45);
+  }
+  .qa-del:hover {
+    color: var(--color-redline-dark);
+    background: rgb(184 15 21 / 0.05);
+  }
+  [data-qa][data-full] [data-qa-add] {
+    display: none;
+  }
+</style>
+
+<script>
+  import { makeSortable } from '@/components/admin/content/client';
+
+  document.querySelectorAll<HTMLElement>('[data-qa]').forEach((root) => {
+    const name = root.dataset.name!;
+    const list = root.querySelector<HTMLOListElement>('[data-qa-list]')!;
+    const tpl = root.querySelector<HTMLTemplateElement>('[data-qa-tpl]')!;
+    const hidden = root.querySelector<HTMLInputElement>('[data-qa-value]')!;
+    const count = root.querySelector<HTMLElement>('[data-qa-count]')!;
+    const max = Number(root.dataset.max || 20);
+    const sync = () => {
+      const rows = [...list.children] as HTMLElement[];
+      const value: { q: string; a: string }[] = [];
+      rows.forEach((li) => {
+        const q = li.querySelector<HTMLInputElement>('[data-qa-q]')!;
+        const a = li.querySelector<HTMLTextAreaElement>('[data-qa-a]')!;
+        if (q.value.trim() || a.value.trim()) {
+          const i = value.length;
+          q.name = `${name}.${i}.q`;
+          a.name = `${name}.${i}.a`;
+          value.push({ q: q.value.trim(), a: a.value.trim() });
+        } else {
+          q.removeAttribute('name');
+          a.removeAttribute('name');
+        }
+      });
+      hidden.value = JSON.stringify(value);
+      count.textContent = `${rows.length}/${max}`;
+      root.toggleAttribute('data-full', rows.length >= max);
+      hidden.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    root.toggleAttribute('data-full', list.children.length >= max);
+    root.querySelector('[data-qa-add]')!.addEventListener('click', () => {
+      if (list.children.length >= max) return;
+      const li = tpl.content.firstElementChild!.cloneNode(true) as HTMLLIElement;
+      list.appendChild(li);
+      li.querySelector('input')!.focus();
+      sync();
+    });
+    list.addEventListener('click', (e) => {
+      const del = (e.target as HTMLElement).closest('[data-qa-del]');
+      if (!del) return;
+      del.closest('li')!.remove();
+      sync();
+    });
+    list.addEventListener('input', sync);
+    makeSortable(list, { onChange: sync });
+  });
+</script>

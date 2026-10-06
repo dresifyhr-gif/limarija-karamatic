@@ -10,7 +10,11 @@ import SectionHead from '@/components/ui/SectionHead.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
 import ProjectCard from '@/components/ui/ProjectCard.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { projects, type Profile, type Project } from '@/data/site';
+import type { Profile } from '@/data/site';
+import { getContent, type ContentProject as Project } from '@/lib/content';
+import heroImage from '@/assets/projects/atika-opsav-susjedni-krov.jpg';
+
+const { projects } = await getContent();
 
 interface Props {
   class?: string;
@@ -46,9 +50,20 @@ const types: { profile: Profile; title: string; text: string }[] = [
 ];
 
 // fotografije 4, 2, 10, 7 (vidi docs/creative-direction.md)
-const picks = ['ravni-krov-gromobran', 'atika-sljunak', 'ravni-krov-trapez-medvednica', 'atika-kut-na-geru']
+const preferred = ['ravni-krov-gromobran', 'atika-sljunak', 'ravni-krov-trapez-medvednica', 'atika-kut-na-geru']
   .map((slug) => projects.find((p) => p.slug === slug))
   .filter((p): p is Project => !!p);
+/* ako vlasnik neki od tih radova obriše ili sakrije: dopuni atikama i ravnim krovovima (pa ostalima) do četiri,
+   bez ponavljanja naslovne fotografije (hero ove stranice je atika uz susjedni krov) */
+const picks = [...preferred];
+for (const p of [
+  ...projects.filter((x) => x.kind === 'atika' || x.kind === 'ravni'),
+  ...projects.filter((x) => x.kind !== 'atika' && x.kind !== 'ravni'),
+]) {
+  if (picks.length >= 4) break;
+  if (picks.includes(p) || picks.some((x) => x.image === p.image) || p.image === heroImage) continue;
+  picks.push(p);
+}
 ---
 
 <section id="radovi-zgrade" class:list={['text-tinta', sectionClass]}>

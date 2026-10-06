@@ -1,9 +1,9 @@
 ---
 /**
- * Kratki dokaz uz formu (papir), bez broja sekcije. Sve vrijednosti dolaze iz site.ts.
+ * Kratki dokaz uz formu (papir), bez broja sekcije. Sve vrijednosti dolaze iz admina (getContent).
  *  - Bez recenzija (reviews = []): samo brojke iz `stats` kao zajednička kota (ui/StatLine) —
  *    bez citata, imena i izmišljenog teksta.
- *  - Čim se u site.ts doda stvarna recenzija: ocjena · recenzija (najbliža usluzi) · jamstvo.
+ *  - Čim vlasnik objavi stvarnu recenziju: ocjena · recenzija (najbliža usluzi) · jamstvo.
  * Poveznica "Recenzije na Googleu" samo kad postoji site.googleReviewsUrl.
  *  slug?   usluga → bira recenziju koja joj najbolje odgovara
  *  class?  pozadina i razmaci sekcije (default "bg-white pt-20 sm:pt-24 lg:pt-28" — bez donjeg razmaka,
@@ -11,8 +11,11 @@
  */
 import Icon from '@/components/ui/Icon.astro';
 import StatLine from '@/components/ui/StatLine.astro';
-import { site, stats, type Stat } from '@/data/site';
+import type { Stat } from '@/data/site';
+import { getContent } from '@/lib/content';
 import { reviewFor } from './media';
+
+const { contact: site, stats, reviews } = await getContent();
 
 interface Props {
   slug?: string;
@@ -28,7 +31,7 @@ const isWarranty = (s: Stat) => /jamstvo/i.test(s.label);
 
 const g = stats.find(isRating);
 const w = stats.find(isWarranty);
-const review = reviewFor(slug);
+const review = reviewFor(reviews, slug);
 const reviewsHref = site.googleReviewsUrl;
 ---
 

@@ -1,0 +1,111 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Button from '@/components/admin/Button.astro';
+import Badge from '@/components/admin/Badge.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import { listProjects } from '@/lib/server/repo/projects';
+import { listServices } from '@/lib/server/repo/services';
+import { thumbUrl } from '@/lib/server/images';
+import { projectKinds } from '@/data/site';
+
+export const prerender = false;
+
+const [projects, services] = await Promise.all([listProjects(), listServices()]);
+const thumbs = await Promise.all(projects.map((p) => thumbUrl(p.images[0], 160)));
+const serviceTitle = Object.fromEntries(services.map((s) => [s.slug, s.title]));
+const published = projects.filter((p) => p.published).length;
+const featured = projects.filter((p) => p.featured).length;
+---
+
+<Admin title="Radovi" active="radovi">
+  <PageHeader title="Radovi" description="Radovi s fotografijama na stranici. Redoslijed ovdje je redoslijed na stranici.">
+    <Button slot="actions" href="/admin/radovi/novi" icon="plus">Dodaj rad</Button>
+  </PageHeader>
+
+  {
+    projects.length === 0 ? (
+      <Card>
+        <EmptyState icon="image" title="Još nema radova" text="Dodajte prvi rad: nekoliko fotografija, naslov i kratak opis.">
+          <Button href="/admin/radovi/novi" icon="plus">Dodaj rad</Button>
+        </EmptyState>
+      </Card>
+    ) : (
+      <>
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-0.5">
+          <p class="cb-counter" data-summary>
+            {projects.length} radova · {published} na stranici · <span data-featured-count>{featured}</span> istaknuto
+          </p>
+          <p class="a-hint flex items-center gap-1.5">
+            <AdminIcon name="grip" size={16} /> povucite za redoslijed
+            <span class="mx-1 text-tinta/30">·</span>
+            <AdminIcon name="star" size={16} /> istaknuto na naslovnici
+          </p>
+        </div>
+        <Card flush>
+          <ul role="list" data-project-list>
+            {projects.map((p, i) => (
+              <li class="cb-row" data-sort-item data-id={p.id}>
+                <button type="button" class="cb-handle" data-sort-handle aria-label={`Promijeni redoslijed: ${p.title}`}>
+                  <AdminIcon name="grip" size={20} />
+                </button>
+                <a href={`/admin/radovi/${p.id}`} class="cb-thumb" tabindex="-1" aria-hidden="true">
+                  {thumbs[i] ? (
+                    <img src={thumbs[i]} alt="" width="64" height="84" loading={i < 8 ? 'eager' : 'lazy'} decoding="async" />
+                  ) : (
+                    <span class="grid size-full place-items-center text-tinta/35">
+                      <AdminIcon name="image" size={22} />
+                    </span>
+                  )}
+                </a>
+                <a href={`/admin/radovi/${p.id}`} class="cb-row__main">
+                  <span class="cb-row__title cb-clamp2">{p.title}</span>
+                  <span class="a-muted truncate text-[0.8125rem]">
+                    {[projectKinds[p.kind], p.location, p.year].filter(Boolean).join(' · ')}
+                  </span>
+                  <span class="mt-0.5 flex flex-wrap gap-1.5 empty:hidden">
+                    {!p.published && <Badge tone="muted">Skriveno</Badge>}
+                    {p.images.length === 0 && <Badge tone="warning">Bez fotografije</Badge>}
+                    <span class="a-hint hidden lg:inline">{serviceTitle[p.serviceSlug] ?? ''} · {p.images.length} fotogr.</span>
+                  </span>
+                </a>
+                <label class="cb-star relative" title="Istakni na naslovnici">
+                  <input
+                    type="checkbox"
+                    checked={p.featured}
+                    data-quick-toggle
+                    data-url={`/api/admin/projects/${p.id}`}
+                    data-field="featured"
+                    data-on="Rad je istaknut na naslovnici."
+                    data-off="Rad više nije istaknut."
+                    aria-label={`Istakni na naslovnici: ${p.title}`}
+                  />
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z" />
+                  </svg>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </>
+    )
+  }
+</Admin>
+
+<script>
+  import { makeSortable, saveOrder, initOptimisticToggles } from '@/components/admin/content/client';
+
+  const list = document.querySelector<HTMLElement>('[data-project-list]');
+  if (list) {
+    makeSortable(list, { onChange: (items) => saveOrder('/api/admin/projects/reorder', { ids: items.map((i) => Number(i.dataset.id)) }) });
+    initOptimisticToggles(list);
+    const count = document.querySelector<HTMLElement>('[data-featured-count]');
+    list.addEventListener('kr:toggled', () => {
+      if (count) count.textContent = String(list.querySelectorAll('input[data-field="featured"]:checked').length);
+    });
+  }
+</script>

@@ -1,0 +1,68 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import Textarea from '@/components/admin/Textarea.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from '@/components/admin/content/SaveBar.astro';
+import { getSetting } from '@/lib/server/repo/settings';
+
+export const prerender = false;
+
+const c = await getSetting('company');
+---
+
+<Admin title="Podaci tvrtke" active="postavke">
+  <PageHeader title="Podaci tvrtke" back={{ href: '/admin/postavke', label: 'Postavke' }} description="Ispisuju se u zaglavlju i podnožju ponude." />
+
+  <form class="cb-form" data-guard data-company-form novalidate>
+    <div class="cb-note">
+      <AdminIcon name="lock" size={18} class="mt-0.5 flex-none text-tinta/60" />
+      <span>Ovi podaci <strong>ne prikazuju se na javnoj stranici</strong>, samo na ponudama. Prazno polje se na ponudi ne ispisuje.</span>
+    </div>
+
+    <Card title="Tvrtka">
+      <div class="cb-grid">
+        <Input name="naziv" label="Puni naziv" value={c.naziv} maxlength="200" autocomplete="off" placeholder="npr. Limarija Karamatić, vl. Ime Prezime" />
+        <Textarea name="adresa" label="Adresa" value={c.adresa} rows={2} maxlength="300" placeholder="Ulica i broj, poštanski broj i mjesto" />
+        <Input name="oib" label="OIB" value={c.oib} maxlength="11" inputmode="numeric" autocomplete="off" pattern="[0-9]*" placeholder="11 znamenki" />
+      </div>
+    </Card>
+
+    <Card title="Plaćanje">
+      <div class="cb-grid">
+        <Input name="iban" label="IBAN" value={c.iban} maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="HR12 3456 7890 1234 5678 9" class="a-mono" />
+        <Input name="banka" label="Banka" value={c.banka} maxlength="120" autocomplete="off" />
+      </div>
+    </Card>
+
+    <Card title="Kontakt na ponudi" description="Telefon, e-pošta i web koji se ispisuju na ponudi.">
+      <div class="cb-grid cb-grid--2">
+        <Input name="telefon" label="Telefon" value={c.telefon} maxlength="40" inputmode="tel" autocomplete="off" />
+        <Input name="email" label="E-pošta" type="email" value={c.email} maxlength="200" inputmode="email" autocomplete="off" />
+        <Input name="web" label="Web" value={c.web} maxlength="200" inputmode="url" autocomplete="off" placeholder="limarija-karamatic.hr" fieldClass="cb-span-2" />
+      </div>
+    </Card>
+
+    <SaveBar cancelHref="/admin/postavke" />
+  </form>
+</Admin>
+
+<script>
+  import { bindSettingsForm } from '@/components/admin/content/settingsSave';
+  const form = document.querySelector<HTMLFormElement>('[data-company-form]');
+  if (form) {
+    const iban = form.querySelector<HTMLInputElement>('[name="iban"]')!;
+    // IBAN u skupinama po 4 znaka (lakše za provjeru)
+    iban.addEventListener('blur', () => {
+      const raw = iban.value.replace(/\s/g, '').toUpperCase();
+      iban.value = raw.replace(/(.{4})/g, '$1 ').trim();
+      iban.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    bindSettingsForm(form, 'company', (d) => ({ ...d, oib: String(d.oib).replace(/\D/g, ''), iban: String(d.iban).toUpperCase().replace(/\s+/g, ' ').trim() }), {
+      publicContent: false,
+    });
+  }
+</script>

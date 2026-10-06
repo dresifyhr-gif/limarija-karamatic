@@ -12,7 +12,9 @@
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import RoofModels from './hero3d/RoofModels.astro';
-import { site, telHref, waHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref, waHref } = await getContent();
 ---
 
 <section id="vrh" class="hx relative overflow-hidden bg-grafit grid-paper" aria-labelledby="vrh-naslov">

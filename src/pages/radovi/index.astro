@@ -13,8 +13,11 @@ import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageH
 import ProjectCard from '@/components/ui/ProjectCard.astro';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { projects, projectKinds, site, telHref, waHref, type ProjectKind } from '@/data/site';
+import { projectKinds, type ProjectKind } from '@/data/site';
+import { getContent } from '@/lib/content';
 import { pad, radova } from '../usluge/_parts/media';
+
+const { projects, contact: site, telHref, waHref } = await getContent();
 
 const crumbs = [homeCrumb, { href: '/radovi', label: 'Radovi' }];
 

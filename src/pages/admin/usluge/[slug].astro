@@ -1,0 +1,25 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Button from '@/components/admin/Button.astro';
+import ServiceForm from '@/components/admin/content/ServiceForm.astro';
+import { getService } from '@/lib/server/repo/services';
+import { thumbUrl } from '@/lib/server/images';
+
+export const prerender = false;
+
+const service = await getService(String(Astro.params.slug ?? ''));
+if (!service) return Astro.redirect(`/admin/usluge?poruka=${encodeURIComponent('Usluga ne postoji.')}&vrsta=greska`, 303);
+
+const [coverThumb, gallery] = await Promise.all([
+  thumbUrl(service.cover, 480),
+  Promise.all(service.gallery.map(async (g) => ({ ...g, thumb: await thumbUrl(g, 360) }))),
+]);
+---
+
+<Admin title={service.title} active="usluge">
+  <PageHeader title={service.title} back={{ href: '/admin/usluge', label: 'Usluge' }} description="Tekstovi, fotografije i pitanja na stranici ove usluge.">
+    <Button slot="actions" href={`/usluge/${service.slug}`} target="_blank" variant="secondary" size="sm" icon="external">Na stranici</Button>
+  </PageHeader>
+  <ServiceForm service={service} cover={{ ...service.cover, thumb: coverThumb }} gallery={gallery} />
+</Admin>

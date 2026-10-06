@@ -1,0 +1,153 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import Textarea from '@/components/admin/Textarea.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from '@/components/admin/content/SaveBar.astro';
+import { getSetting } from '@/lib/server/repo/settings';
+import { PDV_EXEMPT_NOTE } from '@/lib/types';
+
+export const prerender = false;
+
+const q = await getSetting('quote');
+---
+
+<Admin title="PDV i uvjeti ponude" active="postavke">
+  <PageHeader title="PDV i uvjeti ponude" back={{ href: '/admin/postavke', label: 'Postavke' }} description="Zadane vrijednosti za svaku novu ponudu. Na pojedinoj ponudi ih možete promijeniti." />
+
+  <form class="cb-form" data-guard data-quote-form novalidate>
+    <Card title="PDV" description="Odaberite kako tvrtka posluje (ako niste sigurni, provjerite s knjigovođom). Utječe na izračun i tekst na ponudi.">
+      <div class="grid gap-3">
+        <div class="pdv" role="radiogroup" aria-label="PDV">
+          <label class="pdv__opt">
+            <input type="radio" name="pdvMode" value="da" checked={q.pdvEnabled} />
+            <span class="pdv__box">
+              <span class="pdv__title">U sustavu PDV-a</span>
+              <span class="pdv__text">Na cijenu se dodaje PDV.</span>
+            </span>
+          </label>
+          <label class="pdv__opt">
+            <input type="radio" name="pdvMode" value="ne" checked={!q.pdvEnabled} />
+            <span class="pdv__box">
+              <span class="pdv__title">Nije u sustavu PDV-a</span>
+              <span class="pdv__text">Bez PDV-a, uz zakonsku napomenu.</span>
+            </span>
+          </label>
+        </div>
+        <div data-pdv-on hidden={!q.pdvEnabled} class="max-w-[12rem]">
+          <Input name="pdvRate" label="Stopa PDV-a (%)" value={String(q.pdvRate).replace('.', ',')} number maxlength="6" />
+        </div>
+        <div data-pdv-off hidden={q.pdvEnabled} class="cb-note">
+          <AdminIcon name="file" size={18} class="mt-0.5 flex-none text-tinta/60" />
+          <span>Na ponudi će pisati: <strong>{PDV_EXEMPT_NOTE}</strong></span>
+        </div>
+      </div>
+    </Card>
+
+    <Card title="Uvjeti">
+      <div class="cb-grid">
+        <div class="max-w-[12rem]">
+          <Input name="validDays" label="Ponuda vrijedi (dana)" value={String(q.validDays)} number inputmode="numeric" maxlength="3" />
+        </div>
+        <Textarea name="paymentTerms" label="Uvjeti plaćanja" value={q.paymentTerms} rows={3} maxlength="2000" placeholder="npr. 30 % predujam pri narudžbi materijala, ostatak po završetku radova." />
+        <Textarea name="notes" label="Zadane napomene" value={q.notes} rows={4} maxlength="4000" hint="Upisuju se u svaku novu ponudu (npr. što cijena uključuje, jamstvo)." />
+        <Input name="footer" label="Tekst u podnožju PDF-a" value={q.footer} maxlength="300" autocomplete="off" hint="Kratko, jedna rečenica. Nije obavezno." />
+      </div>
+    </Card>
+
+    <SaveBar cancelHref="/admin/postavke" />
+  </form>
+</Admin>
+
+<style>
+  .pdv {
+    display: grid;
+    gap: 0.6rem;
+  }
+  @media (width >= 40rem) {
+    .pdv {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .pdv__opt {
+    position: relative;
+    cursor: pointer;
+  }
+  .pdv__opt input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .pdv__box {
+    display: grid;
+    gap: 0.2rem;
+    min-height: 64px;
+    padding: 0.85rem 1rem 0.85rem 2.75rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 3px;
+    background: #fff;
+    transition:
+      border-color 150ms var(--ease-draft),
+      box-shadow 150ms var(--ease-draft);
+  }
+  .pdv__box::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 1.05rem;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1.5px solid var(--a-line-strong);
+    background: #fff;
+  }
+  .pdv__opt input:checked + .pdv__box {
+    border-color: var(--color-tinta);
+    box-shadow: inset 0 0 0 1px var(--color-tinta);
+  }
+  .pdv__opt input:checked + .pdv__box::before {
+    border: 5px solid var(--color-tinta);
+  }
+  .pdv__opt input:focus-visible + .pdv__box {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+  .pdv__title {
+    font-weight: 650;
+  }
+  .pdv__text {
+    font-size: 0.8125rem;
+    color: var(--a-muted);
+  }
+</style>
+
+<script>
+  import { bindSettingsForm } from '@/components/admin/content/settingsSave';
+  const form = document.querySelector<HTMLFormElement>('[data-quote-form]');
+  if (form) {
+    const on = form.querySelector<HTMLElement>('[data-pdv-on]')!;
+    const off = form.querySelector<HTMLElement>('[data-pdv-off]')!;
+    form.addEventListener('change', (e) => {
+      const t = e.target as HTMLInputElement;
+      if (t.name !== 'pdvMode') return;
+      on.hidden = t.value !== 'da';
+      off.hidden = t.value === 'da';
+    });
+    bindSettingsForm(
+      form,
+      'quote',
+      (d) => ({
+        pdvEnabled: d.pdvMode === 'da',
+        pdvRate: d.pdvRate ?? 25,
+        validDays: d.validDays,
+        paymentTerms: d.paymentTerms,
+        notes: d.notes,
+        footer: d.footer,
+      }),
+      { publicContent: false },
+    );
+  }
+</script>

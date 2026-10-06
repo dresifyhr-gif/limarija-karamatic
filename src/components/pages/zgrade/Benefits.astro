@@ -7,7 +7,9 @@
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon, { type IconName } from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
-import { site, telHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref } = await getContent();
 
 interface Props {
   class?: string;

@@ -6,7 +6,9 @@
  */
 import Icon from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
-import { site, telHref, waHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref, waHref } = await getContent();
 ---
 
 <div class="cs relative w-full lg:ml-auto lg:max-w-[30rem]">

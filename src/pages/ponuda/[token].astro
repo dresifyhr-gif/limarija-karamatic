@@ -1,0 +1,940 @@
+---
+/**
+ * /ponuda/:token — javna stranica ponude (poveznica iz WhatsAppa). On-demand, noindex, bez referera.
+ * Papir + bijeli list: znak, "sastavnica" (broj, datum, rok, iznos), naručitelj/izvođač, stavke (tablica → kartice
+ * na mobitelu), zbroj, napomene, podnožje s kontaktom. Radnje: "Preuzmi PDF" i "Prihvaćam ponudu" (mirna potvrda).
+ * Prvo otvaranje bilježi viewed_at (ne kad je otvori admin ili robot za pregled poveznice).
+ */
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@/styles/global.css';
+import Logo from '@/components/ui/Logo.astro';
+import Icon from '@/components/ui/Icon.astro';
+import { getQuoteByToken, markQuoteViewed, type Quote } from '@/lib/server/repo/quotes';
+import { getSettings } from '@/lib/server/repo/settings';
+import { readSession } from '@/lib/server/auth';
+import { applyPrivateHeaders } from '@/lib/quotes/server';
+import { computeTotals } from '@/lib/quote-math';
+import { PDV_EXEMPT_NOTE, QUOTE_STATUS_LABEL, type SettingsMap } from '@/lib/types';
+import { formatDay, formatEur, formatIban, formatMoment, formatPercent, formatQty, groupItems, isExpired, validUntil, waLink } from '@/lib/quotes/shared';
+
+export const prerender = false;
+
+applyPrivateHeaders(Astro.response.headers);
+
+const token = Astro.params.token ?? '';
+let q: Quote | null = null;
+let s: SettingsMap | null = null;
+let failed = false;
+try {
+  [q, s] = await Promise.all([getQuoteByToken(token), getSettings()]);
+} catch (e) {
+  failed = true;
+  console.error('[ponuda]', (e as Error)?.message ?? e);
+}
+if (!failed && !q) Astro.response.status = 404;
+if (failed) Astro.response.status = 503;
+
+const admin = await readSession(Astro).catch(() => null);
+const ua = Astro.request.headers.get('user-agent') ?? '';
+const isBot = /bot|crawler|spider|preview|whatsapp|facebookexternalhit|telegram|slack|discord|viber|skype|linkedin|embedly|curl|wget/i.test(ua);
+if (q && !admin && !isBot && !q.viewedAt) {
+  try {
+    await markQuoteViewed(q.id);
+  } catch {
+    /* nije presudno */
+  }
+}
+
+const qs = Astro.url.searchParams;
+const errorCode = qs.get('greska');
+const ERRORS: Record<string, string> = {
+  istekla: 'Rok valjanosti ove ponude je istekao. Javite nam se za ažuriranu ponudu.',
+  neaktivna: 'Ova ponuda više nije aktivna. Javite nam se za novu ponudu.',
+  limit: 'Previše pokušaja. Pokušajte ponovno za nekoliko minuta ili nas nazovite.',
+};
+const errorMsg = errorCode ? (ERRORS[errorCode] ?? null) : null;
+
+const t = q ? computeTotals(q.items, q.pdvEnabled, q.pdvRate) : null;
+const g = q ? groupItems(q.items, q.pdvEnabled, q.pdvRate) : null;
+const until = q ? validUntil(q.issueDate, q.validDays) : '';
+const expired = q ? isExpired(q.issueDate, q.validDays) : false;
+const accepted = q?.status === 'prihvacena' && !!q.acceptedAt;
+// prihvatiti se može samo poslana ponuda (nacrt je još u izradi; isto provjerava i server)
+const canAccept = !!q && !accepted && q.status === 'poslana' && !expired;
+
+const contact = s?.contact;
+const co = s?.company;
+const name = co?.naziv || contact?.name || 'Limarija Karamatić';
+const phone = co?.telefon || contact?.phoneDisplay || '';
+const phoneHref = contact?.phoneE164 ? `tel:${contact.phoneE164}` : phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : '';
+const email = co?.email || contact?.email || '';
+const waHref = q && contact?.whatsapp ? waLink(contact.whatsapp, `Pozdrav, imam pitanje o ponudi ${q.number}.`) : '';
+const pdfHref = `/api/ponuda/${encodeURIComponent(token)}/pdf`;
+const pageTitle = q ? `Ponuda ${q.number} · ${name}` : `Ponuda · ${name}`;
+const title = q ? q.title.trim() || 'Ponuda za limarske radove' : '';
+const clientLines = q ? ([q.clientAddress, q.clientOib && `OIB: ${q.clientOib}`, q.clientPhone, q.clientEmail].filter(Boolean) as string[]) : [];
+const companyLines = co ? ([co.adresa, co.oib && `OIB: ${co.oib}`, co.iban && `IBAN: ${formatIban(co.iban)}`, co.banka].filter(Boolean) as string[]) : [];
+const days = q ? `${q.validDays} ${q.validDays % 10 === 1 && q.validDays % 100 !== 11 ? 'dan' : 'dana'}` : '';
+---
+
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#EEECE7" />
+    <title>{pageTitle}</title>
+    {q && <meta property="og:title" content={`Ponuda ${q.number} — ${name}`} />}
+    {q && <meta property="og:description" content={`${title}. Pregled ponude i PDF.`} />}
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body class="pq min-h-dvh bg-papir text-tinta">
+    {
+      admin && q && (
+        <div class="pq-admin">
+          <div class="pq-wrap flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2">
+            <span>
+              Pregled kao klijent · status: <strong>{QUOTE_STATUS_LABEL[q.status]}</strong>
+              {q.viewedAt ? ` · klijent otvorio ${formatMoment(q.viewedAt)}` : ' · klijent još nije otvorio'}
+            </span>
+            <a href={`/admin/ponude/${q.id}`}>← Natrag na uređivanje</a>
+          </div>
+        </div>
+      )
+    }
+
+    <header class="pq-wrap flex items-center justify-between gap-4 pt-6 pb-6 sm:pt-10 sm:pb-9">
+      <a href="/" class="text-tinta no-underline" aria-label={`${name} — naslovnica`}>
+        <Logo variant="full" tone="dark" class="text-[23px] sm:text-[30px]" />
+      </a>
+      {
+        phoneHref && (
+          <a href={phoneHref} class="pq-tel">
+            <Icon name="phone" size={16} />
+            <span class="font-mono">{phone}</span>
+          </a>
+        )
+      }
+    </header>
+
+    <main class="pq-wrap pb-32 sm:pb-20">
+      {
+        failed ? (
+          <div class="pq-sheet pq-pad">
+            <h1 class="pq-h1">Ponuda trenutno nije dostupna</h1>
+            <p class="mt-3 text-tinta/75">Pokušajte ponovno za minutu. Ako i dalje ne radi, nazovite nas.</p>
+          </div>
+        ) : !q || !t || !g ? (
+          <div class="pq-sheet pq-pad">
+            <p class="eyebrow text-tinta/60">Ponuda</p>
+            <h1 class="pq-h1 mt-3">Ponuda nije pronađena</h1>
+            <p class="mt-3 max-w-prose text-tinta/75">Poveznica nije ispravna ili je ponuda povučena. Javite nam se i poslat ćemo vam novu.</p>
+          </div>
+        ) : (
+          <article class="pq-sheet" aria-labelledby="pq-title">
+            {/* sastavnica */}
+            <section class="pq-block" aria-label="Podaci o ponudi">
+              <div class="pq-block__main">
+                <p class="pq-label">Ponuda</p>
+                <h1 id="pq-title" class="pq-h1 mt-2">{title}</h1>
+                {q.location.trim() && (
+                  <p class="pq-site">
+                    <span class="pq-label">Gradilište</span>
+                    <span>{q.location}</span>
+                  </p>
+                )}
+              </div>
+              <dl class="pq-block__cells">
+                <div class="pq-cell">
+                  <dt class="pq-label">Broj</dt>
+                  <dd class="pq-val">{q.number}</dd>
+                </div>
+                <div class="pq-cell">
+                  <dt class="pq-label">Datum</dt>
+                  <dd class="pq-val">{formatDay(q.issueDate)}</dd>
+                </div>
+                <div class="pq-cell">
+                  <dt class="pq-label">Vrijedi do</dt>
+                  <dd class:list={['pq-val', expired && 'text-tinta/55 line-through decoration-1']}>{formatDay(until)}</dd>
+                </div>
+                <div class="pq-cell">
+                  <dt class="pq-label">{q.pdvEnabled ? 'Ukupno s PDV-om' : 'Ukupno'}</dt>
+                  <dd class="pq-val pq-val--strong">{formatEur(t.total)}</dd>
+                </div>
+              </dl>
+            </section>
+
+            {/* stanje */}
+            {(accepted || qs.has('prihvaceno')) && q.acceptedAt && (
+              <p class="pq-note pq-note--ok" role="status" id="prihvaceno">
+                <Icon name="check" size={18} class="mt-0.5 flex-none" />
+                <span>
+                  Ponudu ste prihvatili {formatMoment(q.acceptedAt)}. Hvala na povjerenju — javit ćemo vam se radi dogovora termina.
+                </span>
+              </p>
+            )}
+            {!accepted && expired && (
+              <p class="pq-note">
+                <Icon name="clock" size={18} class="mt-0.5 flex-none" />
+                <span>Rok valjanosti ponude istekao je {formatDay(until)}. Javite nam se i poslat ćemo vam ažuriranu ponudu.</span>
+              </p>
+            )}
+            {!accepted && q.status === 'odbijena' && (
+              <p class="pq-note">
+                <span>Ova ponuda više nije aktivna. Za novu ponudu slobodno nam se javite.</span>
+              </p>
+            )}
+            {errorMsg && !accepted && (
+              <p class="pq-note pq-note--err" role="alert">
+                <span>{errorMsg}</span>
+              </p>
+            )}
+
+            {/* naručitelj / izvođač */}
+            <section class="pq-pad pq-parties" aria-label="Naručitelj i izvođač">
+              <div>
+                <p class="pq-label">Naručitelj</p>
+                <p class="mt-2 font-semibold">{q.clientName.trim() || '—'}</p>
+                {clientLines.map((l) => <p class="pq-muted">{l}</p>)}
+              </div>
+              <div>
+                <p class="pq-label">Izvođač</p>
+                <p class="mt-2 font-semibold">{name}</p>
+                {companyLines.map((l) => <p class="pq-muted">{l}</p>)}
+                {!co?.naziv && phone && <p class="pq-muted">{phone}</p>}
+              </div>
+            </section>
+
+            {q.intro.trim() && (
+              <section class="pq-pad pt-0">
+                <p class="pq-prose">{q.intro}</p>
+              </section>
+            )}
+
+            {/* stavke */}
+            <section class="pq-items" aria-label="Stavke ponude">
+              {g.groups.length === 0 ? (
+                <p class="pq-pad pq-muted">Ponuda još nema stavki.</p>
+              ) : (
+                <>
+                  <table class="pq-table">
+                    <thead>
+                      <tr>
+                        <th scope="col" class="w-12">Rb.</th>
+                        <th scope="col">Opis</th>
+                        <th scope="col" class="text-right">Količina</th>
+                        <th scope="col" class="text-right">Jed. cijena</th>
+                        {g.hasDiscount && <th scope="col" class="text-right">Popust</th>}
+                        <th scope="col" class="text-right">Iznos</th>
+                      </tr>
+                    </thead>
+                    {g.groups.map((grp) => (
+                      <tbody>
+                        {grp.title !== null && (
+                          <tr class="pq-sec">
+                            <th scope="rowgroup" colspan={g.hasDiscount ? 6 : 5}>{grp.title}</th>
+                          </tr>
+                        )}
+                        {grp.rows.map((r) => (
+                          <tr>
+                            <td class="pq-n">{String(r.n).padStart(2, '0')}</td>
+                            <td>
+                              <p class="font-semibold">{r.title || 'Stavka'}</p>
+                              {r.description.trim() && <p class="pq-desc">{r.description}</p>}
+                            </td>
+                            <td class="pq-num">{`${formatQty(r.qty)} ${r.unit}`.trim()}</td>
+                            <td class="pq-num">{formatEur(r.unitPrice)}</td>
+                            {g.hasDiscount && <td class="pq-num">{r.discount ? formatPercent(r.discount) : ''}</td>}
+                            <td class="pq-num font-medium">{formatEur(r.amount)}</td>
+                          </tr>
+                        ))}
+                        {g.hasSections && grp.title !== null && g.groups.length > 1 && (
+                          <tr class="pq-sub">
+                            <td colspan={g.hasDiscount ? 5 : 4}>Međuzbroj: {grp.title.trim()}</td>
+                            <td class="pq-num font-medium">{formatEur(grp.subtotal)}</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    ))}
+                  </table>
+
+                  {/* mobitel: kartice */}
+                  <div class="pq-cards">
+                    {g.groups.map((grp) => (
+                      <div class="pq-cardgroup">
+                        {grp.title !== null && <h2 class="pq-cardsec">{grp.title}</h2>}
+                        <ol role="list">
+                          {grp.rows.map((r) => (
+                            <li class="pq-card">
+                              <div class="flex items-start gap-3">
+                                <span class="pq-n pt-[0.15rem]">{String(r.n).padStart(2, '0')}</span>
+                                <div class="min-w-0 flex-1">
+                                  <p class="font-semibold leading-snug">{r.title || 'Stavka'}</p>
+                                  {r.description.trim() && <p class="pq-desc">{r.description}</p>}
+                                  <div class="mt-2.5 flex items-end justify-between gap-3">
+                                    <p class="font-mono text-[0.8125rem] text-tinta/70">
+                                      {`${formatQty(r.qty)} ${r.unit}`.trim()} × {formatEur(r.unitPrice)}
+                                      {r.discount ? <span class="block">popust {formatPercent(r.discount)}</span> : null}
+                                    </p>
+                                    <p class="font-mono text-[0.9375rem] font-medium whitespace-nowrap">{formatEur(r.amount)}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ol>
+                        {g.hasSections && grp.title !== null && g.groups.length > 1 && (
+                          <p class="pq-cardsub">
+                            <span>Međuzbroj: {grp.title.trim()}</span>
+                            <span class="font-mono font-medium">{formatEur(grp.subtotal)}</span>
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </section>
+
+            {/* zbroj */}
+            <section class="pq-pad pq-totals" aria-label="Zbroj">
+              <dl>
+                <div>
+                  <dt>Osnovica</dt>
+                  <dd>{formatEur(t.subtotal)}</dd>
+                </div>
+                {q.pdvEnabled && (
+                  <div>
+                    <dt>PDV {formatPercent(q.pdvRate)}</dt>
+                    <dd>{formatEur(t.pdvAmount)}</dd>
+                  </div>
+                )}
+                <div class="pq-total">
+                  <dt>Ukupno</dt>
+                  <dd>{formatEur(t.total)}</dd>
+                </div>
+              </dl>
+              <p class="pq-fine">{q.pdvEnabled ? 'Iznosi su u eurima.' : PDV_EXEMPT_NOTE}</p>
+            </section>
+
+            {/* napomene i uvjeti */}
+            <section class="pq-pad pq-terms" aria-label="Uvjeti">
+              {q.notes.trim() && (
+                <div>
+                  <h2 class="pq-label">Napomene</h2>
+                  <p class="pq-prose mt-2">{q.notes}</p>
+                </div>
+              )}
+              {q.paymentTerms.trim() && (
+                <div>
+                  <h2 class="pq-label">Uvjeti plaćanja</h2>
+                  <p class="pq-prose mt-2">{q.paymentTerms}</p>
+                </div>
+              )}
+              <div>
+                <h2 class="pq-label">Rok valjanosti</h2>
+                <p class="pq-prose mt-2">Ponuda vrijedi {days} od datuma izdavanja, do {formatDay(until)}</p>
+              </div>
+            </section>
+
+            {/* radnje */}
+            <section class="pq-pad pq-actions" aria-label="Radnje" id="radnje">
+              {canAccept ? (
+                <form method="post" action={`/api/ponuda/${encodeURIComponent(token)}/prihvat`} class="pq-accept" data-accept>
+                  <div class="pq-confirm" data-confirm hidden>
+                    <p class="font-semibold">Prihvaćate ponudu {q.number}?</p>
+                    <p class="mt-1 text-[0.9375rem] text-tinta/75">
+                      Ukupno <span class="font-mono font-medium text-tinta">{formatEur(t.total)}</span>. Nakon potvrde javljamo vam se radi dogovora termina.
+                    </p>
+                  </div>
+                  <div class="pq-btns">
+                    <a href={pdfHref} class="pq-btn pq-btn--line" download>
+                      <Icon name="file" size={18} />
+                      Preuzmi PDF
+                    </a>
+                    <button type="button" class="pq-btn pq-btn--line" data-cancel hidden>Odustani</button>
+                    <button type="submit" class="pq-btn pq-btn--primary" data-submit>
+                      <Icon name="check" size={18} />
+                      <span data-submit-label>Prihvaćam ponudu</span>
+                    </button>
+                  </div>
+                  <p class="pq-fine mt-3" data-accept-msg role="status" aria-live="polite"></p>
+                </form>
+              ) : (
+                <>
+                  <div class="pq-btns">
+                    <a href={pdfHref} class="pq-btn pq-btn--dark" download>
+                      <Icon name="file" size={18} />
+                      Preuzmi PDF
+                    </a>
+                  </div>
+                  {q.status === 'nacrt' && !expired && (
+                    <p class="pq-fine mt-3">Ako želite prihvatiti ovu ponudu, javite nam se telefonom ili porukom na WhatsApp.</p>
+                  )}
+                </>
+              )}
+            </section>
+          </article>
+        )
+      }
+
+      {/* tvrtka */}
+      <footer class="pq-foot">
+        <div>
+          <p class="font-semibold text-tinta">{name}</p>
+          {co?.adresa && <p>{co.adresa}</p>}
+          {co?.oib && <p>OIB {co.oib}</p>}
+        </div>
+        <div class="pq-foot__links">
+          {phoneHref && <a href={phoneHref}><Icon name="phone" size={16} /> <span class="font-mono">{phone}</span></a>}
+          {waHref && <a href={waHref} target="_blank" rel="noopener noreferrer"><Icon name="whatsapp" size={16} /> WhatsApp</a>}
+          {email && <a href={`mailto:${email}`}><Icon name="mail" size={16} /> {email}</a>}
+        </div>
+      </footer>
+    </main>
+
+    {
+      q && t && (
+        <div class="pq-dock" aria-hidden="true" data-dock>
+          <div>
+            <p class="pq-label">{q.pdvEnabled ? 'Ukupno s PDV-om' : 'Ukupno'}</p>
+            <p class="font-mono text-[1.0625rem] font-medium">{formatEur(t.total)}</p>
+          </div>
+          <a href="#radnje" class:list={['pq-btn', canAccept ? 'pq-btn--primary' : 'pq-btn--dark']} tabindex="-1">
+            {canAccept ? 'Prihvaćam' : 'PDF'}
+          </a>
+        </div>
+      )
+    }
+  </body>
+</html>
+
+<script>
+  // Prihvaćanje: prvi klik traži potvrdu, drugi šalje (bez JS-a forma šalje odmah → 303 natrag ovamo).
+  const form = document.querySelector<HTMLFormElement>('form[data-accept]');
+  if (form) {
+    const confirmBox = form.querySelector<HTMLElement>('[data-confirm]')!;
+    const cancel = form.querySelector<HTMLButtonElement>('[data-cancel]')!;
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]')!;
+    const label = form.querySelector<HTMLElement>('[data-submit-label]')!;
+    const msg = form.querySelector<HTMLElement>('[data-accept-msg]')!;
+    const pdf = form.querySelector<HTMLElement>('a[download]')!;
+    let armed = false;
+    const disarm = () => {
+      armed = false;
+      confirmBox.hidden = true;
+      cancel.hidden = true;
+      pdf.hidden = false;
+      label.textContent = 'Prihvaćam ponudu';
+    };
+    cancel.addEventListener('click', disarm);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!armed) {
+        armed = true;
+        confirmBox.hidden = false;
+        cancel.hidden = false;
+        pdf.hidden = true;
+        label.textContent = 'Da, prihvaćam';
+        confirmBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        return;
+      }
+      submit.disabled = true;
+      submit.setAttribute('aria-busy', 'true');
+      msg.textContent = 'Šaljemo…';
+      try {
+        const res = await fetch(form.action, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: '{}' });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error ?? 'Nije uspjelo. Pokušajte ponovno ili nas nazovite.');
+        location.replace(`${location.pathname}?prihvaceno=1`);
+      } catch (err) {
+        submit.disabled = false;
+        submit.removeAttribute('aria-busy');
+        msg.textContent = (err as Error).message;
+      }
+    });
+  }
+
+  // mobilni dock: skriva se kad su radnje u vidu
+  const dock = document.querySelector<HTMLElement>('[data-dock]');
+  const actions = document.getElementById('radnje');
+  if (dock && actions && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([en]) => dock.classList.toggle('is-hidden', en.isIntersecting), { rootMargin: '0px 0px -40px 0px' }).observe(actions);
+  }
+</script>
+
+<style>
+  .pq {
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      linear-gradient(rgb(21 24 27 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(21 24 27 / 0.035) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .pq-wrap {
+    width: 100%;
+    max-width: 58rem;
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+  @media (width >= 40rem) {
+    .pq-wrap {
+      padding-inline: 32px;
+    }
+  }
+  .pq-admin {
+    background: var(--color-grafit);
+    color: rgb(255 255 255 / 0.8);
+    font-size: 0.8125rem;
+  }
+  .pq-admin a {
+    color: #fff;
+    font-weight: 600;
+  }
+  .pq-tel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 0.25rem;
+    color: var(--color-tinta);
+    text-decoration: none;
+    font-size: 0.9375rem;
+  }
+  .pq-sheet {
+    background: #fff;
+    outline: 1px solid rgb(21 24 27 / 0.08);
+    outline-offset: -1px;
+    box-shadow:
+      0 1px 2px rgb(21 24 27 / 0.04),
+      0 24px 48px -28px rgb(21 24 27 / 0.28);
+  }
+  .pq-pad {
+    padding: 1.5rem 1.25rem;
+  }
+  @media (width >= 40rem) {
+    .pq-pad {
+      padding: 1.75rem 2.25rem;
+    }
+  }
+  .pq-h1 {
+    font-weight: 800;
+    font-stretch: 125%;
+    font-size: clamp(1.5rem, 5.4vw, 2.125rem);
+    line-height: 1.08;
+    letter-spacing: -0.005em;
+    text-wrap: balance;
+  }
+  .pq-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.6);
+  }
+  .pq-muted {
+    color: rgb(21 24 27 / 0.72);
+    font-size: 0.9375rem;
+  }
+  .pq-prose {
+    white-space: pre-line;
+    color: rgb(21 24 27 / 0.85);
+    max-width: 44rem;
+    text-wrap: pretty;
+  }
+  .pq-fine {
+    font-size: 0.8125rem;
+    color: rgb(21 24 27 / 0.6);
+  }
+
+  /* sastavnica */
+  .pq-block {
+    display: grid;
+    border-bottom: 1px solid var(--color-tinta);
+  }
+  .pq-block__main {
+    padding: 1.5rem 1.25rem 1.25rem;
+    border-bottom: 1px solid var(--color-tinta);
+    display: grid;
+    align-content: start;
+  }
+  .pq-site {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    margin-top: 1rem;
+    color: rgb(21 24 27 / 0.8);
+    font-size: 0.9375rem;
+  }
+  .pq-block__cells {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .pq-cell {
+    padding: 0.85rem 1.25rem 0.95rem;
+    border-bottom: 1px solid var(--color-linija);
+  }
+  .pq-cell:nth-child(odd) {
+    border-right: 1px solid var(--color-linija);
+  }
+  .pq-cell:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+  .pq-val {
+    margin-top: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+  .pq-val--strong {
+    font-weight: 500;
+    font-size: 1.0625rem;
+  }
+  @media (width >= 44rem) {
+    .pq-block {
+      grid-template-columns: 1.1fr 1fr;
+    }
+    .pq-block__main {
+      border-bottom: 0;
+      border-right: 1px solid var(--color-tinta);
+      padding: 1.75rem 2.25rem 1.5rem;
+    }
+    .pq-site {
+      margin-top: auto;
+      padding-top: 1.25rem;
+    }
+    .pq-cell {
+      padding: 1rem 1.5rem 1.1rem;
+    }
+  }
+
+  /* napomene stanja */
+  .pq-note {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.25rem 1.25rem 0;
+    padding: 0.9rem 1rem;
+    border-left: 2px solid var(--color-tinta);
+    background: var(--color-papir);
+    font-size: 0.9375rem;
+  }
+  .pq-note--ok {
+    border-left-color: #1f7a4d;
+    background: rgb(31 122 77 / 0.06);
+  }
+  .pq-note--err {
+    border-left-color: var(--color-redline-dark);
+    background: rgb(184 15 21 / 0.05);
+  }
+  @media (width >= 40rem) {
+    .pq-note {
+      margin: 1.5rem 2.25rem 0;
+    }
+  }
+
+  .pq-parties {
+    display: grid;
+    gap: 1.25rem;
+  }
+  @media (width >= 40rem) {
+    .pq-parties {
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+    }
+  }
+
+  /* stavke */
+  .pq-items {
+    border-top: 1px solid var(--color-linija);
+  }
+  .pq-table {
+    display: none;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .pq-table th,
+  .pq-table td {
+    padding: 0.85rem 0.6rem;
+    vertical-align: top;
+    text-align: left;
+  }
+  .pq-table thead th {
+    background: #f2f1ec;
+    border-bottom: 1px solid var(--color-tinta);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(21 24 27 / 0.72);
+    padding-block: 0.7rem;
+    white-space: nowrap;
+  }
+  .pq-table th:first-child,
+  .pq-table td:first-child {
+    padding-left: 2.25rem;
+  }
+  .pq-table th:last-child,
+  .pq-table td:last-child {
+    padding-right: 2.25rem;
+  }
+  .pq-table thead th.text-right {
+    text-align: right;
+  }
+  .pq-table tbody tr:not(.pq-sec):not(.pq-sub) td {
+    border-bottom: 1px solid var(--color-linija);
+  }
+  .pq-sec th {
+    padding-top: 1.4rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid var(--color-antracit);
+    font-weight: 800;
+    font-stretch: 125%;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pq-sub td {
+    text-align: right;
+    color: rgb(21 24 27 / 0.7);
+    font-size: 0.875rem;
+  }
+  .pq-n {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: rgb(21 24 27 / 0.45);
+  }
+  .pq-num {
+    text-align: right !important;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+  .pq-desc {
+    margin-top: 0.2rem;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: rgb(21 24 27 / 0.66);
+    white-space: pre-line;
+  }
+  .pq-cardsec {
+    padding: 1.25rem 1.25rem 0.5rem;
+    border-bottom: 1px solid var(--color-antracit);
+    font-weight: 800;
+    font-stretch: 125%;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pq-card {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-linija);
+  }
+  .pq-cardsub {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem 0.5rem;
+    font-size: 0.875rem;
+    color: rgb(21 24 27 / 0.72);
+  }
+  @media (width >= 44rem) {
+    .pq-table {
+      display: table;
+    }
+    .pq-cards {
+      display: none;
+    }
+  }
+
+  /* zbroj */
+  .pq-totals {
+    display: grid;
+    justify-items: end;
+  }
+  .pq-totals dl {
+    width: min(100%, 22rem);
+  }
+  .pq-totals dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    font-size: 0.9375rem;
+  }
+  .pq-totals dd {
+    font-family: var(--font-mono);
+  }
+  .pq-totals .pq-total {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 2px solid var(--color-tinta);
+    align-items: baseline;
+  }
+  .pq-total dt {
+    font-weight: 800;
+    font-stretch: 125%;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .pq-total dd {
+    font-size: 1.375rem;
+    font-weight: 500;
+  }
+  .pq-totals .pq-fine {
+    margin-top: 0.4rem;
+    text-align: right;
+    max-width: 22rem;
+  }
+
+  .pq-terms {
+    display: grid;
+    gap: 1.25rem;
+    border-top: 1px solid var(--color-linija);
+  }
+
+  /* radnje */
+  .pq-actions {
+    border-top: 1px solid var(--color-tinta);
+    background: #fbfbf9;
+  }
+  .pq-confirm {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border-left: 2px solid var(--color-tinta);
+    background: var(--color-papir);
+  }
+  .pq-btns {
+    display: grid;
+    gap: 0.625rem;
+  }
+  @media (width >= 30rem) {
+    .pq-btns {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+  }
+  .pq-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 52px;
+    padding: 0 1.4rem;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    font-size: 1rem;
+    font-weight: 650;
+    font-stretch: 108%;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color 150ms var(--ease-draft),
+      border-color 150ms var(--ease-draft);
+  }
+  .pq-btn[hidden] {
+    display: none;
+  }
+  .pq-btn--primary {
+    background: var(--color-crvena);
+    color: #fff;
+  }
+  .pq-btn--primary:hover {
+    background: var(--color-crvena-hover);
+  }
+  .pq-btn--dark {
+    background: var(--color-tinta);
+    color: #fff;
+  }
+  .pq-btn--line {
+    background: #fff;
+    color: var(--color-tinta);
+    border-color: rgb(21 24 27 / 0.3);
+  }
+  .pq-btn--line:hover {
+    border-color: var(--color-tinta);
+  }
+  .pq-btn[aria-busy='true'] {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .pq-btn:focus-visible,
+  .pq a:focus-visible {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+
+  /* podnožje */
+  .pq-foot {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.75rem;
+    padding: 0 0.25rem;
+    font-size: 0.875rem;
+    color: rgb(21 24 27 / 0.7);
+  }
+  .pq-foot__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+  }
+  .pq-foot__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    color: var(--color-tinta);
+    text-decoration: none;
+  }
+  @media (width >= 40rem) {
+    .pq-foot {
+      grid-template-columns: 1fr auto;
+      align-items: start;
+    }
+  }
+
+  /* mobilni dock */
+  .pq-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 16px calc(0.75rem + env(safe-area-inset-bottom));
+    background: rgb(255 255 255 / 0.96);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgb(21 24 27 / 0.12);
+    transition:
+      transform 200ms var(--ease-press),
+      opacity 200ms var(--ease-press);
+  }
+  .pq-dock .pq-btn {
+    min-height: 46px;
+    padding: 0 1.25rem;
+  }
+  .pq-dock.is-hidden {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+  @media (width >= 40rem) {
+    .pq-dock {
+      display: none;
+    }
+  }
+</style>

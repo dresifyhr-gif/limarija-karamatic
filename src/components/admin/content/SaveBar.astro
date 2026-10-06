@@ -1,0 +1,110 @@
+---
+/**
+ * Ljepljiva traka za spremanje (stavlja se kao zadnje dijete forme s [data-guard]).
+ *   <form data-guard id="f">…<SaveBar /></form>
+ * Prikazuje "Nespremljene promjene" / "Sve je spremljeno" / "Šaljem fotografije…".
+ * Gumb je onemogućen dok nema promjena (osim s `always`, npr. nova stavka).
+ * Klijentski dio: initGuards() iz ./client (SaveBar ga sam pokreće).
+ */
+import '@/components/admin/content/content.css';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+
+interface Props {
+  label?: string;
+  /** gumb uvijek aktivan (nova stavka) */
+  always?: boolean;
+  cleanText?: string;
+  /** link "Odustani" lijevo od gumba (samo na širem ekranu) */
+  cancelHref?: string;
+}
+const { label = 'Spremi promjene', always = false, cleanText = 'Sve je spremljeno', cancelHref } = Astro.props;
+---
+
+<div class="cb-savebar" data-savebar data-always={always ? '1' : undefined} data-clean-text={cleanText} data-state="clean">
+  <div class="cb-savebar__in">
+    <p class="cb-savebar__state">
+      <span class="cb-savebar__dot" aria-hidden="true"></span>
+      <span data-savebar-state aria-live="polite">{cleanText}</span>
+    </p>
+    {cancelHref && <a href={cancelHref} class="a-btn a-btn--ghost hidden sm:inline-flex">Odustani</a>}
+    <button type="submit" class="a-btn a-btn--primary cb-savebar__btn" disabled={!always}>
+      <AdminIcon name="check" size={20} />
+      {label}
+    </button>
+  </div>
+</div>
+
+<style is:global>
+  .cb-savebar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 30;
+    background: rgb(255 255 255 / 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid var(--a-line-strong);
+    padding: 0.625rem 1rem calc(0.625rem + env(safe-area-inset-bottom));
+  }
+  .cb-savebar__in {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 64rem;
+    margin: 0 auto;
+  }
+  @media (width >= 40rem) {
+    .cb-savebar {
+      padding-inline: 1.5rem;
+    }
+    .cb-savebar__in {
+      max-width: calc(64rem - 3rem);
+    }
+  }
+  .cb-savebar__state {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--a-muted);
+    line-height: 1.25;
+  }
+  .cb-savebar__dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--a-ok);
+    transition: background 150ms var(--ease-draft);
+  }
+  .cb-savebar[data-state='dirty'] .cb-savebar__state {
+    color: var(--color-tinta);
+  }
+  .cb-savebar[data-state='dirty'] .cb-savebar__dot {
+    background: var(--color-crvena);
+  }
+  .cb-savebar[data-state='busy'] .cb-savebar__dot {
+    background: var(--a-warn);
+  }
+  .cb-savebar[data-always='1'][data-state='clean'] .cb-savebar__dot {
+    background: rgb(21 24 27 / 0.3);
+  }
+  .cb-savebar__btn {
+    flex: none;
+    min-width: 9.5rem;
+  }
+  /* poruke iznad trake */
+  body:has(.cb-savebar) .kr-toasts {
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+  body:has(.cb-savebar) main {
+    padding-bottom: 8rem;
+  }
+</style>
+
+<script>
+  import { initGuards } from '@/components/admin/content/client';
+  initGuards();
+</script>

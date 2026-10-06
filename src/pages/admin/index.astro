@@ -1,0 +1,300 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import StatCard from '@/components/admin/StatCard.astro';
+import Button from '@/components/admin/Button.astro';
+import Badge from '@/components/admin/Badge.astro';
+import ListRow from '@/components/admin/ListRow.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import AdminIcon, { type AdminIconName } from '@/components/admin/AdminIcon.astro';
+import { getDashboard, type Dashboard } from '@/lib/server/dashboard';
+import { listQuotes, type QuoteListItem } from '@/lib/server/repo/quotes';
+import { db } from '@/lib/server/db';
+import { LEAD_STATUS_LABEL, LEAD_STATUS_TONE, QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE, formatDate, formatDateTime, timeAgo } from '@/lib/admin/labels';
+import { formatEur } from '@/lib/quote-math';
+import { jobTypes } from '@/data/site';
+
+export const prerender = false;
+
+let d: Dashboard | null = null;
+let quotes: QuoteListItem[] = [];
+let changed: { label: string; href: string; n: number }[] = [];
+let failed = false;
+try {
+  [d, quotes] = await Promise.all([getDashboard(), listQuotes({ limit: 5 })]);
+  if (d.publish.dirty) {
+    // što se promijenilo od zadnje objave (redoslijed i brisanja se ovdje ne vide)
+    const since = d.publish.lastPublishAt ?? '1970-01-01T00:00:00Z';
+    const [r] = await db()`SELECT
+      (SELECT count(*)::int FROM projects WHERE updated_at > ${since}) AS projects,
+      (SELECT count(*)::int FROM services WHERE updated_at > ${since}) AS services,
+      (SELECT count(*)::int FROM reviews WHERE updated_at > ${since}) AS reviews,
+      (SELECT count(*)::int FROM faq WHERE updated_at > ${since}) AS faq,
+      (SELECT count(*)::int FROM settings WHERE key IN ('contact', 'stats') AND updated_at > ${since}) AS settings`;
+    changed = [
+      { label: 'Radovi', href: '/admin/radovi', n: r.projects as number },
+      { label: 'Usluge', href: '/admin/usluge', n: r.services as number },
+      { label: 'Recenzije', href: '/admin/recenzije', n: r.reviews as number },
+      { label: 'Pitanja', href: '/admin/pitanja', n: r.faq as number },
+      { label: 'Kontakt i brojke', href: '/admin/postavke', n: r.settings as number },
+    ].filter((x) => x.n > 0);
+  }
+} catch (e) {
+  failed = true;
+  console.error('[admin] pregled:', (e as Error).message);
+}
+const jobLabel = (id: string) => jobTypes.find((j) => j.id === id || j.service === id)?.label ?? id;
+const hour = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Europe/Zagreb' }).format(new Date()));
+const greeting = hour < 10 ? 'Dobro jutro' : hour < 18 ? 'Dobar dan' : 'Dobra večer';
+
+const quick: { href: string; label: string; hint: string; icon: AdminIconName }[] = [
+  { href: '/admin/ponude/nova', label: 'Nova ponuda', hint: 'PDF i WhatsApp', icon: 'file' },
+  { href: '/admin/radovi/novi', label: 'Dodaj rad', hint: 'Fotografije s gradilišta', icon: 'camera' },
+  { href: '/admin/recenzije/nova', label: 'Dodaj recenziju', hint: 'Stvarna, od klijenta', icon: 'star' },
+  { href: '/admin/postavke/kontakt', label: 'Kontakt', hint: 'Telefon, radno vrijeme', icon: 'phone' },
+];
+---
+
+<Admin title="Pregled" active="pregled">
+  <PageHeader eyebrow={greeting} title="Pregled" description="Upiti s web stranice, ponude i sadržaj stranice na jednom mjestu." />
+
+  {
+    failed || !d ? (
+      <Card>
+        <EmptyState icon="alert" title="Podaci trenutno nisu dostupni" text="Baza se ne javlja. Osvježite stranicu za minutu." />
+      </Card>
+    ) : (
+      <div class="grid gap-5 sm:gap-6">
+        {d.publish.dirty && (
+          <section class="a-card pubnote" aria-label="Neobjavljene promjene">
+            <div class="grid gap-1.5">
+              <p class="a-h2 flex items-center gap-2">
+                <span class="size-2 flex-none rounded-full bg-crvena" aria-hidden="true" />
+                Neobjavljene promjene
+              </p>
+              <p class="a-muted text-[0.9375rem]">
+                {changed.length ? (
+                  <>
+                    Promijenjeno od zadnje objave:{' '}
+                    {changed.map((c, i) => (
+                      <>
+                        {i > 0 && ', '}
+                        <a href={c.href} class="font-semibold text-tinta underline decoration-1 underline-offset-2">
+                          {c.label}
+                        </a>{' '}
+                        <span class="a-mono text-[0.8125rem]">({c.n})</span>
+                      </>
+                    ))}
+                    .
+                  </>
+                ) : (
+                  'Redoslijed ili obrisane stavke još nisu na stranici.'
+                )}{' '}
+                Kad završite s uređivanjem, objavite ih.
+              </p>
+            </div>
+            <Button icon="publish" data-publish-proxy class="w-full sm:w-auto">
+              Objavi na stranicu
+            </Button>
+          </section>
+        )}
+
+        <section aria-label="Brojke" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <StatCard label="Novi upiti" value={d.leads.novo} href="/admin/upiti?status=novo" hint="čekaju odgovor" icon="inbox" highlight={d.leads.novo > 0} />
+          <StatCard label="U obradi" value={d.leads.u_obradi} href="/admin/upiti?status=u_obradi" hint="upiti" icon="clock" />
+          <StatCard label="Ponude — nacrt" value={d.quotes.nacrt} href="/admin/ponude?status=nacrt" hint={`${d.quotes.poslana} poslano`} icon="file" />
+          <StatCard label="Prihvaćene" value={d.quotes.prihvacena} href="/admin/ponude?status=prihvacena" hint="ponude" icon="check" />
+        </section>
+
+        <nav aria-label="Brze radnje" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {quick.map((q, i) => (
+            <a href={q.href} class:list={['a-card quick', i === 0 && 'is-main']}>
+              <span class="quick__icon">
+                <AdminIcon name={q.icon} size={20} />
+              </span>
+              <span class="grid min-w-0 gap-0.5">
+                <span class="quick__label">{q.label}</span>
+                <span class="a-hint hidden truncate sm:block">{q.hint}</span>
+              </span>
+            </a>
+          ))}
+        </nav>
+
+        <div class="grid gap-5 sm:gap-6 lg:grid-cols-[1.6fr_1fr] lg:items-start">
+          <div class="grid content-start gap-5 sm:gap-6">
+            <Card title="Zadnji upiti" flush>
+              <Button slot="actions" href="/admin/upiti" variant="ghost" size="sm" iconRight="arrow-right" class="-my-2">
+                Svi upiti
+              </Button>
+              {d.recentLeads.length === 0 ? (
+                <EmptyState icon="inbox" title="Još nema upita" text="Kad netko pošalje upit preko stranice, pojavit će se ovdje." />
+              ) : (
+                <ul role="list">
+                  {d.recentLeads.map((l) => (
+                    <li>
+                      <ListRow href={`/admin/upiti/${l.id}`} title={l.name || 'Bez imena'} meta={[jobLabel(l.jobType), l.location, timeAgo(l.createdAt)].filter(Boolean).join(' · ')}>
+                        <Badge slot="end" tone={LEAD_STATUS_TONE[l.status]}>
+                          {LEAD_STATUS_LABEL[l.status]}
+                        </Badge>
+                      </ListRow>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <Card title="Zadnje ponude" flush>
+              <Button slot="actions" href="/admin/ponude" variant="ghost" size="sm" iconRight="arrow-right" class="-my-2">
+                Sve ponude
+              </Button>
+              {quotes.length === 0 ? (
+                <EmptyState icon="file" title="Još nema ponuda" text="Ponudu možete složiti iz upita ili od nule.">
+                  <Button href="/admin/ponude/nova" variant="secondary" icon="plus">
+                    Nova ponuda
+                  </Button>
+                </EmptyState>
+              ) : (
+                <ul role="list">
+                  {quotes.map((q) => (
+                    <li>
+                      <ListRow
+                        href={`/admin/ponude/${q.id}`}
+                        title={q.clientName || q.title || 'Bez naziva'}
+                        meta={[q.number, formatEur(q.total), formatDate(q.issueDate)].filter(Boolean).join(' · ')}
+                      >
+                        <Badge slot="end" tone={QUOTE_STATUS_TONE[q.status]}>
+                          {QUOTE_STATUS_LABEL[q.status]}
+                        </Badge>
+                      </ListRow>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+
+          <div class="grid content-start gap-5 sm:gap-6">
+            <Card title="Javna stranica" eyebrow="Objava">
+              <div class="grid gap-3">
+                <p class="flex items-start gap-2.5 text-[0.9375rem]">
+                  {d.publish.dirty ? (
+                    <>
+                      <span class="mt-1.5 size-2 flex-none rounded-full bg-crvena" />
+                      <span>Ima promjena koje još nisu na stranici.</span>
+                    </>
+                  ) : (
+                    <>
+                      <AdminIcon name="check" size={18} class="mt-0.5 flex-none text-[var(--a-ok)]" />
+                      <span>Stranica prikazuje zadnje promjene.</span>
+                    </>
+                  )}
+                </p>
+                <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-[0.875rem]">
+                  <dt class="a-muted">Zadnja objava</dt>
+                  <dd class="a-mono">{d.publish.lastPublishAt ? formatDateTime(d.publish.lastPublishAt) : '—'}</dd>
+                  <dt class="a-muted">Zadnja promjena</dt>
+                  <dd class="a-mono">{d.publish.contentUpdatedAt ? formatDateTime(d.publish.contentUpdatedAt) : '—'}</dd>
+                </dl>
+                {!d.publish.canDeploy && <p class="a-hint">Lokalni način rada: objava se pokreće samo na produkciji.</p>}
+              </div>
+            </Card>
+
+            <Card title="Sadržaj stranice" eyebrow="Na stranici" flush>
+              <ul role="list">
+                <li>
+                  <ListRow href="/admin/radovi" title="Radovi" meta={`${d.content.projectsPublished} na stranici od ${d.content.projects}`} />
+                </li>
+                <li>
+                  <ListRow href="/admin/usluge" title="Usluge" meta="Fotografije, tekstovi i pitanja" />
+                </li>
+                <li>
+                  <ListRow href="/admin/recenzije" title="Recenzije" meta={d.content.reviews ? `${d.content.reviews} recenzija` : 'Još nema recenzija'} />
+                </li>
+                <li>
+                  <ListRow href="/admin/pitanja" title="Česta pitanja" meta={`${d.content.faq} pitanja`} />
+                </li>
+                <li>
+                  <ListRow href="/admin/postavke" title="Postavke" meta="Kontakt, brojke, podaci za ponude" />
+                </li>
+              </ul>
+            </Card>
+          </div>
+        </div>
+      </div>
+    )
+  }
+</Admin>
+
+<style>
+  .pubnote {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+    padding: 1rem 1rem 1rem 1.25rem;
+  }
+  .pubnote::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: -1px;
+    bottom: -1px;
+    width: 3px;
+    background: var(--color-crvena);
+  }
+  @media (width >= 40rem) {
+    .pubnote {
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      padding: 1.25rem 1.5rem 1.25rem 1.75rem;
+    }
+  }
+  .quick {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-height: 72px;
+    padding: 0.85rem 0.9rem;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 150ms var(--ease-draft);
+  }
+  @media (width >= 40rem) {
+    .quick {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.75rem;
+    }
+  }
+  .quick:hover {
+    border-color: var(--a-line-strong);
+  }
+  .quick__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 3px;
+    background: var(--color-papir);
+    color: var(--color-tinta);
+  }
+  .quick.is-main .quick__icon {
+    background: var(--color-tinta);
+    color: #fff;
+  }
+  .quick__label {
+    font-weight: 650;
+    font-stretch: 105%;
+    line-height: 1.2;
+  }
+</style>
+
+<script>
+  // gumb u obavijesti pokreće isti tok kao "Objavi na stranicu" u zaglavlju (potvrda + objava)
+  document.querySelector('[data-publish-proxy]')?.addEventListener('click', () => {
+    document.querySelector<HTMLButtonElement>('[data-publish]')?.click();
+  });
+</script>

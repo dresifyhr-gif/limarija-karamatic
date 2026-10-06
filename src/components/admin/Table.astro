@@ -1,0 +1,99 @@
+---
+/**
+ * Tablica koja se na mobitelu pretvara u kartice (svaki red = blok "Oznaka: vrijednost").
+ *   <Table
+ *     columns={[{ key: 'number', label: 'Broj', mono: true }, { key: 'client', label: 'Klijent', primary: true }, { key: 'total', label: 'Iznos', align: 'right' }]}
+ *     rows={quotes.map((q) => ({ number: q.number, client: q.clientName, total: formatEur(q.total), _href: `/admin/ponude/${q.id}` }))}
+ *     empty="Još nema ponuda."
+ *   />
+ * Ćelije su tekst (escapirano). Red s `_href` je klikabilan. Za složenije ćelije koristi slot "row" ili .a-row popis.
+ */
+interface Column {
+  key: string;
+  label: string;
+  align?: 'left' | 'right' | 'center';
+  /** mono font (brojevi, iznosi) */
+  mono?: boolean;
+  /** glavni podatak — na mobitelu kao naslov kartice */
+  primary?: boolean;
+  /** sakrij na mobitelu */
+  hideOnMobile?: boolean;
+  class?: string;
+}
+interface Props {
+  columns: Column[];
+  rows: (Record<string, unknown> & { _href?: string })[];
+  empty?: string;
+  class?: string;
+  caption?: string;
+}
+const { columns, rows, empty = 'Nema zapisa.', class: className = '', caption } = Astro.props;
+const primary = columns.find((c) => c.primary) ?? columns[0];
+const cell = (v: unknown) => (v == null ? '' : String(v));
+---
+
+<div class:list={['a-tablewrap', className]}>
+  {
+    rows.length === 0 ? (
+      <p class="a-muted px-4 py-8 text-center text-[0.9375rem]">{empty}</p>
+    ) : (
+      <>
+        <table class="a-table hidden md:table">
+          {caption && <caption class="sr-only">{caption}</caption>}
+          <thead>
+            <tr>
+              {columns.map((c) => (
+                <th scope="col" style={c.align ? `text-align:${c.align}` : undefined} class={c.class}>
+                  {c.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr data-href={r._href}>
+                {columns.map((c, i) => (
+                  <td style={c.align ? `text-align:${c.align}` : undefined} class:list={[c.mono && 'a-mono', c.primary && 'font-semibold', c.class]}>
+                    {i === 0 && r._href ? <a href={r._href} class="text-inherit no-underline">{cell(r[c.key])}</a> : cell(r[c.key])}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <ul class="md:hidden" role="list">
+          {rows.map((r) => {
+            const Tag = r._href ? 'a' : 'div';
+            return (
+              <li class="border-b border-[var(--a-line)] last:border-b-0">
+                <Tag href={r._href} class="block px-4 py-3.5 text-inherit no-underline">
+                  <p class:list={['font-semibold', primary.mono && 'a-mono']}>{cell(r[primary.key])}</p>
+                  <dl class="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[0.875rem]">
+                    {columns
+                      .filter((c) => c !== primary && !c.hideOnMobile && cell(r[c.key]) !== '')
+                      .map((c) => (
+                        <>
+                          <dt class="a-muted">{c.label}</dt>
+                          <dd class:list={[c.mono && 'a-mono', 'min-w-0 break-words']}>{cell(r[c.key])}</dd>
+                        </>
+                      ))}
+                  </dl>
+                </Tag>
+              </li>
+            );
+          })}
+        </ul>
+      </>
+    )
+  }
+</div>
+
+<script>
+  // cijeli red tablice klikabilan (link u prvoj ćeliji ostaje za tipkovnicu)
+  document.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest('a, button, input, select, textarea, label')) return;
+    const tr = t.closest<HTMLTableRowElement>('.a-table tr[data-href]');
+    if (tr?.dataset.href) location.href = tr.dataset.href;
+  });
+</script>

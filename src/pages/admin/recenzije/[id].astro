@@ -1,0 +1,17 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import ReviewForm from '@/components/admin/content/ReviewForm.astro';
+import { getReview } from '@/lib/server/repo/reviews';
+
+export const prerender = false;
+
+const id = Number(Astro.params.id);
+const review = Number.isInteger(id) && id > 0 ? await getReview(id) : null;
+if (!review) return Astro.redirect(`/admin/recenzije?poruka=${encodeURIComponent('Recenzija ne postoji ili je obrisana.')}&vrsta=greska`, 303);
+---
+
+<Admin title="Recenzija" active="recenzije">
+  <PageHeader title={review.name} eyebrow="Recenzija" back={{ href: '/admin/recenzije', label: 'Recenzije' }} />
+  <ReviewForm review={review} />
+</Admin>

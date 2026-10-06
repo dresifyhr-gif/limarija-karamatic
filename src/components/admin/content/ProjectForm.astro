@@ -1,0 +1,264 @@
+---
+/**
+ * Forma rada (novi i uređivanje).
+ *   <ProjectForm project={p} images={imagesWithThumbs} services={opts} slugs={otherSlugs} />
+ * Nova: POST /api/admin/projects (s fotografijama) → /admin/radovi/:id
+ * Uređivanje: PUT /api/admin/projects/:id + PUT /api/admin/projects/:id/images (cijeli popis redom).
+ * Opis naslovne fotografije (alt) ujedno je `alt` rada.
+ */
+import '@/components/admin/content/content.css';
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import Select from '@/components/admin/Select.astro';
+import Textarea from '@/components/admin/Textarea.astro';
+import Toggle from '@/components/admin/Toggle.astro';
+import Button from '@/components/admin/Button.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import ImageUploader from '@/components/admin/ImageUploader.astro';
+import ListEditor from './ListEditor.astro';
+import SaveBar from './SaveBar.astro';
+import { projectKinds } from '@/data/site';
+import type { AdminProject } from '@/lib/server/repo/projects';
+import type { ImageRef } from '@/lib/types';
+
+interface Props {
+  project?: AdminProject | null;
+  images?: (ImageRef & { id?: number; thumb?: string | null })[];
+  services: { value: string; label: string }[];
+  /** slugovi ostalih radova (za jedinstven URL) */
+  slugs: string[];
+}
+const { project = null, images = [], services, slugs } = Astro.props;
+const isNew = !project;
+const year = Number(new Intl.DateTimeFormat('en-GB', { year: 'numeric', timeZone: 'Europe/Zagreb' }).format(new Date()));
+const kinds = Object.entries(projectKinds).map(([value, label]) => ({ value, label }));
+const p = project ?? {
+  slug: '',
+  title: '',
+  heroTitle: null,
+  kind: 'krov',
+  serviceSlug: 'limeni-krovovi',
+  location: '',
+  material: '',
+  year,
+  note: '',
+  scope: [] as string[],
+  featured: false,
+  published: true,
+};
+---
+
+<form
+  class="cb-form"
+  data-guard
+  data-project-form
+  data-mode={isNew ? 'new' : 'edit'}
+  data-id={project?.id}
+  data-slugs={JSON.stringify(slugs)}
+  novalidate
+>
+  <Card title="Fotografije" description="Prva je naslovna. Zvjezdicom odaberite drugu za naslovnu, strelicama mijenjate redoslijed.">
+    <ImageUploader
+      name="images"
+      value={images}
+      withAlt
+      max={24}
+      maxEdge={2400}
+      hint="Uslikajte ili odaberite iz galerije · smanjuju se automatski · opis: ukratko što se vidi"
+    />
+    {isNew && <p class="a-hint mt-3">Rad bez fotografije ne prikazuje se na stranici.</p>}
+  </Card>
+
+  <Card title="Osnovno">
+    <div class="cb-grid">
+      <Input name="title" label="Naslov" value={p.title} required maxlength="160" placeholder="npr. Falcani krov obiteljske kuće" autocomplete="off" />
+      <Input
+        name="heroTitle"
+        label="Kratki naslov"
+        value={p.heroTitle ?? ''}
+        maxlength="120"
+        hint="Za veliki naslov na stranici rada, ako je naslov dug. Nije obavezno."
+        autocomplete="off"
+      />
+      <div class="cb-grid cb-grid--2">
+        <Select name="kind" label="Vrsta rada" value={p.kind} options={kinds} />
+        <Select name="serviceSlug" label="Usluga" value={p.serviceSlug} options={services} hint="Rad se prikazuje i na stranici te usluge." />
+      </div>
+      <div class="cb-grid cb-grid--2">
+        <Input name="location" label="Mjesto" value={p.location} maxlength="120" placeholder="npr. Zagreb, Sesvete" autocomplete="off" />
+        <Input name="year" label="Godina" value={p.year ?? ''} number inputmode="numeric" maxlength="4" placeholder={String(year)} />
+      </div>
+      <Input name="material" label="Materijal" value={p.material} maxlength="160" placeholder="npr. Stojeći falc · RAL 7016" autocomplete="off" />
+    </div>
+  </Card>
+
+  <Card title="Opis">
+    <div class="cb-grid">
+      <Textarea name="note" label="Opis rada" value={p.note} rows={5} maxlength="4000" hint="Dvije-tri rečenice: što je bio problem i što je napravljeno." />
+      <ListEditor name="scope" label="Što je izvedeno" items={p.scope} placeholder="npr. Opšav atike s okapnicom" addLabel="Dodaj stavku" />
+    </div>
+  </Card>
+
+  <Card title="Prikaz na stranici">
+    <div class="grid gap-2">
+      <Toggle name="published" label="Prikaži na stranici" checked={p.published} hint="Kad je isključeno, rad se vidi samo u adminu." />
+      <Toggle name="featured" label="Istakni na naslovnici" checked={p.featured} hint="Istaknuti radovi idu prvi u nizu radova na naslovnici." />
+    </div>
+  </Card>
+
+  <details class="a-card cb-details" data-advanced>
+    <summary>
+      <span class="grid gap-0.5">
+        <span>Napredno</span>
+        <span class="a-hint font-normal">Adresa stranice rada</span>
+      </span>
+      <AdminIcon name="chevron-down" size={20} class="cb-chev text-tinta/60" />
+    </summary>
+    <div class="cb-details__body">
+      <Input
+        name="slug"
+        label="Adresa (URL)"
+        value={p.slug}
+        maxlength="120"
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        hint={isNew ? 'Nastaje sama iz naslova. Samo mala slova, brojke i crtice.' : 'Promjena mijenja adresu stranice rada; stari link prestaje raditi.'}
+      />
+      <p class="a-mono a-hint" data-slug-preview>/radovi/{p.slug || '…'}</p>
+    </div>
+  </details>
+
+  {
+    !isNew && (
+      <Card title="Brisanje" description="Rad i njegove fotografije trajno se brišu sa stranice i iz spremišta.">
+        <Button variant="danger" icon="trash" data-delete-project>Obriši rad</Button>
+      </Card>
+    )
+  }
+
+  <SaveBar label={isNew ? 'Dodaj rad' : 'Spremi promjene'} always={isNew} cleanText={isNew ? 'Novi rad' : 'Sve je spremljeno'} cancelHref="/admin/radovi" />
+</form>
+
+<script>
+  import { api, formData } from '@/lib/admin/ui';
+  import { save, slugify, allowLeave, confirmDelete } from '@/components/admin/content/client';
+  import type { AdminProject, ProjectImage } from '@/lib/server/repo/projects';
+
+  const SERVICE_FOR_KIND: Record<string, string> = {
+    krov: 'limeni-krovovi',
+    falc: 'falcani-krovovi',
+    atika: 'opsav-atike',
+    ravni: 'opsav-atike',
+    dimnjak: 'dimnjaci',
+    snjegobrani: 'oluci-snjegobrani',
+  };
+
+  const form = document.querySelector<HTMLFormElement>('[data-project-form]');
+  if (form) {
+    const isNew = form.dataset.mode === 'new';
+    const id = form.dataset.id;
+    const taken = new Set<string>(JSON.parse(form.dataset.slugs || '[]'));
+    const el = <T extends HTMLElement = HTMLInputElement>(name: string) => form.querySelector<T>(`[name="${name}"]`)!;
+    const slug = el('slug');
+    const preview = form.querySelector<HTMLElement>('[data-slug-preview]')!;
+    const advanced = form.querySelector<HTMLDetailsElement>('[data-advanced]')!;
+    let slugTouched = !isNew;
+    let serviceTouched = !isNew;
+
+    const unique = (base: string) => {
+      let s = base || 'rad';
+      for (let i = 2; taken.has(s); i++) s = `${base}-${i}`;
+      return s;
+    };
+    const showSlug = () => (preview.textContent = `/radovi/${slug.value || '…'}`);
+    el('title').addEventListener('input', () => {
+      if (slugTouched) return;
+      slug.value = unique(slugify(el('title').value));
+      showSlug();
+    });
+    slug.addEventListener('input', () => {
+      slugTouched = true;
+      showSlug();
+    });
+    slug.addEventListener('blur', () => {
+      slug.value = slugify(slug.value);
+      showSlug();
+    });
+    el<HTMLSelectElement>('serviceSlug').addEventListener('change', () => (serviceTouched = true));
+    el<HTMLSelectElement>('kind').addEventListener('change', () => {
+      if (serviceTouched) return;
+      const s = SERVICE_FOR_KIND[el<HTMLSelectElement>('kind').value];
+      if (s) el<HTMLSelectElement>('serviceSlug').value = s;
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = formData(form) as Record<string, any>;
+      if (!d.slug) {
+        slug.value = unique(slugify(String(d.title || '')));
+        d.slug = slug.value;
+        showSlug();
+      }
+      const imgs = (d.images ?? []) as (ProjectImage & { id?: number })[];
+      const body = {
+        slug: d.slug,
+        title: d.title,
+        heroTitle: String(d.heroTitle ?? '').trim() || null,
+        kind: d.kind,
+        serviceSlug: d.serviceSlug,
+        location: d.location,
+        material: d.material,
+        year: d.year ?? null,
+        alt: imgs[0]?.alt ?? '',
+        note: d.note,
+        scope: d.scope ?? [],
+        featured: !!d.featured,
+        published: !!d.published,
+      };
+      const strip = ({ id: _i, sort: _s, ...image }: ProjectImage & { id?: number }) => image;
+
+      if (isNew) {
+        const res = await save(
+          form,
+          () => api<AdminProject>('/api/admin/projects', { method: 'POST', body: { ...body, images: imgs.map((i) => ({ image: strip(i) })) } }),
+          { success: null },
+        );
+        if (res) {
+          allowLeave();
+          location.href = `/admin/radovi/${res.id}?poruka=${encodeURIComponent('Rad je dodan.')}`;
+        }
+      } else {
+        await save(form, async () => {
+          const p = await api<AdminProject>(`/api/admin/projects/${id}`, { method: 'PUT', body });
+          const r = await api<{ items: ProjectImage[] }>(`/api/admin/projects/${id}/images`, {
+            method: 'PUT',
+            body: { images: imgs.map((i) => (i.id ? { id: i.id, image: strip(i) } : { image: strip(i) })) },
+          });
+          form.querySelector('[data-iu]')?.dispatchEvent(new CustomEvent('iu:set-ids', { detail: r.items.map((x) => x.id) }));
+          taken.delete(p.slug);
+          return p;
+        });
+      }
+      if (advanced.querySelector('[aria-invalid="true"]')) {
+        advanced.open = true;
+        advanced.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+      }
+    });
+
+    form.querySelector<HTMLButtonElement>('[data-delete-project]')?.addEventListener('click', async (e) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      const title = el('title').value.trim();
+      const ok = await confirmDelete({
+        title: 'Obrisati rad?',
+        message: `„${title}“ i sve njegove fotografije trajno se brišu. Ovo se ne može poništiti.`,
+        path: `/api/admin/projects/${id}`,
+        button: btn,
+      });
+      if (ok) {
+        allowLeave();
+        location.href = `/admin/radovi?poruka=${encodeURIComponent('Rad je obrisan.')}`;
+      }
+    });
+  }
+</script>

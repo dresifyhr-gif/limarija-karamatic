@@ -1,0 +1,31 @@
+---
+/**
+ * <Select name="kind" label="Vrsta" value={p.kind} options={[{ value: 'krov', label: 'Limeni krov' }]} />
+ * options mogu biti i string[] (value = label). placeholder dodaje praznu prvu opciju.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import Field from './Field.astro';
+
+type Opt = { value: string; label: string; disabled?: boolean };
+type Props = HTMLAttributes<'select'> & {
+  name: string;
+  label?: string;
+  hint?: string;
+  error?: string;
+  options: (Opt | string)[];
+  value?: string | null;
+  placeholder?: string;
+  class?: string;
+  fieldClass?: string;
+};
+const { name, label, hint, error, options, value, placeholder, class: className = '', fieldClass, id, required, ...rest } = Astro.props;
+const inputId = id ?? `f-${name.replace(/[^\w-]/g, '-')}`;
+const opts: Opt[] = options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o));
+---
+
+<Field label={label} for={inputId} name={name} hint={hint} error={error} required={!!required} class={fieldClass}>
+  <select id={inputId} name={name} class:list={['a-select', className]} required={required} aria-invalid={error ? 'true' : undefined} {...rest}>
+    {placeholder !== undefined && <option value="">{placeholder}</option>}
+    {opts.map((o) => <option value={o.value} selected={o.value === value} disabled={o.disabled}>{o.label}</option>)}
+  </select>
+</Field>

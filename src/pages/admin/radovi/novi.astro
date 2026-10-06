@@ -1,0 +1,16 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import ProjectForm from '@/components/admin/content/ProjectForm.astro';
+import { listProjects } from '@/lib/server/repo/projects';
+import { listServices } from '@/lib/server/repo/services';
+
+export const prerender = false;
+
+const [projects, services] = await Promise.all([listProjects(), listServices()]);
+---
+
+<Admin title="Novi rad" active="radovi">
+  <PageHeader title="Novi rad" back={{ href: '/admin/radovi', label: 'Radovi' }} description="Dodajte fotografije, naslov i kratak opis. Novi rad ide na vrh popisa." />
+  <ProjectForm services={services.map((s) => ({ value: s.slug, label: s.title }))} slugs={projects.map((p) => p.slug)} />
+</Admin>

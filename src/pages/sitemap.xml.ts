@@ -3,11 +3,13 @@
  * Ne uključuje /dev, /hvala ni 404.
  */
 import type { APIRoute } from 'astro';
-import { services, projects } from '@/data/site';
+import { getContent } from '@/lib/content';
 
 const STATIC = ['/', '/usluge', '/radovi', '/upravitelji-zgrada', '/o-nama', '/kontakt', '/procjena', '/privatnost'];
 
-export const GET: APIRoute = ({ site }) => {
+export const GET: APIRoute = async ({ site }) => {
+  // radovi se dodaju u adminu → putanje iz istog sadržaja kao /radovi/[slug] (getContent)
+  const { services, projects } = await getContent();
   const paths = [
     ...STATIC,
     ...services.map((s) => `/usluge/${s.slug}`),

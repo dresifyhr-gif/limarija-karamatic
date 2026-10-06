@@ -1,0 +1,83 @@
+---
+/** /admin/ponude/:id — uređivanje ponude, slanje (WhatsApp, PDF, poveznica), status, kopija, brisanje. */
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Badge from '@/components/admin/Badge.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import QuoteEditor, { type QuoteDraft } from '@/components/admin/quotes/QuoteEditor.astro';
+import { getQuote, type Quote } from '@/lib/server/repo/quotes';
+import { getSettings } from '@/lib/server/repo/settings';
+import { listTemplates, type QuoteTemplate } from '@/lib/server/repo/templates';
+import { getLead, type Lead } from '@/lib/server/repo/leads';
+import { thumbUrls } from '@/lib/server/images';
+import { QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE } from '@/lib/admin/labels';
+import { jobLabel } from '@/lib/quotes/labels';
+import { leadNumber } from '@/lib/quotes/shared';
+import type { SettingsMap } from '@/lib/types';
+
+export const prerender = false;
+
+const id = Number(Astro.params.id);
+let q: Quote | null = null;
+let s: SettingsMap | null = null;
+let templates: QuoteTemplate[] = [];
+let lead: Lead | null = null;
+let thumbs: (string | null)[] = [];
+let failed = false;
+if (Number.isInteger(id) && id > 0) {
+  try {
+    [q, s, templates] = await Promise.all([getQuote(id), getSettings(), listTemplates()]);
+    if (q?.leadId) {
+      lead = await getLead(q.leadId);
+      if (lead) thumbs = await thumbUrls(lead.photos.slice(0, 4), 160);
+    }
+  } catch (e) {
+    failed = true;
+    console.error('[admin] ponuda:', (e as Error).message);
+  }
+}
+if (!failed && !q) return Astro.redirect(`/admin/ponude?poruka=${encodeURIComponent('Ponuda ne postoji.')}&vrsta=greska`, 303);
+
+const draft: QuoteDraft | null = q
+  ? {
+      issueDate: q.issueDate,
+      clientName: q.clientName,
+      clientPhone: q.clientPhone,
+      clientEmail: q.clientEmail,
+      clientAddress: q.clientAddress,
+      clientOib: q.clientOib,
+      location: q.location,
+      title: q.title,
+      intro: q.intro,
+      items: q.items,
+      notes: q.notes,
+      paymentTerms: q.paymentTerms,
+      validDays: q.validDays,
+      pdvEnabled: q.pdvEnabled,
+      pdvRate: q.pdvRate,
+      leadId: q.leadId,
+    }
+  : null;
+const leadInfo = lead
+  ? { id: lead.id, no: leadNumber(lead.id), name: lead.name, job: jobLabel(lead.jobType), location: lead.location, note: lead.note, thumbs: thumbs.filter((x): x is string => !!x), photos: lead.photos.length }
+  : null;
+const publicUrl = q ? new URL(`/ponuda/${q.publicToken}`, Astro.url.origin).toString() : '';
+---
+
+<Admin title={q ? `Ponuda ${q.number}` : 'Ponuda'} active="ponude" wide>
+  {
+    failed || !q || !s || !draft ? (
+      <Card>
+        <EmptyState icon="alert" title="Ponuda trenutno nije dostupna" text="Baza se ne javlja. Osvježite stranicu za minutu." />
+      </Card>
+    ) : (
+      <>
+        <PageHeader title={q.number} eyebrow={q.clientName || 'Ponuda'} back={{ href: '/admin/ponude', label: 'Ponude' }}>
+          <Badge slot="actions" tone={QUOTE_STATUS_TONE[q.status]}>{QUOTE_STATUS_LABEL[q.status]}</Badge>
+        </PageHeader>
+        <QuoteEditor quote={q} draft={draft} templates={templates} pdvDefault={s.quote} lead={leadInfo} publicUrl={publicUrl} company={s.company.naziv || s.contact.name} />
+      </>
+    )
+  }
+</Admin>

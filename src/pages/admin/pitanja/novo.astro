@@ -1,0 +1,15 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import FaqForm from '@/components/admin/content/FaqForm.astro';
+import { listFaq, FAQ_HOME_MAX } from '@/lib/server/repo/faq';
+
+export const prerender = false;
+
+const all = await listFaq();
+---
+
+<Admin title="Novo pitanje" active="pitanja">
+  <PageHeader title="Novo pitanje" back={{ href: '/admin/pitanja', label: 'Česta pitanja' }} description="Novo pitanje dolazi na kraj popisa." />
+  <FaqForm homeCount={all.filter((f) => f.onHome).length} homeMax={FAQ_HOME_MAX} />
+</Admin>

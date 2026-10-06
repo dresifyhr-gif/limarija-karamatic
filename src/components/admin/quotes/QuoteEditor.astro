@@ -1,0 +1,1407 @@
+---
+/**
+ * Uređivač ponude (nova i postojeća). Mobitel prvo: kartice jedna ispod druge, dolje traka s iznosom i "Spremi";
+ * na desktopu desni stupac (iznos, slanje, status) ostaje u vidu.
+ *
+ * Props:
+ *   quote      postojeća ponuda ili null (nova — broj se dodjeljuje pri prvom spremanju)
+ *   draft      početne vrijednosti polja (za novu: iz postavki i upita)
+ *   templates  cjenik stavki (quote_item_templates)
+ *   pdvDefault postavke PDV-a (za napomenu "zadano u postavkama")
+ *   lead       upit iz kojeg je ponuda (sažetak) ili null
+ *   publicUrl  javna poveznica /ponuda/:token (samo za postojeću)
+ *   company    ime tvrtke (potpis u WhatsApp poruci)
+ */
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import Textarea from '@/components/admin/Textarea.astro';
+import Toggle from '@/components/admin/Toggle.astro';
+import Button from '@/components/admin/Button.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import type { Quote } from '@/lib/server/repo/quotes';
+import type { QuoteTemplate } from '@/lib/server/repo/templates';
+import { QUOTE_STATUS_LABEL, formatDateTime } from '@/lib/admin/labels';
+import { QUOTE_STATUSES, type QuoteItem, type QuoteSettings } from '@/lib/types';
+import { computeTotals } from '@/lib/quote-math';
+import { formatEur, formatPercent, SECTION_PRESETS, UNIT_OPTIONS, UNIT_HINT } from '@/lib/quotes/shared';
+
+export type QuoteDraft = {
+  issueDate: string;
+  clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+  clientAddress: string;
+  clientOib: string;
+  location: string;
+  title: string;
+  intro: string;
+  items: QuoteItem[];
+  notes: string;
+  paymentTerms: string;
+  validDays: number;
+  pdvEnabled: boolean;
+  pdvRate: number;
+  leadId: number | null;
+};
+
+interface Props {
+  quote: Quote | null;
+  draft: QuoteDraft;
+  templates: QuoteTemplate[];
+  pdvDefault: QuoteSettings;
+  lead?: { id: number; no: string; name: string; job: string; location: string; note: string; thumbs: string[]; photos: number } | null;
+  publicUrl?: string;
+  company: string;
+}
+const { quote, draft: d, templates, pdvDefault, lead, publicUrl = '', company } = Astro.props;
+const t = computeTotals(d.items, d.pdvEnabled, d.pdvRate);
+const num = (n: number) => String(n).replace('.', ',');
+/** prihvaćena ponuda: stavke i iznosi su zaključani (klijent je prihvatio točno njih) */
+const locked = quote?.status === 'prihvacena';
+const boot = {
+  locked,
+  id: quote?.id ?? null,
+  number: quote?.number ?? null,
+  status: quote?.status ?? 'nacrt',
+  token: quote?.publicToken ?? null,
+  publicUrl,
+  company,
+  leadId: d.leadId,
+  items: d.items,
+  templates: templates.map((x) => ({ id: x.id, name: x.name, description: x.description, unit: x.unit, unitPrice: x.unitPrice, category: x.category })),
+};
+const stamps = quote
+  ? ([
+      ['Izrađena', quote.createdAt],
+      ['Poslana', quote.sentAt],
+      ['Klijent otvorio', quote.viewedAt],
+      ['Prihvaćena', quote.acceptedAt],
+      ['Odbijena', quote.rejectedAt],
+    ].filter(([, v]) => v) as [string, string][])
+  : [];
+---
+
+<form class="qe" data-qe novalidate>
+  <script type="application/json" data-qe-boot set:html={JSON.stringify(boot).replace(/</g, '\\u003c')} />
+  <datalist id="qe-units">{UNIT_OPTIONS.map((u) => <option value={u} label={UNIT_HINT[u]} />)}</datalist>
+  <datalist id="qe-sections">{SECTION_PRESETS.map((u) => <option value={u} />)}</datalist>
+
+  <div class="qe-grid">
+    <div class="qe-main">
+      {
+        locked && (
+          <div class="qe-locked" role="note">
+            <AdminIcon name="check" size={20} class="flex-none" />
+            <p>
+              <strong>Klijent je prihvatio ovu ponudu{quote?.acceptedAt ? ` ${formatDateTime(quote.acceptedAt)}` : ''}.</strong> Stavke i iznosi su zaključani. Za izmjene
+              napravite kopiju (Dupliciraj) ili vratite status na „Poslana”.
+            </p>
+          </div>
+        )
+      }
+      <Card title="Klijent">
+        <div class="grid gap-4 md:grid-cols-2">
+          <Input name="clientName" label="Ime i prezime / tvrtka" value={d.clientName} autocomplete="off" fieldClass="md:col-span-2" />
+          <Input name="clientPhone" label="Mobitel" type="tel" inputmode="tel" value={d.clientPhone} hint="Za WhatsApp poruku s ponudom." autocomplete="off" />
+          <Input name="clientEmail" label="E-pošta" type="email" inputmode="email" value={d.clientEmail} autocomplete="off" />
+          <Input name="clientAddress" label="Adresa klijenta" value={d.clientAddress} autocomplete="off" />
+          <Input name="clientOib" label="OIB" inputmode="numeric" maxlength="11" value={d.clientOib} hint="Nije obavezno (za tvrtke i upravitelje)." autocomplete="off" />
+        </div>
+      </Card>
+
+      <Card title="Posao">
+        <div class="grid gap-4">
+          <Input name="title" label="Naslov ponude" value={d.title} placeholder="npr. Opšav atike i oluci" autocomplete="off" />
+          <Input name="location" label="Gradilište" value={d.location} placeholder="Adresa ili mjesto izvođenja" autocomplete="off" />
+          <Textarea name="intro" label="Uvodni tekst" rows={3} value={d.intro} placeholder="npr. Zahvaljujemo na upitu. Na temelju izmjere na terenu nudimo…" hint="Nije obavezno. Ispisuje se iznad stavki." />
+        </div>
+      </Card>
+
+      <Card title="Stavke" description="Cijene su bez PDV-a. Iznos stavke računa se sam.">
+        <ol class="qe-items" role="list" data-items aria-live="polite"></ol>
+        <p class="qe-empty a-muted" data-empty hidden>Još nema stavki. Dodajte prvu ili je odaberite iz cjenika.</p>
+        <div class="qe-add">
+          <Button variant="dark" icon="plus" data-add="item">Stavka</Button>
+          <Button variant="secondary" icon="layers" data-add="template">Iz cjenika</Button>
+          <Button variant="secondary" icon="plus" data-add="section">Odjeljak</Button>
+        </div>
+        <p class="a-hint mt-3">Odjeljci (npr. <em>Materijal</em> i <em>Rad</em>) nisu obavezni; u PDF-u dobivaju međuzbroj.</p>
+      </Card>
+
+      <Card title="Uvjeti">
+        <div class="grid gap-4">
+          <Textarea name="notes" label="Napomene" rows={3} value={d.notes} placeholder="npr. Cijene uključuju dostavu materijala na gradilište." />
+          <Textarea name="paymentTerms" label="Uvjeti plaćanja" rows={2} value={d.paymentTerms} placeholder="npr. 40 % avans, ostatak po završetku radova." />
+          <div class="grid grid-cols-2 gap-4">
+            <Input name="issueDate" label="Datum ponude" type="date" value={d.issueDate} />
+            <Input name="validDays" label="Vrijedi (dana)" type="number" inputmode="numeric" min="1" max="365" value={String(d.validDays)} />
+          </div>
+        </div>
+      </Card>
+
+      <Card title="PDV">
+        <div class="grid gap-3">
+          <Toggle
+            name="pdvEnabled"
+            label="Obračunaj PDV"
+            checked={d.pdvEnabled}
+            hint={`Zadano u postavkama: ${pdvDefault.pdvEnabled ? `u sustavu PDV-a, ${formatPercent(pdvDefault.pdvRate)}` : 'nije u sustavu PDV-a'}.`}
+          />
+          <div class="qe-rate" data-rate hidden={!d.pdvEnabled}>
+            <Input name="pdvRate" label="Stopa PDV-a (%)" number value={num(d.pdvRate)} class="max-w-[8rem] a-mono" />
+          </div>
+          <p class="a-hint" data-exempt hidden={d.pdvEnabled}>Na ponudi piše: „Obveznik nije u sustavu PDV-a (čl. 90. st. 1. Zakona o PDV-u)“.</p>
+        </div>
+      </Card>
+    </div>
+
+    <aside class="qe-side" aria-label="Iznos i radnje">
+      <div class="qe-sticky">
+        <section class="a-card qe-totals" aria-label="Iznos">
+          <dl>
+            <div><dt>Osnovica</dt><dd data-t="subtotal">{formatEur(t.subtotal)}</dd></div>
+            <div data-t-pdv-row hidden={!d.pdvEnabled}><dt data-t="pdvLabel">PDV {formatPercent(d.pdvRate)}</dt><dd data-t="pdv">{formatEur(t.pdvAmount)}</dd></div>
+            <div class="qe-total"><dt>Ukupno</dt><dd data-t="total">{formatEur(t.total)}</dd></div>
+          </dl>
+          {!locked && <Button type="submit" block icon="check" data-save>{quote ? 'Spremi promjene' : 'Spremi ponudu'}</Button>}
+          <p class="qe-state" data-state>{locked ? 'Prihvaćena ponuda — zaključano.' : quote ? 'Sve je spremljeno.' : 'Broj ponude dodjeljuje se pri spremanju.'}</p>
+        </section>
+
+        {
+          quote && (
+            <section class="a-card qe-send" aria-label="Slanje">
+              <p class="a-eyebrow">Slanje klijentu</p>
+              <a href="#" class="a-btn a-btn--dark a-btn--block qe-wa" data-wa>
+                <AdminIcon name="whatsapp" size={20} />
+                Pošalji na WhatsApp
+              </a>
+              {quote.status === 'nacrt' && <p class="a-hint -mt-1">Klijent može prihvatiti ponudu tek kad je označena kao poslana.</p>}
+              <div class="grid grid-cols-2 gap-2">
+                <a href={`/api/ponuda/${quote.publicToken}/pdf`} class="a-btn a-btn--secondary a-btn--sm" data-pdf>
+                  <AdminIcon name="download" size={18} />
+                  PDF
+                </a>
+                <a href={publicUrl} target="_blank" rel="noopener" class="a-btn a-btn--secondary a-btn--sm" data-preview>
+                  <AdminIcon name="eye" size={18} />
+                  Kao klijent
+                </a>
+              </div>
+              <div class="qe-link">
+                <label for="qe-public" class="a-hint">Poveznica za klijenta</label>
+                <div class="flex gap-2">
+                  <input id="qe-public" class="a-input a-mono qe-link__in" value={publicUrl} readonly />
+                  <Button variant="secondary" size="sm" icon="copy" iconOnly label="Kopiraj poveznicu" data-copy />
+                </div>
+              </div>
+            </section>
+          )
+        }
+
+        {
+          quote && (
+            <section class="a-card qe-status" aria-label="Status">
+              <p class="a-eyebrow">Status</p>
+              <fieldset class="qe-seg" data-status>
+                <legend class="sr-only">Status ponude</legend>
+                {QUOTE_STATUSES.map((s) => (
+                  <label>
+                    <input type="radio" name="_status" value={s} checked={quote.status === s} />
+                    <span>{QUOTE_STATUS_LABEL[s]}</span>
+                  </label>
+                ))}
+              </fieldset>
+              {stamps.length > 0 && (
+                <dl class="qe-stamps">
+                  {stamps.map(([k, v]) => (
+                    <>
+                      <dt>{k}</dt>
+                      <dd>{formatDateTime(v)}</dd>
+                    </>
+                  ))}
+                </dl>
+              )}
+              <div class="flex flex-wrap justify-between gap-2 border-t border-[var(--a-line)] pt-3">
+                <Button variant="ghost" size="sm" icon="copy" data-duplicate>Dupliciraj</Button>
+                <Button variant="danger" size="sm" icon="trash" data-delete>Obriši</Button>
+              </div>
+            </section>
+          )
+        }
+
+        {
+          lead && (
+            <section class="a-card qe-lead" aria-label="Upit">
+              <p class="a-eyebrow">Iz upita #U-{lead.no}</p>
+              <p class="font-semibold">{lead.job}</p>
+              <p class="a-muted text-[0.875rem]">{[lead.name, lead.location].filter(Boolean).join(' · ')}</p>
+              {lead.note && <p class="qe-lead__note">{lead.note}</p>}
+              {lead.thumbs.length > 0 && (
+                <div class="qe-lead__ph">
+                  {lead.thumbs.slice(0, 4).map((src) => (
+                    <img src={src} alt="" width="64" height="64" loading="lazy" />
+                  ))}
+                </div>
+              )}
+              <a href={`/admin/upiti/${lead.id}`} class="qe-lead__a">Otvori upit<AdminIcon name="chevron-right" size={16} /></a>
+            </section>
+          )
+        }
+      </div>
+    </aside>
+  </div>
+
+  <!-- traka na mobitelu -->
+  <div class="qe-bar">
+    <div>
+      <p class="a-eyebrow">Ukupno</p>
+      <p class="a-mono text-[1.0625rem] font-medium" data-t="total">{formatEur(t.total)}</p>
+    </div>
+    {locked ? <span class="a-hint">Zaključano</span> : <button type="submit" class="a-btn a-btn--primary" data-save>Spremi</button>}
+  </div>
+
+  <!-- cjenik -->
+  <dialog class="a-dialog qe-dlg" data-tpl-dialog aria-labelledby="qe-tpl-title">
+    <div class="qe-dlg__head">
+      <h2 id="qe-tpl-title" class="a-h2">Iz cjenika</h2>
+      <button type="button" class="a-btn a-btn--ghost a-btn--sm a-btn--icon" data-tpl-close aria-label="Zatvori"><AdminIcon name="close" size={20} /></button>
+    </div>
+    <div class="px-4 pb-3 sm:px-5">
+      <label for="qe-tpl-q" class="sr-only">Traži u cjeniku</label>
+      <input id="qe-tpl-q" type="search" class="a-input" placeholder="Traži…" data-tpl-q autocomplete="off" />
+    </div>
+    <div class="qe-dlg__list" data-tpl-list></div>
+    <div class="qe-dlg__foot">
+      <a href="/admin/ponude/predlosci" class="a-hint underline">Uredi cjenik</a>
+    </div>
+  </dialog>
+</form>
+
+<style>
+  .qe-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+  .qe-locked {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--a-line-strong);
+    border-left: 3px solid var(--color-tinta);
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  .qe-main {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+  .qe-side {
+    min-width: 0;
+  }
+  .qe-sticky {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (width >= 64rem) {
+    .qe-grid {
+      grid-template-columns: minmax(0, 1fr) 21rem;
+      align-items: start;
+    }
+    .qe-sticky {
+      position: sticky;
+      top: 8.5rem;
+    }
+  }
+
+  /* stavke */
+  .qe-items {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+    min-width: 0;
+  }
+  .qe-items:empty {
+    display: none;
+  }
+  .qe-empty {
+    padding: 1.25rem 0;
+    font-size: 0.9375rem;
+  }
+  .qe-add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .qe-add > :first-child {
+    flex: 1 1 100%;
+  }
+  @media (width >= 30rem) {
+    .qe-add > :first-child {
+      flex: 0 0 auto;
+    }
+  }
+  .qe-rate[hidden],
+  [data-exempt][hidden] {
+    display: none;
+  }
+
+  /* zbroj */
+  .qe-totals {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+  }
+  .qe-totals dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.2rem 0;
+    font-size: 0.9375rem;
+  }
+  .qe-totals dl > div[hidden] {
+    display: none;
+  }
+  .qe-totals dd {
+    font-family: var(--font-mono);
+  }
+  .qe-totals .qe-total {
+    margin-top: 0.35rem;
+    padding-top: 0.6rem;
+    border-top: 2px solid var(--color-tinta);
+    align-items: baseline;
+  }
+  .qe-total dt {
+    font-weight: 800;
+    font-stretch: 120%;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .qe-total dd {
+    font-size: 1.375rem;
+    font-weight: 500;
+  }
+  .qe-state {
+    font-size: 0.8125rem;
+    color: var(--a-muted);
+    text-align: center;
+  }
+  .qe-totals [data-save]:disabled:not([aria-busy='true']) {
+    background: transparent;
+    border-color: var(--a-line-strong);
+    color: var(--a-muted);
+    box-shadow: none;
+  }
+  .qe-state.is-dirty {
+    color: var(--a-warn);
+    font-weight: 600;
+  }
+  .qe-send,
+  .qe-status,
+  .qe-lead {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  .qe-wa :global(svg) {
+    color: #25d366;
+  }
+  .qe-link {
+    display: grid;
+    gap: 0.35rem;
+  }
+  .qe-link__in {
+    min-height: 40px;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  .qe-seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.375rem;
+  }
+  .qe-seg label {
+    position: relative;
+  }
+  .qe-seg input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+  .qe-seg span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 3px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .qe-seg input:checked + span {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: #fff;
+  }
+  .qe-seg input:focus-visible + span {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+  .qe-seg[aria-busy='true'] {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+  .qe-stamps {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+  .qe-stamps dt {
+    color: var(--a-muted);
+  }
+  .qe-stamps dd {
+    font-family: var(--font-mono);
+    text-align: right;
+  }
+  .qe-lead__note {
+    font-size: 0.875rem;
+    white-space: pre-line;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .qe-lead__ph {
+    display: flex;
+    gap: 6px;
+  }
+  .qe-lead__ph img {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 2px;
+  }
+  .qe-lead__a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+    text-decoration: none;
+  }
+
+  /* traka na mobitelu */
+  .qe-bar {
+    position: fixed;
+    z-index: 35;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
+    background: rgb(255 255 255 / 0.97);
+    border-top: 1px solid var(--a-line);
+    box-shadow: 0 -8px 24px -16px rgb(0 0 0 / 0.25);
+  }
+  .qe-bar .a-btn {
+    min-width: 8.5rem;
+  }
+  @media (width >= 64rem) {
+    .qe-bar {
+      display: none;
+    }
+  }
+
+  /* dijalog cjenika */
+  .qe-dlg {
+    width: min(34rem, calc(100vw - 1.5rem));
+    max-height: min(40rem, calc(100dvh - 2rem));
+  }
+  .qe-dlg[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  .qe-dlg__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.75rem 0.5rem 1rem;
+  }
+  @media (width >= 40rem) {
+    .qe-dlg__head {
+      padding-left: 1.25rem;
+    }
+  }
+  .qe-dlg__list {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--a-line);
+  }
+  .qe-dlg__foot {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--a-line);
+  }
+</style>
+
+<style is:global>
+  /* stavke se crtaju iz skripte (zato globalno, s prefiksom qi-) */
+  .qe .a-field {
+    align-content: start;
+  }
+  .qi__head .qi__title {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 0;
+  }
+  .qi__head .qi__tools {
+    flex: none;
+    flex-wrap: nowrap;
+    margin-left: 0;
+  }
+  .qi {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+    gap: 0.6rem;
+    padding: 0.85rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 3px;
+    background: #fff;
+  }
+  .qi--section {
+    padding: 0.6rem 0.6rem 0.6rem 0.85rem;
+    border-color: transparent;
+    border-bottom: 2px solid var(--color-tinta);
+    border-radius: 0;
+    background: transparent;
+    margin-top: 0.5rem;
+  }
+  .qi__head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+  .qi__n {
+    flex: none;
+    min-width: 1.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--a-muted);
+  }
+  .qi__title {
+    font-weight: 600;
+  }
+  .qi--section .qi__title {
+    font-weight: 800;
+    font-stretch: 120%;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.9375rem;
+    border-color: transparent;
+    background: transparent;
+    padding-left: 0.25rem;
+  }
+  .qi--section .qi__title:hover,
+  .qi--section .qi__title:focus {
+    border-color: var(--a-line-strong);
+    background: #fff;
+  }
+  .qi__desc {
+    min-height: 3.25rem;
+    font-size: 0.9375rem;
+  }
+  .qi__desc[hidden] {
+    display: none;
+  }
+  .qi__nums {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .qi__amt {
+    display: grid;
+    gap: 0.25rem;
+    align-content: start;
+    justify-items: end;
+    text-align: right;
+  }
+  .qi__amt .qi__amount {
+    min-height: 48px;
+    display: grid;
+    align-content: center;
+  }
+  .qi__nums.has-disc .qi__amt {
+    grid-column: 1 / -1;
+  }
+  @media (width >= 40rem) {
+    .qi__nums {
+      grid-template-columns: 6.5rem 7rem minmax(7rem, 1fr) minmax(8rem, auto);
+    }
+    .qi__nums.has-disc {
+      grid-template-columns: 6.5rem 7rem minmax(7rem, 1fr) 5.5rem minmax(8rem, auto);
+    }
+    .qi__nums.has-disc .qi__amt {
+      grid-column: auto;
+    }
+  }
+  .qi__title {
+    min-height: 48px;
+    resize: none;
+    overflow: hidden;
+    field-sizing: content;
+    line-height: 1.35;
+  }
+  .qi__desc {
+    field-sizing: content;
+  }
+  @media (width < 30rem) {
+    .qi__tl {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+  }
+  .qi__lab {
+    display: grid;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--a-muted);
+  }
+  .qi__lab[hidden] {
+    display: none;
+  }
+  .qi__lab .a-input {
+    font-family: var(--font-mono);
+    color: var(--color-tinta);
+  }
+  .qi__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--a-line);
+  }
+  .qi__tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.125rem;
+    margin-left: -0.35rem;
+  }
+  .qi__tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    height: 40px;
+    min-width: 40px;
+    justify-content: center;
+    padding: 0 0.55rem;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--color-tinta);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .qi__tool:hover {
+    background: rgb(21 24 27 / 0.06);
+  }
+  .qi__tool:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .qi__tool--del {
+    color: var(--color-redline-dark);
+  }
+  .qi__tool[aria-pressed='true'] {
+    background: rgb(21 24 27 / 0.08);
+  }
+  .qi__tool--del {
+    margin-left: auto;
+  }
+  .qi__amount {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+  .qi__amount small {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: var(--a-muted);
+    text-align: right;
+  }
+  .qi.is-new {
+    animation: qi-in 200ms var(--ease-press);
+  }
+  @keyframes qi-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+  .qt-group {
+    padding: 0.6rem 1rem 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--a-muted);
+  }
+  .qt-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border: 0;
+    border-bottom: 1px solid var(--a-line);
+    background: #fff;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+  }
+  .qt-item:hover {
+    background: rgb(21 24 27 / 0.03);
+  }
+  .qt-item__t {
+    flex: 1;
+    min-width: 0;
+  }
+  .qt-item__t span {
+    display: block;
+  }
+  .qt-item__p {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { api, toast, errorMessage, confirmDialog, formData, showErrors, withBusy, ApiError } from '@/lib/admin/ui';
+  import { computeTotals, formatEur, formatQty } from '@/lib/quote-math';
+  import { quoteWhatsAppText, waLink, formatPercent } from '@/lib/quotes/shared';
+  import type { QuoteItem } from '@/lib/types';
+
+  type Tpl = { id: number; name: string; description: string; unit: string; unitPrice: number; category: string };
+  type Boot = {
+    locked: boolean;
+    id: number | null;
+    number: string | null;
+    status: string;
+    token: string | null;
+    publicUrl: string;
+    company: string;
+    leadId: number | null;
+    items: QuoteItem[];
+    templates: Tpl[];
+  };
+  type Item = Extract<QuoteItem, { type: 'item' }>;
+
+  const form = document.querySelector<HTMLFormElement>('form[data-qe]');
+  if (form) init(form);
+
+  function init(form: HTMLFormElement) {
+    const boot = JSON.parse(form.querySelector('[data-qe-boot]')!.textContent || '{}') as Boot;
+    let items: QuoteItem[] = boot.items.map((x) => ({ ...x }));
+    let templates = boot.templates;
+    let dirty = false;
+    let saving = false;
+    const showDesc = new Set(items.filter((x) => x.type === 'item' && x.description.trim()).map((x) => x.id));
+    const showDisc = new Set(items.filter((x) => x.type === 'item' && x.discount).map((x) => x.id));
+
+    const list = form.querySelector<HTMLOListElement>('[data-items]')!;
+    const empty = form.querySelector<HTMLElement>('[data-empty]')!;
+    const state = form.querySelector<HTMLElement>('[data-state]')!;
+    const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+    const newId = () => (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36)).replace(/-/g, '').slice(0, 10);
+    /** '1.234,5' / '12,5' / '12.5' → broj */
+    const parseNum = (raw: string): number => {
+      let s = raw.trim().replace(/\s|€|%/g, '');
+      if (!s) return 0;
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = Number(s);
+      return Number.isFinite(n) ? n : NaN;
+    };
+    const fmtInput = (n: number, dec?: number) => (dec === undefined ? formatQty(n) : n.toFixed(dec).replace('.', ',')).replace(/\./g, '').replace(/ /g, '');
+
+    /* ── stanje "nespremljeno" ── */
+    const saveButtons = () => [...form.querySelectorAll<HTMLButtonElement>('[data-save]')];
+    const setDirty = (v: boolean) => {
+      dirty = v;
+      if (boot.locked) return;
+      state.textContent = v ? 'Ima nespremljenih promjena.' : boot.id ? 'Sve je spremljeno.' : 'Broj ponude dodjeljuje se pri spremanju.';
+      state.classList.toggle('is-dirty', v);
+      // postojeća ponuda: "Spremi" je aktivan samo kad ima što spremiti
+      if (boot.id && !saving) saveButtons().forEach((b) => (b.disabled = !v));
+    };
+    window.addEventListener('beforeunload', (e) => {
+      if (dirty && !saving) {
+        e.preventDefault();
+        // stariji Safari traži i returnValue
+        Reflect.set(e, 'returnValue', '');
+      }
+    });
+
+    /* ── stavke ── */
+    const icon = (name: string) =>
+      ({
+        up: '<path d="m6 14.5 6-6 6 6"/>',
+        down: '<path d="m6 9.5 6 6 6-6"/>',
+        trash: '<path d="M4 6.5h16M9.5 6.5V4h5v2.5M6.5 6.5 7.5 20h9l1-13.5"/>',
+        text: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+        pct: '<path d="M18 6 6 18"/><circle cx="7.5" cy="7.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/>',
+        save: '<path d="m12 3 9 5-9 5-9-5Z"/><path d="m3 13 9 5 9-5"/>',
+      })[name];
+    const svg = (name: string) =>
+      `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon(name)}</svg>`;
+
+    function itemHtml(it: QuoteItem, idx: number, n: number): string {
+      const first = idx === 0;
+      const last = idx === items.length - 1;
+      const move = `<button type="button" class="qi__tool" data-act="up" aria-label="Pomakni gore" ${first ? 'disabled' : ''}>${svg('up')}</button>
+        <button type="button" class="qi__tool" data-act="down" aria-label="Pomakni dolje" ${last ? 'disabled' : ''}>${svg('down')}</button>`;
+      if (it.type === 'section') {
+        return `<li class="qi qi--section" data-id="${it.id}">
+          <div class="qi__head">
+            <label class="sr-only" for="qi-${it.id}">Naslov odjeljka</label>
+            <input id="qi-${it.id}" class="a-input qi__title" data-f="title" list="qe-sections" value="${esc(it.title)}" placeholder="Naslov odjeljka" autocomplete="off" />
+            <div class="qi__tools">${move}<button type="button" class="qi__tool qi__tool--del" data-act="del" aria-label="Obriši odjeljak">${svg('trash')}</button></div>
+          </div>
+        </li>`;
+      }
+      const d = showDesc.has(it.id);
+      const disc = showDisc.has(it.id);
+      return `<li class="qi" data-id="${it.id}">
+        <div class="qi__head">
+          <span class="qi__n">${String(n).padStart(2, '0')}</span>
+          <label class="sr-only" for="qi-${it.id}">Naziv stavke ${n}</label>
+          <textarea id="qi-${it.id}" class="a-textarea qi__title" data-f="title" rows="1" placeholder="Naziv stavke" autocomplete="off">${esc(it.title)}</textarea>
+        </div>
+        <textarea class="a-textarea qi__desc" data-f="description" rows="2" placeholder="Opis (nije obavezno)" aria-label="Opis stavke ${n}" ${d ? '' : 'hidden'}>${esc(it.description)}</textarea>
+        <div class="qi__nums ${disc ? 'has-disc' : ''}">
+          <label class="qi__lab">Količina<input class="a-input" data-f="qty" inputmode="decimal" autocomplete="off" value="${esc(fmtInput(it.qty))}" /></label>
+          <label class="qi__lab">Jedinica<input class="a-input" data-f="unit" list="qe-units" maxlength="12" autocomplete="off" value="${esc(it.unit)}" /></label>
+          <label class="qi__lab qi__price">Cijena (€)<input class="a-input" data-f="unitPrice" inputmode="decimal" autocomplete="off" value="${esc(fmtInput(it.unitPrice, 2))}" /></label>
+          <label class="qi__lab" ${disc ? '' : 'hidden'}>Popust (%)<input class="a-input" data-f="discount" inputmode="decimal" autocomplete="off" value="${it.discount ? esc(fmtInput(it.discount)) : ''}" /></label>
+          <div class="qi__amt"><span class="qi__lab">Iznos</span><p class="qi__amount" data-amount></p></div>
+        </div>
+        <div class="qi__foot">
+          <div class="qi__tools">
+            ${move}
+            <button type="button" class="qi__tool" data-act="desc" aria-pressed="${d}" title="Opis">${svg('text')}<span class="qi__tl">Opis</span></button>
+            <button type="button" class="qi__tool" data-act="disc" aria-pressed="${disc}" title="Popust">${svg('pct')}<span class="qi__tl">Popust</span></button>
+            <button type="button" class="qi__tool" data-act="tpl" title="Spremi u cjenik">${svg('save')}<span class="sr-only">Spremi u cjenik</span></button>
+          </div>
+          <button type="button" class="qi__tool qi__tool--del" data-act="del" aria-label="Obriši stavku ${n}">${svg('trash')}<span class="qi__tl">Obriši</span></button>
+        </div>
+      </li>`;
+    }
+
+    function render(focusId?: string, focusSel = '.qi__title') {
+      let n = 0;
+      list.innerHTML = items.map((it, i) => itemHtml(it, i, it.type === 'item' ? ++n : n)).join('');
+      empty.hidden = items.length > 0;
+      list.querySelectorAll('textarea').forEach(autosize);
+      updateTotals();
+      if (focusId) {
+        const li = list.querySelector<HTMLElement>(`[data-id="${focusId}"]`);
+        li?.classList.add('is-new');
+        li?.querySelector<HTMLElement>(focusSel)?.focus();
+      }
+    }
+
+    const pdvOn = () => (form.elements.namedItem('pdvEnabled') as HTMLInputElement).checked;
+    const pdvRate = () => {
+      const n = parseNum((form.elements.namedItem('pdvRate') as HTMLInputElement).value);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    function updateTotals() {
+      const t = computeTotals(items, pdvOn(), pdvRate());
+      for (const li of list.querySelectorAll<HTMLElement>('.qi:not(.qi--section)')) {
+        const it = items.find((x) => x.id === li.dataset.id) as Item | undefined;
+        const out = li.querySelector('[data-amount]');
+        if (!it || !out) continue;
+        const gross = Math.round(it.qty * it.unitPrice * 100) / 100;
+        out.innerHTML = it.discount ? `${formatEur(t.lines[it.id] ?? 0)}<small>−${formatPercent(it.discount)} od ${formatEur(gross)}</small>` : formatEur(t.lines[it.id] ?? 0);
+      }
+      form.querySelectorAll('[data-t="subtotal"]').forEach((e) => (e.textContent = formatEur(t.subtotal)));
+      form.querySelectorAll('[data-t="pdv"]').forEach((e) => (e.textContent = formatEur(t.pdvAmount)));
+      form.querySelectorAll('[data-t="pdvLabel"]').forEach((e) => (e.textContent = `PDV ${formatPercent(pdvRate())}`));
+      form.querySelectorAll('[data-t="total"]').forEach((e) => (e.textContent = formatEur(t.total)));
+      form.querySelector<HTMLElement>('[data-t-pdv-row]')!.hidden = !pdvOn();
+      refreshWa();
+    }
+
+    // unos u stavke
+    const autosize = (el: HTMLTextAreaElement) => {
+      if (CSS.supports('field-sizing', 'content')) return;
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight + 2}px`;
+    };
+    list.addEventListener('keydown', (e) => {
+      const el = e.target as HTMLElement;
+      if (e.key === 'Enter' && el.classList.contains('qi__title') && el.tagName === 'TEXTAREA') e.preventDefault();
+    });
+    list.addEventListener('input', (e) => {
+      const el = e.target as HTMLInputElement;
+      if (el.tagName === 'TEXTAREA') autosize(el as unknown as HTMLTextAreaElement);
+      const li = el.closest<HTMLElement>('[data-id]');
+      const f = el.dataset.f;
+      if (!li || !f) return;
+      const it = items.find((x) => x.id === li.dataset.id);
+      if (!it) return;
+      if (f === 'title') it.title = el.value;
+      else if (it.type === 'item') {
+        if (f === 'description') it.description = el.value;
+        else if (f === 'unit') it.unit = el.value;
+        else {
+          const v = parseNum(el.value);
+          el.toggleAttribute('aria-invalid', Number.isNaN(v));
+          const val = Number.isNaN(v) ? 0 : v;
+          if (f === 'qty') it.qty = val;
+          if (f === 'unitPrice') it.unitPrice = val;
+          if (f === 'discount') it.discount = Math.min(Math.max(val, 0), 100) || undefined;
+        }
+      }
+      setDirty(true);
+      updateTotals();
+    });
+    // cijena: nakon unosa uvijek dvije decimale
+    list.addEventListener('focusout', (e) => {
+      const el = e.target as HTMLInputElement;
+      const it = items.find((x) => x.id === el.closest<HTMLElement>('[data-id]')?.dataset.id);
+      if (!it || it.type !== 'item' || Number.isNaN(parseNum(el.value))) return;
+      if (el.dataset.f === 'unitPrice') el.value = fmtInput(it.unitPrice, 2);
+      if (el.dataset.f === 'qty') el.value = fmtInput(it.qty);
+    });
+    // samooznačavanje broja na fokus (lakše prepisati na mobitelu)
+    list.addEventListener('focusin', (e) => {
+      const el = e.target as HTMLInputElement;
+      if (el.dataset.f && ['qty', 'unitPrice', 'discount'].includes(el.dataset.f)) setTimeout(() => el.select(), 0);
+    });
+
+    list.addEventListener('click', async (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-act]');
+      if (!btn) return;
+      const li = btn.closest<HTMLElement>('[data-id]')!;
+      const id = li.dataset.id!;
+      const i = items.findIndex((x) => x.id === id);
+      const it = items[i];
+      const act = btn.dataset.act;
+      if (act === 'up' || act === 'down') {
+        const j = act === 'up' ? i - 1 : i + 1;
+        if (j < 0 || j >= items.length) return;
+        [items[i], items[j]] = [items[j], items[i]];
+        setDirty(true);
+        render();
+        list.querySelector<HTMLElement>(`[data-id="${id}"] [data-act="${act}"]`)?.focus();
+      } else if (act === 'del') {
+        const hasContent = it.title.trim() || (it.type === 'item' && (it.unitPrice || it.description.trim()));
+        if (hasContent && !(await confirmDialog({ title: it.type === 'section' ? 'Obrisati odjeljak?' : 'Obrisati stavku?', message: it.title.trim() || undefined, confirmLabel: 'Obriši', danger: true })))
+          return;
+        items.splice(i, 1);
+        setDirty(true);
+        render();
+      } else if (act === 'desc' && it.type === 'item') {
+        if (showDesc.has(id) && !it.description.trim()) showDesc.delete(id);
+        else showDesc.add(id);
+        render(id, '.qi__desc');
+      } else if (act === 'disc' && it.type === 'item') {
+        if (showDisc.has(id)) {
+          showDisc.delete(id);
+          if (it.discount) {
+            it.discount = undefined;
+            setDirty(true);
+          }
+          render();
+        } else {
+          showDisc.add(id);
+          render(id, '[data-f="discount"]');
+        }
+      } else if (act === 'tpl' && it.type === 'item') {
+        if (!it.title.trim()) return toast('Upišite naziv stavke pa je spremite u cjenik.', 'info');
+        // kategorija = naslov odjeljka iznad stavke
+        const sec = items.slice(0, i).reverse().find((x) => x.type === 'section');
+        try {
+          const tpl = await withBusy(btn, () =>
+            api<Tpl>('/api/admin/quote-templates', {
+              method: 'POST',
+              body: { name: it.title.trim(), description: it.description, unit: it.unit || 'kom', unitPrice: it.unitPrice, category: sec?.title.trim() ?? '' },
+            }),
+          );
+          templates = [...templates, tpl];
+          toast('Stavka je spremljena u cjenik.');
+        } catch (err) {
+          toast(errorMessage(err), 'error');
+        }
+      }
+    });
+
+    /** prazna početna stavka nove ponude — dok je netaknuta, prva dodana stavka je zamjenjuje */
+    let starterId: string | null = null;
+    const untouched = (x: QuoteItem | undefined) =>
+      !!x && x.type === 'item' && !x.title.trim() && !x.description.trim() && !x.unitPrice && x.qty === 1;
+    const addItem = (partial: Partial<Item> = {}) => {
+      const it: Item = { id: newId(), type: 'item', title: '', description: '', unit: 'm²', qty: 1, unitPrice: 0, ...partial };
+      if (it.description.trim()) showDesc.add(it.id);
+      const si = starterId ? items.findIndex((x) => x.id === starterId) : -1;
+      if (si >= 0 && untouched(items[si])) {
+        if (!partial.title) {
+          // "Stavka" na netaknutu praznu: samo fokus na nju
+          starterId = null;
+          render(items[si].id);
+          return;
+        }
+        items.splice(si, 1, it);
+      } else items.push(it);
+      starterId = null;
+      setDirty(true);
+      render(it.id, partial.title ? '[data-f="qty"]' : '.qi__title');
+    };
+    form.querySelector('[data-add="item"]')!.addEventListener('click', () => addItem());
+    form.querySelector('[data-add="section"]')!.addEventListener('click', () => {
+      const has = items.filter((x) => x.type === 'section').map((x) => x.title.trim().toLowerCase());
+      const title = has.includes('materijal') ? (has.includes('rad') ? '' : 'Rad') : 'Materijal';
+      const s: QuoteItem = { id: newId(), type: 'section', title };
+      items.push(s);
+      setDirty(true);
+      render(s.id);
+    });
+
+    /* ── cjenik ── */
+    const dlg = form.querySelector<HTMLDialogElement>('[data-tpl-dialog]')!;
+    const tq = dlg.querySelector<HTMLInputElement>('[data-tpl-q]')!;
+    const tlist = dlg.querySelector<HTMLElement>('[data-tpl-list]')!;
+    const renderTpl = () => {
+      const q = tq.value.trim().toLowerCase();
+      const rows = templates.filter((t) => !q || `${t.name} ${t.description} ${t.category}`.toLowerCase().includes(q));
+      if (!templates.length) {
+        tlist.innerHTML = `<p class="a-muted px-5 py-8 text-center text-[0.9375rem]">Cjenik je prazan. Stavke dodajte u <a href="/admin/ponude/predlosci" class="underline">Cjeniku stavki</a> ili gumbom „Spremi u cjenik” uz stavku.</p>`;
+        return;
+      }
+      if (!rows.length) {
+        tlist.innerHTML = `<p class="a-muted px-5 py-8 text-center text-[0.9375rem]">Nema stavki za „${esc(tq.value)}”.</p>`;
+        return;
+      }
+      const groups = new Map<string, Tpl[]>();
+      for (const r of rows) groups.set(r.category || 'Ostalo', [...(groups.get(r.category || 'Ostalo') ?? []), r]);
+      tlist.innerHTML = [...groups]
+        .map(
+          ([cat, rs]) =>
+            `<p class="qt-group">${esc(cat)}</p>` +
+            rs
+              .map(
+                (r) => `<button type="button" class="qt-item" data-tpl="${r.id}">
+                  <span class="qt-item__t"><span class="font-semibold">${esc(r.name)}</span>${r.description ? `<span class="a-muted truncate text-[0.8125rem]">${esc(r.description)}</span>` : ''}</span>
+                  <span class="qt-item__p">${formatEur(r.unitPrice)} / ${esc(r.unit)}</span>
+                </button>`,
+              )
+              .join(''),
+        )
+        .join('');
+    };
+    form.querySelector('[data-add="template"]')!.addEventListener('click', () => {
+      tq.value = '';
+      renderTpl();
+      dlg.showModal();
+      if (matchMedia('(pointer: fine)').matches) tq.focus();
+    });
+    tq.addEventListener('input', renderTpl);
+    dlg.querySelector('[data-tpl-close]')!.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-tpl]');
+      if (!b) return;
+      const t = templates.find((x) => String(x.id) === b.dataset.tpl);
+      if (!t) return;
+      dlg.close();
+      addItem({ title: t.name, description: t.description, unit: t.unit, unitPrice: t.unitPrice, qty: 1 });
+      toast(`Dodano: ${t.name}`, 'info', 1800);
+    });
+
+    /* ── ostala polja ── */
+    form.addEventListener('input', (e) => {
+      const el = e.target as HTMLElement;
+      if (el.closest('[data-items]') || el.closest('dialog') || (el as HTMLInputElement).name === '_status') return;
+      setDirty(true);
+      if ((el as HTMLInputElement).name === 'pdvRate') updateTotals();
+      if (['clientName', 'clientPhone', 'title'].includes((el as HTMLInputElement).name)) refreshWa();
+    });
+    form.querySelector<HTMLInputElement>('[name="pdvEnabled"]')!.addEventListener('change', (e) => {
+      const on = (e.target as HTMLInputElement).checked;
+      form.querySelector<HTMLElement>('[data-rate]')!.hidden = !on;
+      form.querySelector<HTMLElement>('[data-exempt]')!.hidden = on;
+      setDirty(true);
+      updateTotals();
+    });
+
+    /* ── spremanje ── */
+    const payload = () => {
+      const f = formData(form);
+      const data: Record<string, unknown> = {
+        issueDate: f.issueDate || undefined,
+        clientName: f.clientName,
+        clientPhone: f.clientPhone,
+        clientEmail: f.clientEmail,
+        clientAddress: f.clientAddress,
+        clientOib: String(f.clientOib ?? '').replace(/\s/g, ''),
+        location: f.location,
+        title: f.title,
+        intro: f.intro,
+        notes: f.notes,
+        paymentTerms: f.paymentTerms,
+        validDays: f.validDays,
+        pdvEnabled: f.pdvEnabled,
+        pdvRate: f.pdvRate ?? 0,
+        items: items
+          .filter((it) => !untouchedEmpty(it))
+          .map((it) =>
+          it.type === 'section'
+            ? { id: it.id, type: 'section', title: it.title }
+            : { id: it.id, type: 'item', title: it.title, description: it.description, unit: it.unit, qty: it.qty, unitPrice: it.unitPrice, ...(it.discount ? { discount: it.discount } : {}) },
+        ),
+      };
+      if (!boot.id && boot.leadId) data.leadId = boot.leadId;
+      return data;
+    };
+
+    /** stavka bez naziva, opisa i cijene — ne sprema se (inače "Stavka 0,00 €" u PDF-u) */
+    function untouchedEmpty(x: QuoteItem): boolean {
+      return x.type === 'item' && !x.title.trim() && !x.description.trim() && !x.unitPrice;
+    }
+    const ITEM_FIELD_LABEL: Record<string, string> = { qty: 'količina', unitPrice: 'cijena', unit: 'jedinica', discount: 'popust', title: 'naziv', description: 'opis' };
+    async function save(): Promise<boolean> {
+      if (saving || boot.locked) return false;
+      saving = true;
+      const buttons = saveButtons();
+      buttons.forEach((b) => {
+        b.disabled = true;
+        b.setAttribute('aria-busy', 'true');
+      });
+      try {
+        if (!boot.id) {
+          const q = await api<{ id: number; number: string }>('/api/admin/quotes', { method: 'POST', body: payload() });
+          dirty = false;
+          location.href = `/admin/ponude/${q.id}?poruka=${encodeURIComponent(`Ponuda ${q.number} je spremljena.`)}`;
+          return true;
+        }
+        const q = await api<{ total: number; status: string; items: QuoteItem[] }>(`/api/admin/quotes/${boot.id}`, { method: 'PUT', body: payload() });
+        showErrors(form!, undefined);
+        // prazne stavke server ne sprema — makni ih i s ekrana
+        if (items.some(untouchedEmpty)) {
+          items = items.filter((x) => !untouchedEmpty(x));
+          render();
+        }
+        saving = false;
+        setDirty(false);
+        toast('Spremljeno.');
+        // server je izvor istine za iznose
+        form!.querySelectorAll('[data-t="total"]').forEach((e) => (e.textContent = formatEur(q.total)));
+        return true;
+      } catch (err) {
+        if (err instanceof ApiError && err.fields) {
+          showErrors(form!, err.fields);
+          const itemErr = Object.entries(err.fields).find(([k]) => k.startsWith('items.'));
+          if (itemErr) {
+            const [, idx, f] = itemErr[0].split('.');
+            const it = items[Number(idx)];
+            const n = items.slice(0, Number(idx) + 1).filter((x) => x.type === 'item').length;
+            toast(`Stavka ${n}${it ? ` (${ITEM_FIELD_LABEL[f] ?? f})` : ''}: ${itemErr[1]}`, 'error');
+            list.querySelector<HTMLElement>(`[data-id="${it?.id}"] [data-f="${f}"]`)?.focus();
+            return false;
+          }
+        }
+        toast(errorMessage(err), 'error');
+        return false;
+      } finally {
+        saving = false;
+        buttons.forEach((b) => {
+          b.disabled = !!boot.id && !dirty;
+          b.removeAttribute('aria-busy');
+        });
+      }
+    }
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      save();
+    });
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        save();
+      }
+    });
+
+    /* ── slanje ── */
+    const waBtn = form.querySelector<HTMLAnchorElement>('[data-wa]');
+    function waHref(): string {
+      const f = formData(form!);
+      const t = computeTotals(items, pdvOn(), pdvRate());
+      const text = quoteWhatsAppText({ number: boot.number ?? '', clientName: String(f.clientName ?? ''), title: String(f.title ?? ''), total: t.total }, boot.publicUrl, boot.company);
+      return waLink(String(f.clientPhone ?? ''), text);
+    }
+    function refreshWa() {
+      if (waBtn) waBtn.href = waHref();
+    }
+    async function setStatus(status: string): Promise<boolean> {
+      try {
+        await api(`/api/admin/quotes/${boot.id}/status`, { method: 'POST', body: { status } });
+        boot.status = status;
+        const r = form!.querySelector<HTMLInputElement>(`[name="_status"][value="${status}"]`);
+        if (r) r.checked = true;
+        return true;
+      } catch (err) {
+        toast(errorMessage(err), 'error');
+        return false;
+      }
+    }
+    /**
+     * Otvori vanjsku poveznicu u novoj kartici, a admin ostaje otvoren.
+     * (window.open(…, 'noopener') UVIJEK vraća null — zato prazna kartica, prekid veze s openerom, pa navigacija.)
+     * false = preglednik je blokirao novu karticu.
+     */
+    function openTab(href: string): boolean {
+      const w = window.open('about:blank', '_blank');
+      if (!w) return false;
+      try {
+        w.opener = null;
+      } catch {}
+      w.location.href = href;
+      return true;
+    }
+    const ASK_KEY = 'kr:ask-sent';
+    async function askSent() {
+      if (boot.status !== 'nacrt' || boot.locked) return;
+      const ok = await confirmDialog({
+        title: 'Je li ponuda poslana?',
+        message: 'Ako ste poruku poslali u WhatsAppu, označite ponudu kao poslanu. Klijent je može prihvatiti tek tada.',
+        confirmLabel: 'Označi kao poslanu',
+        cancelLabel: 'Nije još',
+      });
+      if (ok && (await setStatus('poslana'))) location.reload();
+    }
+    waBtn?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (dirty && !(await save())) return;
+      const href = waHref();
+      if (openTab(href)) return void askSent();
+      // nova kartica blokirana (npr. mobitel): ista kartica ide na WhatsApp — pitanje se postavlja po povratku
+      try {
+        sessionStorage.setItem(ASK_KEY, String(boot.id));
+      } catch {}
+      location.href = href;
+    });
+    const askOnReturn = () => {
+      let pending = false;
+      try {
+        pending = sessionStorage.getItem(ASK_KEY) === String(boot.id);
+        if (pending) sessionStorage.removeItem(ASK_KEY);
+      } catch {}
+      if (pending) askSent();
+    };
+    if (boot.id) {
+      askOnReturn();
+      window.addEventListener('pageshow', (ev) => {
+        if ((ev as PageTransitionEvent).persisted) askOnReturn();
+      });
+    }
+    form.querySelector<HTMLAnchorElement>('[data-pdf]')?.addEventListener('click', async (e) => {
+      if (!dirty) return;
+      e.preventDefault();
+      if (await save()) location.href = (e.currentTarget as HTMLAnchorElement).href;
+    });
+    form.querySelector<HTMLAnchorElement>('[data-preview]')?.addEventListener('click', async (e) => {
+      if (!dirty) return;
+      e.preventDefault();
+      const href = (e.currentTarget as HTMLAnchorElement).href;
+      if ((await save()) && !openTab(href)) location.href = href;
+    });
+    form.querySelector('[data-copy]')?.addEventListener('click', async () => {
+      const inp = form.querySelector<HTMLInputElement>('#qe-public')!;
+      try {
+        await navigator.clipboard.writeText(inp.value);
+        toast('Poveznica je kopirana.');
+      } catch {
+        inp.select();
+        toast('Označeno — kopirajte ručno.', 'info');
+      }
+    });
+
+    /* ── status, dupliciranje, brisanje ── */
+    const seg = form.querySelector<HTMLFieldSetElement>('[data-status]');
+    seg?.addEventListener('change', async (e) => {
+      const input = e.target as HTMLInputElement;
+      const prev = boot.status;
+      if (dirty && !(await save())) {
+        form.querySelector<HTMLInputElement>(`[name="_status"][value="${prev}"]`)!.checked = true;
+        return;
+      }
+      seg.setAttribute('aria-busy', 'true');
+      if (await setStatus(input.value)) location.href = `${location.pathname}?poruka=${encodeURIComponent(`Status: ${input.nextElementSibling?.textContent}.`)}`;
+      else {
+        seg.removeAttribute('aria-busy');
+        form.querySelector<HTMLInputElement>(`[name="_status"][value="${prev}"]`)!.checked = true;
+      }
+    });
+    const dup = form.querySelector<HTMLButtonElement>('[data-duplicate]');
+    dup?.addEventListener('click', async () => {
+      if (dirty && !(await save())) return;
+      try {
+        const q = await withBusy(dup, () => api<{ id: number; number: string }>(`/api/admin/quotes/${boot.id}/duplicate`, { method: 'POST', body: {} }));
+        location.href = `/admin/ponude/${q.id}?poruka=${encodeURIComponent(`Napravljena je kopija ${q.number}.`)}`;
+      } catch (err) {
+        toast(errorMessage(err), 'error');
+      }
+    });
+    const del = form.querySelector<HTMLButtonElement>('[data-delete]');
+    del?.addEventListener('click', async () => {
+      const ok = await confirmDialog({
+        title: `Obrisati ponudu ${boot.number}?`,
+        message: 'Ponuda se trajno briše, a poveznica za klijenta prestaje raditi.',
+        confirmLabel: 'Obriši',
+        danger: true,
+      });
+      if (!ok) return;
+      try {
+        await withBusy(del, () => api(`/api/admin/quotes/${boot.id}`, { method: 'DELETE' }));
+        dirty = false;
+        location.href = `/admin/ponude?poruka=${encodeURIComponent(`Ponuda ${boot.number} je obrisana.`)}`;
+      } catch (err) {
+        toast(errorMessage(err), 'error');
+      }
+    });
+
+    render();
+    // nova ponuda bez stavki: odmah jedna prazna stavka (prva dodana stavka je zamjenjuje dok je netaknuta)
+    if (!boot.id && items.length === 0) {
+      starterId = newId();
+      items.push({ id: starterId, type: 'item', title: '', description: '', unit: 'm²', qty: 1, unitPrice: 0 });
+      render();
+    }
+    setDirty(false);
+    // prihvaćena ponuda: sve u glavnom stupcu samo za čitanje
+    if (boot.locked) {
+      form.querySelector('.qe-main')?.querySelectorAll<HTMLInputElement>('input, textarea, select, button').forEach((el) => (el.disabled = true));
+    }
+  }
+</script>

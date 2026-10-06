@@ -1,0 +1,25 @@
+---
+/**
+ * Prekidač da/ne (checkbox role="switch"; formData() vraća boolean).
+ *   <Toggle name="published" label="Objavljeno na stranici" checked={p.published} hint="Kad je isključeno, rad se ne vidi." />
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = Omit<HTMLAttributes<'input'>, 'type'> & {
+  name: string;
+  label: string;
+  hint?: string;
+  checked?: boolean;
+  class?: string;
+};
+const { name, label, hint, checked = false, class: className = '', id, ...rest } = Astro.props;
+const inputId = id ?? `f-${name.replace(/[^\w-]/g, '-')}`;
+---
+
+<label class:list={['a-toggle', className]} for={inputId}>
+  <input type="checkbox" role="switch" id={inputId} name={name} checked={checked} {...rest} />
+  <span class="grid gap-0.5">
+    <span class="a-label">{label}</span>
+    {hint && <span class="a-hint">{hint}</span>}
+  </span>
+</label>

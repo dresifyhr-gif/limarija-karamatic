@@ -1,0 +1,18 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import FaqForm from '@/components/admin/content/FaqForm.astro';
+import { listFaq, FAQ_HOME_MAX } from '@/lib/server/repo/faq';
+
+export const prerender = false;
+
+const id = Number(Astro.params.id);
+const all = await listFaq();
+const faq = all.find((f) => f.id === id);
+if (!faq) return Astro.redirect(`/admin/pitanja?poruka=${encodeURIComponent('Pitanje ne postoji ili je obrisano.')}&vrsta=greska`, 303);
+---
+
+<Admin title="Pitanje" active="pitanja">
+  <PageHeader title="Uredi pitanje" back={{ href: '/admin/pitanja', label: 'Česta pitanja' }} />
+  <FaqForm faq={faq} homeCount={all.filter((f) => f.onHome && f.id !== id).length} homeMax={FAQ_HOME_MAX} />
+</Admin>

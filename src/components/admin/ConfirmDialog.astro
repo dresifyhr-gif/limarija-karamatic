@@ -1,0 +1,25 @@
+---
+/**
+ * Modalna potvrda (jedna po stranici; Admin.astro je već uključuje).
+ * Klijent: const ok = await confirmDialog({ title: 'Obrisati?', message: '…', confirmLabel: 'Obriši', danger: true });
+ */
+---
+
+<dialog id="kr-confirm" class="a-dialog" aria-labelledby="kr-confirm-title">
+  <form method="dialog" class="grid gap-5 p-5 sm:p-6">
+    <div class="grid gap-2">
+      <h2 id="kr-confirm-title" class="a-h2" data-title>Potvrda</h2>
+      <p class="a-muted text-[0.9375rem]" data-message hidden></p>
+    </div>
+    <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button value="cancel" class="a-btn a-btn--secondary" data-cancel>Odustani</button>
+      <button value="ok" class="a-btn a-btn--dark" data-ok>Potvrdi</button>
+    </div>
+  </form>
+</dialog>
+
+<style>
+  [data-ok][data-danger='1'] {
+    background: var(--color-redline-dark);
+  }
+</style>

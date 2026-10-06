@@ -1,0 +1,42 @@
+---
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import ListRow from '@/components/admin/ListRow.astro';
+import Badge from '@/components/admin/Badge.astro';
+import { getSettings } from '@/lib/server/repo/settings';
+
+export const prerender = false;
+
+const s = await getSettings();
+const c = s.company;
+const companyFilled = [c.naziv, c.oib, c.adresa, c.iban].filter(Boolean).length;
+const pdv = s.quote.pdvEnabled ? `U sustavu PDV-a (${String(s.quote.pdvRate).replace('.', ',')} %)` : 'Nije u sustavu PDV-a';
+---
+
+<Admin title="Postavke" active="postavke">
+  <PageHeader title="Postavke" description="Kontakt na stranici, brojke, podaci tvrtke za ponude i lozinka." />
+  <div class="grid gap-5 sm:gap-6">
+    <Card title="Na stranici" eyebrow="Javno" flush>
+      <ul role="list">
+        <li><ListRow href="/admin/postavke/kontakt" title="Kontakt" meta={[s.contact.phoneDisplay, s.contact.email].filter(Boolean).join(' · ')} /></li>
+        <li><ListRow href="/admin/postavke/brojke" title="Brojke" meta={s.stats.map((x) => x.label).join(' · ') || 'Nema brojki'} /></li>
+      </ul>
+    </Card>
+    <Card title="Ponude" eyebrow="Samo za ponude, ne vidi se na stranici" flush>
+      <ul role="list">
+        <li>
+          <ListRow href="/admin/postavke/tvrtka" title="Podaci tvrtke" meta={c.naziv || 'Još nije upisano'}>
+            {companyFilled < 4 && <Badge slot="end" tone="warning">Nepotpuno</Badge>}
+          </ListRow>
+        </li>
+        <li><ListRow href="/admin/postavke/ponude" title="PDV i uvjeti ponude" meta={`${pdv} · vrijedi ${s.quote.validDays} dana`} /></li>
+      </ul>
+    </Card>
+    <Card title="Pristup" eyebrow="Sigurnost" flush>
+      <ul role="list">
+        <li><ListRow href="/admin/postavke/lozinka" title="Lozinka" meta="Promjena lozinke za admin" /></li>
+      </ul>
+    </Card>
+  </div>
+</Admin>

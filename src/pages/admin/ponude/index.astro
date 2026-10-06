@@ -1,0 +1,214 @@
+---
+/** /admin/ponude — popis ponuda: filtri po statusu, pretraga (broj, klijent, mjesto, naslov), iznosi. */
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Badge from '@/components/admin/Badge.astro';
+import Button from '@/components/admin/Button.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import FilterTabs from '@/components/admin/quotes/FilterTabs.astro';
+import { listQuotes, type QuoteListItem } from '@/lib/server/repo/quotes';
+import { quoteSums } from '@/lib/quotes/server';
+import { QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE } from '@/lib/admin/labels';
+import { QUOTE_STATUSES, type QuoteStatus } from '@/lib/types';
+import { formatDay, formatEur, pluralHr, sumTotals } from '@/lib/quotes/shared';
+
+export const prerender = false;
+
+const PER_PAGE = 40;
+const sp = Astro.url.searchParams;
+const st = sp.get('status');
+const status = st && (QUOTE_STATUSES as readonly string[]).includes(st) ? (st as QuoteStatus) : undefined;
+const q = (sp.get('q') ?? '').trim().slice(0, 100);
+const page = Math.max(1, Number(sp.get('str') ?? 1) || 1);
+
+let rows: QuoteListItem[] = [];
+let sums: Awaited<ReturnType<typeof quoteSums>> | null = null;
+let failed = false;
+try {
+  [rows, sums] = await Promise.all([listQuotes({ status, q: q || undefined, limit: PER_PAGE + 1, offset: (page - 1) * PER_PAGE }), quoteSums()]);
+} catch (e) {
+  failed = true;
+  console.error('[admin] ponude:', (e as Error).message);
+}
+const hasMore = rows.length > PER_PAGE;
+rows = rows.slice(0, PER_PAGE);
+const total = sums ? Object.values(sums).reduce((a, b) => a + b.n, 0) : 0;
+const link = (s?: string, p = 1) => {
+  const u = new URLSearchParams();
+  if (s) u.set('status', s);
+  if (q) u.set('q', q);
+  if (p > 1) u.set('str', String(p));
+  const x = u.toString();
+  return `/admin/ponude${x ? `?${x}` : ''}`;
+};
+const tabs = [
+  { href: link(), label: 'Sve', count: total, active: !status },
+  ...QUOTE_STATUSES.map((s) => ({ href: link(s), label: QUOTE_STATUS_LABEL[s], count: sums?.[s].n ?? 0, active: status === s })),
+];
+const shownSum = sumTotals(rows);
+---
+
+<Admin title="Ponude" active="ponude">
+  <PageHeader title="Ponude" description="Ponude s brojem, PDF-om i poveznicom za klijenta.">
+    <Fragment slot="actions">
+      <Button href="/admin/ponude/nova" icon="plus">Nova ponuda</Button>
+      <Button href="/admin/ponude/predlosci" variant="secondary" icon="layers">Cjenik stavki</Button>
+    </Fragment>
+  </PageHeader>
+
+  {
+    failed || !sums ? (
+      <Card>
+        <EmptyState icon="alert" title="Ponude trenutno nisu dostupne" text="Baza se ne javlja. Osvježite stranicu za minutu." />
+      </Card>
+    ) : (
+      <div class="grid gap-4">
+        <section class="sums" aria-label="Zbroj po statusu">
+          {(['poslana', 'prihvacena'] as const).map((s) => (
+            <a href={link(s)} class="sums__c">
+              <span class="a-eyebrow">{s === 'poslana' ? 'Poslano, čeka odgovor' : 'Prihvaćeno'}</span>
+              <span class="sums__v">{formatEur(sums![s].total)}</span>
+              <span class="a-hint">{sums![s].n} {pluralHr(sums![s].n, 'ponuda', 'ponude', 'ponuda')}</span>
+            </a>
+          ))}
+        </section>
+
+        <form method="get" action="/admin/ponude" class="search" role="search">
+          {status && <input type="hidden" name="status" value={status} />}
+          <label for="q" class="sr-only">Pretraži ponude</label>
+          <span class="search__ic" aria-hidden="true"><AdminIcon name="search" size={18} /></span>
+          <input id="q" name="q" type="search" value={q} class="a-input search__in" placeholder="Broj, klijent, mjesto ili naslov" autocomplete="off" />
+          {q && <a href={link(status)} class="search__x" aria-label="Očisti pretragu"><AdminIcon name="close" size={18} /></a>}
+        </form>
+
+        <FilterTabs label="Status ponude" items={tabs} />
+
+        <Card flush>
+          {rows.length === 0 ? (
+            <EmptyState
+              icon="file"
+              title={q ? 'Nema ponuda za tu pretragu' : status ? `Nema ponuda sa statusom „${QUOTE_STATUS_LABEL[status]}“` : 'Još nema ponuda'}
+              text={q || status ? 'Promijenite pretragu ili filtar.' : 'Prvu ponudu napravite gumbom ispod ili iz upita.'}
+            >
+              {!q && !status && <Button href="/admin/ponude/nova" icon="plus">Nova ponuda</Button>}
+            </EmptyState>
+          ) : (
+            <>
+              <ul role="list">
+                {rows.map((r) => (
+                  <li>
+                    <a href={`/admin/ponude/${r.id}`} class="a-row qrow">
+                      <span class="grid min-w-0 flex-1 gap-0.5">
+                        <span class="flex min-w-0 items-baseline gap-2.5">
+                          <span class="a-mono flex-none text-[0.8125rem] text-tinta/60">{r.number}</span>
+                          <span class="truncate font-semibold">{r.clientName || 'Bez klijenta'}</span>
+                        </span>
+                        <span class="a-muted truncate text-[0.875rem]">{[r.title, r.location].filter(Boolean).join(' · ') || '—'}</span>
+                        <span class="a-mono text-[0.75rem] text-tinta/55">{formatDay(r.issueDate)}</span>
+                      </span>
+                      <span class="grid flex-none justify-items-end gap-1.5">
+                        <span class="a-mono text-[0.9375rem] font-medium">{formatEur(r.total)}</span>
+                        <Badge tone={QUOTE_STATUS_TONE[r.status]}>{QUOTE_STATUS_LABEL[r.status]}</Badge>
+                      </span>
+                      <AdminIcon name="chevron-right" size={18} class="hidden flex-none text-tinta/40 sm:block" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p class="foot">
+                <span>{rows.length} {pluralHr(rows.length, 'ponuda', 'ponude', 'ponuda')} u prikazu</span>
+                <span class="a-mono">Ukupno {formatEur(shownSum)}</span>
+              </p>
+            </>
+          )}
+        </Card>
+        {(page > 1 || hasMore) && (
+          <div class="flex justify-between gap-2">
+            {page > 1 ? <Button href={link(status, page - 1)} variant="secondary" size="sm" icon="chevron-left">Novije</Button> : <span />}
+            {hasMore && <Button href={link(status, page + 1)} variant="secondary" size="sm" iconRight="chevron-right">Starije</Button>}
+          </div>
+        )}
+      </div>
+    )
+  }
+</Admin>
+
+<style>
+  .sums {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+  .sums__c {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.9rem 1rem;
+    background: #fff;
+    border: 1px solid var(--a-line);
+    border-radius: var(--a-radius);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 150ms var(--ease-draft);
+  }
+  .sums__c:hover {
+    border-color: var(--a-line-strong);
+  }
+  .sums__v {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  @media (width >= 48rem) {
+    .sums__v {
+      font-size: 1.5rem;
+    }
+  }
+  .search {
+    position: relative;
+  }
+  .search__ic {
+    position: absolute;
+    display: grid;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--a-muted);
+    pointer-events: none;
+  }
+  .search__in {
+    padding-left: 2.5rem;
+    padding-right: 2.75rem;
+  }
+  .search__x {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    color: var(--a-muted);
+  }
+  .qrow {
+    align-items: center;
+  }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    border-top: 1px solid var(--a-line);
+    background: rgb(21 24 27 / 0.02);
+    font-size: 0.875rem;
+    color: var(--a-muted);
+  }
+  @media (width >= 48rem) {
+    .foot {
+      padding-inline: 1.5rem;
+    }
+  }
+</style>

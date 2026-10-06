@@ -1,0 +1,117 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Button from '@/components/admin/Button.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import { listReviews } from '@/lib/server/repo/reviews';
+import { getSetting } from '@/lib/server/repo/settings';
+import { formatDate } from '@/lib/admin/labels';
+
+export const prerender = false;
+
+const [reviews, contact] = await Promise.all([listReviews(), getSetting('contact')]);
+const visible = reviews.filter((r) => r.published).length;
+const google = contact.googleReviewsUrl;
+---
+
+<Admin title="Recenzije" active="recenzije">
+  <PageHeader title="Recenzije" description="Stvarne recenzije klijenata koje se prikazuju na stranici. Ne izmišljaju se.">
+    <Fragment slot="actions">
+      <Button href="/admin/recenzije/nova" icon="plus">Dodaj recenziju</Button>
+      {google && <Button href={google} target="_blank" variant="secondary" icon="external">Google profil</Button>}
+    </Fragment>
+  </PageHeader>
+
+  {
+    reviews.length === 0 ? (
+      <Card>
+        <EmptyState
+          icon="star"
+          title="Još nema recenzija"
+          text="Kad klijent ostavi recenziju (npr. na Google profilu), prepišite je ovdje."
+        >
+          <Button href="/admin/recenzije/nova" icon="plus">Dodaj recenziju</Button>
+          {!google && <Button href="/admin/postavke/kontakt" variant="secondary">Upiši Google profil</Button>}
+        </EmptyState>
+      </Card>
+    ) : (
+      <>
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-0.5">
+          <p class="cb-counter">
+            {reviews.length} recenzija · <span data-visible-count>{visible}</span> na stranici
+          </p>
+          <p class="a-hint flex items-center gap-1.5">
+            <AdminIcon name="grip" size={16} /> povucite za redoslijed
+          </p>
+        </div>
+        <Card flush>
+          <ul role="list" data-review-list>
+            {reviews.map((r) => (
+              <li class="cb-row items-start" data-sort-item data-id={r.id}>
+                <button type="button" class="cb-handle mt-1" data-sort-handle aria-label={`Promijeni redoslijed: ${r.name}`}>
+                  <AdminIcon name="grip" size={20} />
+                </button>
+                <a href={`/admin/recenzije/${r.id}`} class="cb-row__main py-1.5">
+                  <span class="rv-stars" aria-label={`${r.stars} od 5`}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" class:list={[n > r.stars && 'is-off']}>
+                        <path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8Z" />
+                      </svg>
+                    ))}
+                  </span>
+                  <span class="cb-clamp2 text-[0.9375rem] leading-snug">„{r.text}“</span>
+                  <span class="a-muted truncate text-[0.8125rem]">
+                    <strong class="font-semibold text-tinta">{r.name}</strong>
+                    {[r.place, r.source, r.reviewDate && formatDate(r.reviewDate)].filter(Boolean).map((x) => ` · ${x}`)}
+                  </span>
+                </a>
+                <label class="a-toggle cb-mini mt-1" title="Prikaži na stranici">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    checked={r.published}
+                    data-quick-toggle
+                    data-url={`/api/admin/reviews/${r.id}`}
+                    data-field="published"
+                    data-on="Recenzija je vidljiva na stranici."
+                    data-off="Recenzija je skrivena."
+                    aria-label={`Prikaži na stranici: ${r.name}`}
+                  />
+                  <span class="hidden sm:inline">Vidljivo</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </>
+    )
+  }
+</Admin>
+
+<style>
+  .rv-stars {
+    display: flex;
+    gap: 1px;
+    color: var(--color-tinta);
+  }
+  .rv-stars svg {
+    fill: currentColor;
+  }
+  .rv-stars svg.is-off {
+    fill: rgb(21 24 27 / 0.18);
+  }
+</style>
+
+<script>
+  import { makeSortable, saveOrder, initOptimisticToggles } from '@/components/admin/content/client';
+  const list = document.querySelector<HTMLElement>('[data-review-list]');
+  if (list) {
+    makeSortable(list, { onChange: (items) => saveOrder('/api/admin/reviews/reorder', { ids: items.map((i) => Number(i.dataset.id)) }) });
+    initOptimisticToggles(list);
+    const c = document.querySelector<HTMLElement>('[data-visible-count]');
+    list.addEventListener('kr:toggled', () => c && (c.textContent = String(list.querySelectorAll('input[data-quick-toggle]:checked').length)));
+  }
+</script>

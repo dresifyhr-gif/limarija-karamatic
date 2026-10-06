@@ -1,0 +1,187 @@
+---
+/** /admin/ponude/predlosci — cjenik stavki (predlošci) za brzo dodavanje u ponudu. Uređivanje u dijalogu. */
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Button from '@/components/admin/Button.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import { listTemplates, type QuoteTemplate } from '@/lib/server/repo/templates';
+import { formatEur, SECTION_PRESETS, UNIT_OPTIONS, UNIT_HINT } from '@/lib/quotes/shared';
+
+export const prerender = false;
+
+let rows: QuoteTemplate[] = [];
+let failed = false;
+try {
+  rows = await listTemplates();
+} catch (e) {
+  failed = true;
+  console.error('[admin] cjenik:', (e as Error).message);
+}
+const groups = new Map<string, QuoteTemplate[]>();
+for (const r of rows) groups.set(r.category || 'Ostalo', [...(groups.get(r.category || 'Ostalo') ?? []), r]);
+const categories = [...new Set([...SECTION_PRESETS, ...rows.map((r) => r.category).filter(Boolean)])];
+---
+
+<Admin title="Cjenik stavki" active="ponude">
+  <PageHeader
+    title="Cjenik stavki"
+    description="Stavke koje često nudite, s jedinicom i cijenom bez PDV-a. U ponudi ih dodajete gumbom „Iz cjenika”."
+    back={{ href: '/admin/ponude', label: 'Ponude' }}
+  >
+    <Button slot="actions" icon="plus" data-new>Dodaj stavku</Button>
+  </PageHeader>
+
+  {
+    failed ? (
+      <Card>
+        <EmptyState icon="alert" title="Cjenik trenutno nije dostupan" text="Baza se ne javlja. Osvježite stranicu za minutu." />
+      </Card>
+    ) : rows.length === 0 ? (
+      <Card>
+        <EmptyState icon="layers" title="Cjenik je prazan" text="Dodajte stavke koje često nudite, npr. „Opšav atike r.š. 50 cm” po dužnom metru.">
+          <Button icon="plus" data-new>Dodaj prvu stavku</Button>
+        </EmptyState>
+      </Card>
+    ) : (
+      <div class="grid gap-5">
+        {[...groups].map(([cat, list]) => (
+          <Card title={cat} flush>
+            <ul role="list">
+              {list.map((r) => (
+                <li>
+                  <button type="button" class="a-row tpl-row" data-edit={JSON.stringify(r)}>
+                    <span class="grid min-w-0 flex-1 gap-0.5 text-left">
+                      <span class="truncate font-semibold">{r.name}</span>
+                      {r.description && <span class="a-muted truncate text-[0.875rem]">{r.description}</span>}
+                    </span>
+                    <span class="a-mono flex-none text-[0.9375rem]">
+                      {formatEur(r.unitPrice)}
+                      <span class="a-muted"> / {r.unit}</span>
+                    </span>
+                    <AdminIcon name="edit" size={18} class="flex-none text-tinta/40" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  <dialog class="a-dialog tpl-dlg" data-dialog aria-labelledby="tpl-title">
+    <form class="grid gap-4 p-5 sm:p-6" data-form novalidate>
+      <h2 id="tpl-title" class="a-h2" data-title>Nova stavka</h2>
+      <input type="hidden" name="id" />
+      <div class="a-field">
+        <label class="a-label" for="t-name">Naziv<span class="a-req" aria-hidden="true">*</span></label>
+        <input id="t-name" name="name" class="a-input" required autocomplete="off" placeholder="npr. Opšav atike r.š. 50 cm" />
+        <p class="a-error" data-field-error="name" hidden></p>
+      </div>
+      <div class="a-field">
+        <label class="a-label" for="t-desc">Opis</label>
+        <textarea id="t-desc" name="description" rows="3" class="a-textarea" placeholder="Nije obavezno — ide ispod naziva u ponudi."></textarea>
+        <p class="a-error" data-field-error="description" hidden></p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="a-field">
+          <label class="a-label" for="t-unit">Jedinica</label>
+          <input id="t-unit" name="unit" class="a-input" list="t-units" maxlength="12" autocomplete="off" />
+          <datalist id="t-units">{UNIT_OPTIONS.map((u) => <option value={u} label={UNIT_HINT[u]} />)}</datalist>
+          <p class="a-error" data-field-error="unit" hidden></p>
+        </div>
+        <div class="a-field">
+          <label class="a-label" for="t-price">Cijena (€, bez PDV-a)</label>
+          <input id="t-price" name="unitPrice" class="a-input a-mono" inputmode="decimal" data-number autocomplete="off" />
+          <p class="a-error" data-field-error="unitPrice" hidden></p>
+        </div>
+      </div>
+      <div class="a-field">
+        <label class="a-label" for="t-cat">Skupina</label>
+        <input id="t-cat" name="category" class="a-input" list="t-cats" autocomplete="off" placeholder="npr. Materijal ili Rad" />
+        <datalist id="t-cats">{categories.map((c) => <option value={c} />)}</datalist>
+      </div>
+      <div class="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:items-center">
+        <Button variant="danger" size="sm" icon="trash" data-del class="sm:mr-auto">Obriši</Button>
+        <Button variant="secondary" data-close>Odustani</Button>
+        <Button type="submit" variant="dark" icon="check">Spremi</Button>
+      </div>
+    </form>
+  </dialog>
+</Admin>
+
+<style>
+  .tpl-row {
+    width: 100%;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    background: #fff;
+    font: inherit;
+    cursor: pointer;
+  }
+  .tpl-row:hover {
+    background: rgb(21 24 27 / 0.03);
+  }
+  .tpl-dlg {
+    width: min(32rem, calc(100vw - 1.5rem));
+  }
+</style>
+
+<script>
+  import { api, toast, errorMessage, confirmDialog, formData, showErrors, withBusy, ApiError } from '@/lib/admin/ui';
+
+  const dlg = document.querySelector<HTMLDialogElement>('[data-dialog]')!;
+  const form = dlg.querySelector<HTMLFormElement>('[data-form]')!;
+  const del = form.querySelector<HTMLButtonElement>('[data-del]')!;
+  const field = (n: string) => form.elements.namedItem(n) as HTMLInputElement;
+  type Tpl = { id: number; name: string; description: string; unit: string; unitPrice: number; category: string };
+
+  function open(t?: Tpl) {
+    showErrors(form, undefined);
+    form.querySelector('[data-title]')!.textContent = t ? 'Uredi stavku' : 'Nova stavka';
+    field('id').value = t ? String(t.id) : '';
+    field('name').value = t?.name ?? '';
+    (form.elements.namedItem('description') as HTMLTextAreaElement).value = t?.description ?? '';
+    field('unit').value = t?.unit ?? 'm²';
+    field('unitPrice').value = t ? t.unitPrice.toFixed(2).replace('.', ',') : '';
+    field('category').value = t?.category ?? '';
+    del.hidden = !t;
+    dlg.showModal();
+    if (matchMedia('(pointer: fine)').matches) field('name').focus();
+  }
+  document.querySelectorAll('[data-new]').forEach((b) => b.addEventListener('click', () => open()));
+  document.querySelectorAll<HTMLElement>('[data-edit]').forEach((b) => b.addEventListener('click', () => open(JSON.parse(b.dataset.edit!))));
+  form.querySelector('[data-close]')!.addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (e) => e.target === dlg && dlg.close());
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = formData(form);
+    const id = String(f.id ?? '');
+    const body = { name: f.name, description: f.description, unit: f.unit || 'kom', unitPrice: f.unitPrice ?? 0, category: f.category };
+    const btn = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+    try {
+      await withBusy(btn, () => api(id ? `/api/admin/quote-templates/${id}` : '/api/admin/quote-templates', { method: id ? 'PUT' : 'POST', body }));
+      location.href = `/admin/ponude/predlosci?poruka=${encodeURIComponent(id ? 'Stavka je spremljena.' : 'Stavka je dodana u cjenik.')}`;
+    } catch (err) {
+      if (err instanceof ApiError && err.fields) showErrors(form, err.fields);
+      toast(errorMessage(err), 'error');
+    }
+  });
+
+  del.addEventListener('click', async () => {
+    const id = field('id').value;
+    dlg.close();
+    const ok = await confirmDialog({ title: 'Obrisati stavku iz cjenika?', message: 'Postojeće ponude se ne mijenjaju.', confirmLabel: 'Obriši', danger: true });
+    if (!ok) return dlg.showModal();
+    try {
+      await api(`/api/admin/quote-templates/${id}`, { method: 'DELETE' });
+      location.href = `/admin/ponude/predlosci?poruka=${encodeURIComponent('Stavka je obrisana.')}`;
+    } catch (err) {
+      toast(errorMessage(err), 'error');
+    }
+  });
+</script>

@@ -1,0 +1,27 @@
+---
+/**
+ * Spremnik poruka (jedan po stranici; Admin.astro ga već uključuje).
+ * Poruku prikazuje klijent: import { toast } from '@/lib/admin/ui'; toast('Spremljeno.');
+ * Poruka nakon preusmjeravanja: dodaj ?poruka=Tekst u URL (layout je prikaže i makne iz adrese).
+ * Prikazuje se SAMO kad se na stranicu došlo iz samog admina (document.referrer s iste domene) —
+ * poveznica izvana (npr. poslana porukom) ne može ispisati lažnu poruku.
+ */
+---
+
+<div id="kr-toasts" class="kr-toasts" aria-live="polite"></div>
+
+<script>
+  import { toast } from '@/lib/admin/ui';
+  const u = new URL(location.href);
+  const msg = u.searchParams.get('poruka');
+  if (msg !== null) {
+    let fromAdmin = false;
+    try {
+      fromAdmin = !!document.referrer && new URL(document.referrer).origin === location.origin;
+    } catch {}
+    if (fromAdmin && msg) toast(msg.slice(0, 160), u.searchParams.get('vrsta') === 'greska' ? 'error' : 'success');
+    u.searchParams.delete('poruka');
+    u.searchParams.delete('vrsta');
+    history.replaceState(null, '', u.pathname + u.search + u.hash);
+  }
+</script>

@@ -1,0 +1,163 @@
+---
+/** /admin/upiti — upiti s web stranice (filtri po statusu, novije prvo, hitni označeni). */
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Badge from '@/components/admin/Badge.astro';
+import Button from '@/components/admin/Button.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import FilterTabs from '@/components/admin/quotes/FilterTabs.astro';
+import { listLeads, countLeadsByStatus, type Lead } from '@/lib/server/repo/leads';
+import { thumbUrl } from '@/lib/server/images';
+import { LEAD_STATUS_LABEL, LEAD_STATUS_TONE, timeAgo, formatDateTime } from '@/lib/admin/labels';
+import { LEAD_STATUSES, type LeadStatus } from '@/lib/types';
+import { jobLabel, isUrgentJob } from '@/lib/quotes/labels';
+import { leadNumber } from '@/lib/quotes/shared';
+
+export const prerender = false;
+
+const PER_PAGE = 30;
+const sp = Astro.url.searchParams;
+const st = sp.get('status');
+const status = st && (LEAD_STATUSES as readonly string[]).includes(st) ? (st as LeadStatus) : undefined;
+const page = Math.max(1, Number(sp.get('str') ?? 1) || 1);
+
+let leads: Lead[] = [];
+let counts: Record<LeadStatus, number> | null = null;
+let thumbs: (string | null)[] = [];
+let failed = false;
+try {
+  [leads, counts] = await Promise.all([listLeads({ status, limit: PER_PAGE + 1, offset: (page - 1) * PER_PAGE }), countLeadsByStatus()]);
+  thumbs = await Promise.all(leads.slice(0, PER_PAGE).map((l) => thumbUrl(l.photos[0], 160)));
+} catch (e) {
+  failed = true;
+  console.error('[admin] upiti:', (e as Error).message);
+}
+const hasMore = leads.length > PER_PAGE;
+leads = leads.slice(0, PER_PAGE);
+const total = counts ? Object.values(counts).reduce((a, b) => a + b, 0) : 0;
+const link = (s?: string, p = 1) => {
+  const q = new URLSearchParams();
+  if (s) q.set('status', s);
+  if (p > 1) q.set('str', String(p));
+  const qs = q.toString();
+  return `/admin/upiti${qs ? `?${qs}` : ''}`;
+};
+const tabs = [
+  { href: link(), label: 'Svi', count: total, active: !status },
+  ...LEAD_STATUSES.map((s) => ({ href: link(s), label: LEAD_STATUS_LABEL[s], count: counts?.[s] ?? 0, active: status === s })),
+];
+---
+
+<Admin title="Upiti" active="upiti">
+  <PageHeader title="Upiti" description="Upiti poslani preko forme na stranici. Otvorite upit, nazovite ili pošaljite poruku i napravite ponudu." />
+
+  {
+    failed ? (
+      <Card>
+        <EmptyState icon="alert" title="Upiti trenutno nisu dostupni" text="Baza se ne javlja. Osvježite stranicu za minutu." />
+      </Card>
+    ) : (
+      <div class="grid gap-4">
+        <FilterTabs label="Status upita" items={tabs} />
+        <Card flush>
+          {leads.length === 0 ? (
+            <EmptyState
+              icon="inbox"
+              title={status ? `Nema upita sa statusom „${LEAD_STATUS_LABEL[status]}“` : 'Još nema upita'}
+              text={status ? 'Odaberite drugi filtar.' : 'Kad netko pošalje upit preko stranice, pojavit će se ovdje.'}
+            />
+          ) : (
+            <ul role="list">
+              {leads.map((l, i) => (
+                <li>
+                  <a href={`/admin/upiti/${l.id}`} class="a-row lead-row">
+                    <span class="lead-thumb">
+                      {thumbs[i] ? (
+                        <img src={thumbs[i]!} alt="" width="56" height="56" loading="lazy" decoding="async" />
+                      ) : (
+                        <AdminIcon name={isUrgentJob(l.jobType) ? 'alert' : 'inbox'} size={20} class="text-tinta/40" />
+                      )}
+                      {l.photos.length > 1 && <span class="lead-thumb__n">{l.photos.length}</span>}
+                    </span>
+                    <span class="grid min-w-0 flex-1 gap-0.5">
+                      <span class="flex min-w-0 items-center gap-2">
+                        <span class:list={['truncate font-semibold', l.status === 'novo' && 'lead-new']}>{l.name || 'Bez imena'}</span>
+                        {isUrgentJob(l.jobType) && l.status !== 'zatvoreno' && (
+                          <Badge tone="danger" plain>
+                            Hitno
+                          </Badge>
+                        )}
+                      </span>
+                      <span class="a-muted truncate text-[0.875rem]">{[jobLabel(l.jobType), l.location].filter(Boolean).join(' · ')}</span>
+                      <span class="a-mono text-[0.75rem] text-tinta/55" title={formatDateTime(l.createdAt)}>
+                        #U-{leadNumber(l.id)} · {timeAgo(l.createdAt)}
+                      </span>
+                    </span>
+                    <span class="flex flex-none items-center gap-2">
+                      <Badge tone={LEAD_STATUS_TONE[l.status]}>{LEAD_STATUS_LABEL[l.status]}</Badge>
+                    </span>
+                    <AdminIcon name="chevron-right" size={18} class="hidden flex-none text-tinta/40 sm:block" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        {(page > 1 || hasMore) && (
+          <div class="flex justify-between gap-2">
+            {page > 1 ? <Button href={link(status, page - 1)} variant="secondary" size="sm" icon="chevron-left">Novije</Button> : <span />}
+            {hasMore && <Button href={link(status, page + 1)} variant="secondary" size="sm" iconRight="chevron-right">Starije</Button>}
+          </div>
+        )}
+      </div>
+    )
+  }
+</Admin>
+
+<style>
+  .lead-row {
+    align-items: center;
+  }
+  .lead-thumb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--color-papir-2);
+  }
+  .lead-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .lead-thumb__n {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    min-width: 18px;
+    padding: 0 4px;
+    border-radius: 2px;
+    background: rgb(14 16 19 / 0.78);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+  }
+  .lead-new::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 0.45rem;
+    border-radius: 999px;
+    background: var(--color-crvena);
+    vertical-align: 0.12em;
+  }
+</style>

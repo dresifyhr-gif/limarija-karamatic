@@ -1,0 +1,59 @@
+---
+/**
+ * Gumb ili link koji izgleda kao gumb.
+ *   <Button>Spremi</Button>                                  (primary = crvena, samo za glavnu radnju na ekranu)
+ *   <Button variant="secondary" href="/admin/radovi">Natrag</Button>
+ *   <Button variant="danger" size="sm" icon="trash" data-delete>Obriši</Button>
+ *   <Button variant="ghost" icon="edit" label="Uredi" iconOnly />
+ */
+import type { HTMLAttributes } from 'astro/types';
+import AdminIcon, { type AdminIconName } from './AdminIcon.astro';
+
+type Props = Omit<HTMLAttributes<'button'>, 'type'> & {
+  variant?: 'primary' | 'secondary' | 'dark' | 'ghost' | 'danger';
+  size?: 'md' | 'sm';
+  href?: string;
+  type?: 'button' | 'submit' | 'reset';
+  icon?: AdminIconName;
+  iconRight?: AdminIconName;
+  /** samo ikona; `label` postaje aria-label i title */
+  iconOnly?: boolean;
+  label?: string;
+  block?: boolean;
+  class?: string;
+  target?: string;
+};
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  type = 'button',
+  icon,
+  iconRight,
+  iconOnly = false,
+  label,
+  block = false,
+  class: className = '',
+  target,
+  ...rest
+} = Astro.props;
+const cls = ['a-btn', `a-btn--${variant}`, size === 'sm' && 'a-btn--sm', iconOnly && 'a-btn--icon', block && 'a-btn--block', className];
+const isize = size === 'sm' ? 18 : 20;
+const aria = iconOnly && label ? { 'aria-label': label, title: label } : {};
+---
+
+{
+  href ? (
+    <a href={href} class:list={cls} target={target} rel={target === '_blank' ? 'noopener' : undefined} {...aria} {...(rest as object)}>
+      {icon && <AdminIcon name={icon} size={isize} />}
+      {!iconOnly && <slot>{label}</slot>}
+      {iconRight && <AdminIcon name={iconRight} size={isize} />}
+    </a>
+  ) : (
+    <button type={type} class:list={cls} {...aria} {...rest}>
+      {icon && <AdminIcon name={icon} size={isize} />}
+      {!iconOnly && <slot>{label}</slot>}
+      {iconRight && <AdminIcon name={iconRight} size={isize} />}
+    </button>
+  )
+}

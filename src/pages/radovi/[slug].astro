@@ -6,6 +6,7 @@
  * Zatim: opis rada iz scope[] (bijela) → ostale fotografije rada (papir) → slični radovi (bijela / papir-2) →
  *        procjena: FinalCta s predodabranom uslugom.
  * Fotografije se ne ponavljaju: slični radovi ne koriste naslovnu sliku koja je već na stranici.
+ * Radovi dolaze iz admina (getContent → samo objavljeni s barem jednom fotografijom), pa i putanje.
  */
 import Base from '@/layouts/Base.astro';
 import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
@@ -15,18 +16,26 @@ import FinalCta from '@/components/home/FinalCta.astro';
 import Gallery from '../usluge/_parts/Gallery.astro';
 import Scope from '../usluge/_parts/Scope.astro';
 import { altFor, clip, galleryOf, kindProfile } from '../usluge/_parts/media';
-import { projects, projectKinds, serviceBySlug, type Project } from '@/data/site';
+import { projectKinds } from '@/data/site';
+import { getContent, type ContentProject as Project } from '@/lib/content';
 
-export function getStaticPaths() {
-  return projects.map((project, i) => ({ params: { slug: project.slug }, props: { project, i } }));
+export async function getStaticPaths() {
+  const { projects } = await getContent();
+  return projects.map((project) => ({ params: { slug: project.slug }, props: { project } }));
 }
 
 interface Props {
   project: Project;
-  i: number;
 }
-const { project, i } = Astro.props;
-const service = serviceBySlug(project.service);
+const { project } = Astro.props;
+const content = await getContent();
+const { projects, services } = content;
+/* redni broj za prethodni / sljedeći rad (po slugu: u devu se sadržaj osvježava svake 3 s) */
+const i = Math.max(
+  0,
+  projects.findIndex((p) => p.slug === project.slug),
+);
+const service = services.find((s) => s.slug === project.service);
 const kind = projectKinds[project.kind];
 const h1 = project.heroTitle ?? project.title;
 
@@ -34,7 +43,7 @@ const crumbs = [homeCrumb, { href: '/radovi', label: 'Radovi' }, { href: `/radov
 
 const gallery = galleryOf(project.gallery, project.image).map((src, k) => ({
   src,
-  alt: altFor(src, `${project.title}, fotografija ${k + 2}`),
+  alt: altFor(src, `${project.title}, fotografija ${k + 2}`, content),
 }));
 const used = new Set([project.image, ...gallery.map((g) => g.src)]);
 

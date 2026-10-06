@@ -6,7 +6,9 @@
  * Radnje na dodir (WhatsApp, telefon, e-pošta) su u heru (ContactSheet).
  */
 import Icon from '@/components/ui/Icon.astro';
-import { site } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site } = await getContent();
 
 /* crtica ostaje na kraju retka, nikad na početku sljedećeg */
 const areaLine = site.areaLine.replace(' — ', '\u00a0— ');

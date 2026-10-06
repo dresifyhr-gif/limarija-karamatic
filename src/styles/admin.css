@@ -1,0 +1,510 @@
+/* ─────────────────────────────────────────────────────────────
+   Admin — osnovni stil (uvozi ga SAMO src/layouts/Admin.astro, poslije global.css).
+   Papir/bijele plohe, grafit traka, Archivo + Plex Mono, crvena samo za glavne radnje.
+   Klase a-* koriste komponente iz src/components/admin; smiju se koristiti i izravno.
+   ───────────────────────────────────────────────────────────── */
+
+/* Sve je u cascade layerima (base / components) — Tailwind utility klase uvijek imaju prednost. */
+@layer base {
+  html:where(.admin) {
+    background: var(--color-papir);
+    color: var(--color-tinta);
+    color-scheme: light;
+    scroll-padding-top: 7.5rem;
+    scroll-padding-bottom: 1rem;
+  }
+  html:where(.admin) body {
+    background: var(--color-papir);
+    font-size: 16px;
+    line-height: 1.45;
+  }
+  .admin :focus-visible {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+  .admin .a-dark :focus-visible {
+    outline-color: var(--color-redline);
+  }
+  .admin {
+    --a-line: rgb(21 24 27 / 0.12);
+    --a-line-strong: rgb(21 24 27 / 0.28);
+    --a-muted: rgb(21 24 27 / 0.66);
+    --a-radius: 3px;
+    --a-ok: #1f7a4d;
+    --a-warn: #9a6a00;
+  }
+
+}
+
+@layer components {
+  /* ── tipografija ─────────────────────────────────────────── */
+  .a-h1 {
+    font-stretch: 112%;
+    font-weight: 800;
+    font-size: 1.625rem;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  @media (width >= 48rem) {
+    .a-h1 {
+      font-size: 2rem;
+    }
+  }
+  .a-h2 {
+    font-stretch: 110%;
+    font-weight: 750;
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+  .a-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--a-muted);
+  }
+  .a-muted {
+    color: var(--a-muted);
+  }
+  .a-mono {
+    font-family: var(--font-mono);
+    letter-spacing: 0.01em;
+  }
+
+  /* ── plohe ───────────────────────────────────────────────── */
+  .a-card {
+    background: #fff;
+    border: 1px solid var(--a-line);
+    border-radius: var(--a-radius);
+  }
+  .a-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1rem 0;
+  }
+  .a-card__body {
+    padding: 1rem;
+  }
+  @media (width >= 48rem) {
+    .a-card__head {
+      padding: 1.25rem 1.5rem 0;
+    }
+    .a-card__body {
+      padding: 1.25rem 1.5rem 1.5rem;
+    }
+  }
+
+  /* ── polja ───────────────────────────────────────────────── */
+  .a-field {
+    display: grid;
+    gap: 0.375rem;
+  }
+  .a-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .a-label .a-req {
+    color: var(--color-redline-dark);
+    margin-left: 0.15em;
+  }
+  .a-hint {
+    font-size: 0.8125rem;
+    color: var(--a-muted);
+  }
+  .a-error {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-redline-dark);
+  }
+  .a-input,
+  .a-select,
+  .a-textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.7rem 0.85rem;
+    background: #fff;
+    color: var(--color-tinta);
+    border: 1px solid var(--a-line-strong);
+    border-radius: var(--a-radius);
+    font: inherit;
+    font-size: 1rem; /* ≥16 px: iOS ne zumira */
+    transition:
+      border-color 150ms var(--ease-draft),
+      box-shadow 150ms var(--ease-draft);
+  }
+  .a-textarea {
+    min-height: 7rem;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  .a-select {
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315181b' stroke-width='1.75' stroke-linecap='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 18px;
+  }
+  .a-input:hover,
+  .a-select:hover,
+  .a-textarea:hover {
+    border-color: rgb(21 24 27 / 0.45);
+  }
+  .a-input:focus,
+  .a-select:focus,
+  .a-textarea:focus {
+    outline: none;
+    border-color: var(--color-tinta);
+    box-shadow: 0 0 0 3px rgb(21 24 27 / 0.12);
+  }
+  .a-input[aria-invalid='true'],
+  .a-select[aria-invalid='true'],
+  .a-textarea[aria-invalid='true'] {
+    border-color: var(--color-redline-dark);
+    box-shadow: 0 0 0 3px rgb(184 15 21 / 0.12);
+  }
+  .a-input::placeholder,
+  .a-textarea::placeholder {
+    color: rgb(21 24 27 / 0.4);
+  }
+  .a-input:disabled,
+  .a-select:disabled,
+  .a-textarea:disabled {
+    background: var(--color-papir);
+    color: var(--a-muted);
+  }
+
+  /* prekidač (checkbox role=switch) */
+  .a-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-height: 44px;
+    cursor: pointer;
+  }
+  .a-toggle input {
+    appearance: none;
+    flex: none;
+    position: relative;
+    width: 46px;
+    height: 28px;
+    margin-top: 0.1rem;
+    border-radius: 999px;
+    background: rgb(21 24 27 / 0.22);
+    transition: background 180ms var(--ease-press);
+    cursor: pointer;
+  }
+  .a-toggle input::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+    transition: transform 180ms var(--ease-press);
+  }
+  .a-toggle input:checked {
+    background: var(--color-tinta);
+  }
+  .a-toggle input:checked::after {
+    transform: translateX(18px);
+  }
+
+  /* ── gumbi ───────────────────────────────────────────────── */
+  .a-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1.15rem;
+    border: 1px solid transparent;
+    border-radius: var(--a-radius);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    font-stretch: 105%;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 150ms var(--ease-draft),
+      border-color 150ms var(--ease-draft),
+      color 150ms var(--ease-draft),
+      transform 150ms var(--ease-press);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .a-btn:active {
+    transform: translateY(1px);
+  }
+  .a-btn[disabled],
+  .a-btn[aria-disabled='true'] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .a-btn[aria-busy='true'] {
+    position: relative;
+    color: transparent !important;
+  }
+  .a-btn[aria-busy='true']::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 2px solid currentColor;
+    border-color: rgb(255 255 255 / 0.9) rgb(255 255 255 / 0.9) transparent transparent;
+    animation: a-spin 0.7s linear infinite;
+  }
+  .a-btn--secondary[aria-busy='true']::after,
+  .a-btn--ghost[aria-busy='true']::after,
+  .a-btn--danger[aria-busy='true']::after {
+    border-color: var(--color-tinta) var(--color-tinta) transparent transparent;
+  }
+  @keyframes a-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .a-btn--primary {
+    background: var(--color-crvena);
+    color: #fff;
+  }
+  .a-btn--primary:hover {
+    background: var(--color-crvena-hover);
+  }
+  .a-btn--secondary {
+    background: #fff;
+    color: var(--color-tinta);
+    border-color: var(--a-line-strong);
+  }
+  .a-btn--secondary:hover {
+    border-color: var(--color-tinta);
+  }
+  .a-btn--dark {
+    background: var(--color-tinta);
+    color: #fff;
+  }
+  .a-btn--dark:hover {
+    background: var(--color-antracit);
+  }
+  .a-btn--ghost {
+    background: transparent;
+    color: var(--color-tinta);
+  }
+  .a-btn--ghost:hover {
+    background: rgb(21 24 27 / 0.06);
+  }
+  .a-btn--danger {
+    background: #fff;
+    color: var(--color-redline-dark);
+    border-color: rgb(184 15 21 / 0.35);
+  }
+  .a-btn--danger:hover {
+    border-color: var(--color-redline-dark);
+    background: rgb(184 15 21 / 0.04);
+  }
+  .a-btn--sm {
+    min-height: 40px;
+    padding: 0 0.85rem;
+    font-size: 0.875rem;
+  }
+  .a-btn--icon {
+    padding: 0;
+    width: 48px;
+  }
+  .a-btn--sm.a-btn--icon {
+    width: 40px;
+  }
+  .a-btn--block {
+    width: 100%;
+  }
+
+  /* ── oznake ──────────────────────────────────────────────── */
+  .a-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    height: 24px;
+    padding: 0 0.5rem;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 1px solid var(--a-line-strong);
+    color: var(--color-tinta);
+    background: #fff;
+  }
+  .a-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.8;
+  }
+  .a-badge--plain::before {
+    display: none;
+  }
+  .a-badge--info {
+    color: #1d4f91;
+    border-color: rgb(29 79 145 / 0.35);
+    background: rgb(29 79 145 / 0.05);
+  }
+  .a-badge--success {
+    color: var(--a-ok);
+    border-color: rgb(31 122 77 / 0.35);
+    background: rgb(31 122 77 / 0.05);
+  }
+  .a-badge--warning {
+    color: var(--a-warn);
+    border-color: rgb(154 106 0 / 0.4);
+    background: rgb(154 106 0 / 0.06);
+  }
+  .a-badge--danger,
+  .a-badge--red {
+    color: var(--color-redline-dark);
+    border-color: rgb(184 15 21 / 0.35);
+    background: rgb(184 15 21 / 0.04);
+  }
+  .a-badge--muted {
+    color: var(--a-muted);
+  }
+
+  /* ── tablica / popis ─────────────────────────────────────── */
+  .a-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .a-table th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--a-muted);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--a-line);
+    white-space: nowrap;
+  }
+  .a-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--a-line);
+    vertical-align: middle;
+  }
+  .a-table tr:last-child td {
+    border-bottom: 0;
+  }
+  .a-table tbody tr[data-href] {
+    cursor: pointer;
+  }
+  .a-table tbody tr[data-href]:hover {
+    background: rgb(21 24 27 / 0.03);
+  }
+  .a-row {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    min-height: 64px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--a-line);
+    color: inherit;
+    text-decoration: none;
+  }
+  .a-row:last-child {
+    border-bottom: 0;
+  }
+  a.a-row:hover {
+    background: rgb(21 24 27 / 0.03);
+  }
+
+  /* ── toast ───────────────────────────────────────────────── */
+  .kr-toasts {
+    position: fixed;
+    z-index: 60;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    display: grid;
+    gap: 0.5rem;
+    justify-items: center;
+    grid-template-columns: minmax(0, 1fr); /* duga poruka se lomi umjesto da izađe iz ekrana */
+    pointer-events: none;
+  }
+  @media (width >= 48rem) {
+    .kr-toasts {
+      left: auto;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      justify-items: end;
+    }
+  }
+  .kr-toast {
+    pointer-events: auto;
+    max-width: 28rem;
+    width: max-content;
+    max-width: 100%;
+    padding: 0.85rem 1rem 0.85rem 0.95rem;
+    border-radius: var(--a-radius);
+    background: var(--color-grafit);
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 550;
+    box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.45);
+    border-left: 3px solid #4fbf8a;
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 180ms var(--ease-press),
+      transform 180ms var(--ease-press);
+    cursor: pointer;
+  }
+  .kr-toast--error {
+    border-left-color: var(--color-redline);
+  }
+  .kr-toast--info {
+    border-left-color: var(--color-celik);
+  }
+  .kr-toast.is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ── dijalog ─────────────────────────────────────────────── */
+  .a-dialog {
+    margin: auto; /* preflight postavlja margin: 0 → modal ne bi bio centriran */
+    width: min(28rem, calc(100vw - 2rem));
+    padding: 0;
+    border: 0;
+    border-radius: var(--a-radius);
+    background: #fff;
+    color: var(--color-tinta);
+    box-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.5);
+  }
+  .a-dialog::backdrop {
+    background: rgb(14 16 19 / 0.55);
+  }
+  .a-dialog[open] {
+    animation: a-dialog-in 180ms var(--ease-press);
+  }
+  @keyframes a-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+}

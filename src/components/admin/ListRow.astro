@@ -1,0 +1,39 @@
+---
+/**
+ * Red popisa (mobilno prijateljski; ide u <Card flush>).
+ *   <ListRow href={`/admin/radovi/${p.id}`} title={p.title} meta={`${p.location} · ${p.year}`} thumb={thumbSrc}>
+ *     <Badge slot="end" tone="muted">Skriveno</Badge>
+ *   </ListRow>
+ */
+import AdminIcon from './AdminIcon.astro';
+
+interface Props {
+  title: string;
+  meta?: string;
+  href?: string;
+  /** URL sličice (npr. iz thumbUrl()) */
+  thumb?: string | null;
+  thumbAlt?: string;
+  class?: string;
+}
+const { title, meta, href, thumb, thumbAlt = '', class: className = '' } = Astro.props;
+const Tag = href ? 'a' : 'div';
+---
+
+<Tag href={href} class:list={['a-row', className]}>
+  {Astro.slots.has('start') && <slot name="start" />}
+  {
+    thumb !== undefined && (
+      <span class="block size-14 flex-none overflow-hidden rounded-[2px] bg-papir-2">
+        {thumb && <img src={thumb} alt={thumbAlt} width="56" height="56" loading="lazy" decoding="async" class="size-full object-cover" />}
+      </span>
+    )
+  }
+  <span class="grid min-w-0 flex-1 gap-0.5">
+    <span class="truncate font-semibold">{title}</span>
+    {meta && <span class="a-muted truncate text-[0.875rem]">{meta}</span>}
+    <slot />
+  </span>
+  {Astro.slots.has('end') && <span class="flex flex-none items-center gap-2"><slot name="end" /></span>}
+  {href && <AdminIcon name="chevron-right" size={18} class="flex-none text-tinta/40" />}
+</Tag>

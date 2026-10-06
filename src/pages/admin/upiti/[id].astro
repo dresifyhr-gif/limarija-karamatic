@@ -1,0 +1,421 @@
+---
+/**
+ * /admin/upiti/:id — jedan upit: brze radnje (nazovi, WhatsApp, napravi ponudu), posao, fotografije,
+ * status (odmah se sprema), interna bilješka, ponude vezane uz upit, brisanje (s fotografijama).
+ */
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Badge from '@/components/admin/Badge.astro';
+import Button from '@/components/admin/Button.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import { getLead, type Lead } from '@/lib/server/repo/leads';
+import { getSetting } from '@/lib/server/repo/settings';
+import { thumbUrls } from '@/lib/server/images';
+import { quotesForLead, type LeadQuote } from '@/lib/quotes/server';
+import { LEAD_STATUS_LABEL, QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE, formatDateTime, timeAgo } from '@/lib/admin/labels';
+import { LEAD_STATUSES } from '@/lib/types';
+import { jobLabel, isUrgentJob } from '@/lib/quotes/labels';
+import { formatDay, formatEur, leadNumber, leadWhatsAppText, waLink, waNumber } from '@/lib/quotes/shared';
+
+export const prerender = false;
+
+const id = Number(Astro.params.id);
+let lead: Lead | null = null;
+let quotes: LeadQuote[] = [];
+let thumbs: (string | null)[] = [];
+let company = 'Limarija Karamatić';
+let failed = false;
+if (Number.isInteger(id) && id > 0) {
+  try {
+    [lead, quotes] = await Promise.all([getLead(id), quotesForLead(id)]);
+    if (lead) thumbs = await thumbUrls(lead.photos, 640);
+    company = (await getSetting('contact')).name || company;
+  } catch (e) {
+    failed = true;
+    console.error('[admin] upit:', (e as Error).message);
+  }
+}
+if (!failed && !lead) return Astro.redirect(`/admin/upiti?poruka=${encodeURIComponent('Upit ne postoji.')}&vrsta=greska`, 303);
+
+const no = lead ? leadNumber(lead.id) : '';
+const tel = lead ? lead.phone.replace(/[^\d+]/g, '') : '';
+const wa = lead && waNumber(lead.phone) ? waLink(lead.phone, leadWhatsAppText(lead.name, no, company)) : '';
+const mapHref = lead?.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lead.location)}` : '';
+const urgent = lead ? isUrgentJob(lead.jobType) : false;
+---
+
+<Admin title={lead ? `Upit — ${lead.name}` : 'Upit'} active="upiti">
+  {
+    failed || !lead ? (
+      <Card>
+        <EmptyState icon="alert" title="Upit trenutno nije dostupan" text="Baza se ne javlja. Osvježite stranicu za minutu." />
+      </Card>
+    ) : (
+      <>
+        <PageHeader
+          title={lead.name || 'Bez imena'}
+          eyebrow={`Upit #U-${no} · ${timeAgo(lead.createdAt)}`}
+          back={{ href: '/admin/upiti', label: 'Upiti' }}
+        />
+
+        {urgent && lead.status !== 'zatvoreno' && (
+          <p class="urgent">
+            <AdminIcon name="alert" size={18} class="flex-none" />
+            <span><strong>Hitno — curi sada.</strong> Klijent je označio da krov trenutno prokišnjava.</span>
+          </p>
+        )}
+
+        <div class="quick" role="group" aria-label="Brze radnje">
+          {tel && (
+            <a href={`tel:${tel}`} class="a-btn a-btn--dark quick__b">
+              <AdminIcon name="phone" size={20} />
+              Nazovi
+            </a>
+          )}
+          {wa && (
+            <a href={wa} target="_blank" rel="noopener noreferrer" class="a-btn a-btn--secondary quick__b quick__wa">
+              <AdminIcon name="whatsapp" size={20} />
+              WhatsApp
+            </a>
+          )}
+          <a href={`/admin/ponude/nova?upit=${lead.id}`} class="a-btn a-btn--primary quick__b quick__q" data-make-quote>
+            <AdminIcon name="file" size={20} />
+            Napravi ponudu
+          </a>
+        </div>
+
+        <div class="grid gap-5 lg:grid-cols-[1.5fr_1fr] lg:items-start">
+          <div class="grid gap-5">
+            <Card title="Posao">
+              <dl class="facts">
+                <dt>Vrsta posla</dt>
+                <dd class="font-semibold">{jobLabel(lead.jobType) || '—'}{lead.variant === 'zgrada' && <span class="a-muted font-normal"> · zgrada</span>}</dd>
+                <dt>{lead.variant === 'zgrada' ? 'Adresa zgrade' : 'Mjesto'}</dt>
+                <dd>
+                  {lead.location || '—'}
+                  {mapHref && (
+                    <a href={mapHref} target="_blank" rel="noopener noreferrer" class="maplink">
+                      <AdminIcon name="map-pin" size={15} /> Karta
+                    </a>
+                  )}
+                </dd>
+                {lead.size && (
+                  <>
+                    <dt>Veličina krova</dt>
+                    <dd>{lead.size}</dd>
+                  </>
+                )}
+                {lead.note && (
+                  <>
+                    <dt>Napomena</dt>
+                    <dd class="whitespace-pre-line">{lead.note}</dd>
+                  </>
+                )}
+                <dt>Poslano</dt>
+                <dd class="a-mono text-[0.875rem]">
+                  {formatDateTime(lead.createdAt)}
+                  {lead.sourcePage && <span class="a-muted"> · {lead.sourcePage}</span>}
+                </dd>
+              </dl>
+            </Card>
+
+            <Card title="Fotografije" description={lead.photos.length ? `${lead.photos.length} od klijenta · dodirnite za punu veličinu` : undefined}>
+              {lead.photos.length === 0 ? (
+                <p class="a-muted text-[0.9375rem]">Klijent nije poslao fotografije. Možete ih zatražiti na WhatsApp.</p>
+              ) : (
+                <ul class="photos" role="list">
+                  {lead.photos.map((p, i) => (
+                    <li>
+                      <a href={p.url} target="_blank" rel="noopener noreferrer" aria-label={`Fotografija ${i + 1} u punoj veličini`}>
+                        <img src={thumbs[i] ?? p.url} alt={`Fotografija ${i + 1}`} loading="lazy" decoding="async" width="320" height="320" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
+
+          <div class="grid gap-5">
+            <Card title="Kontakt">
+              <dl class="facts">
+                <dt>Ime</dt>
+                <dd class="font-semibold">{lead.name}</dd>
+                <dt>Mobitel</dt>
+                <dd>{tel ? <a href={`tel:${tel}`} class="a-mono">{lead.phone}</a> : <span class="a-mono">{lead.phone}</span>}</dd>
+                {lead.email && (
+                  <>
+                    <dt>E-pošta</dt>
+                    <dd class="break-all"><a href={`mailto:${lead.email}`}>{lead.email}</a></dd>
+                  </>
+                )}
+                {lead.callTime && (
+                  <>
+                    <dt>Kad nazvati</dt>
+                    <dd>{lead.callTime}</dd>
+                  </>
+                )}
+              </dl>
+            </Card>
+
+            <Card title="Status">
+              <fieldset class="seg" data-status data-id={lead.id}>
+                <legend class="sr-only">Status upita</legend>
+                {LEAD_STATUSES.map((s) => (
+                  <label class="seg__o">
+                    <input type="radio" name="status" value={s} checked={lead!.status === s} />
+                    <span>{LEAD_STATUS_LABEL[s]}</span>
+                  </label>
+                ))}
+              </fieldset>
+            </Card>
+
+            <Card title="Bilješka" description="Samo za vas — klijent je ne vidi.">
+              <form class="grid gap-3" data-note>
+                <label class="sr-only" for="adminNote">Bilješka</label>
+                <textarea id="adminNote" name="adminNote" rows="4" class="a-textarea" placeholder="npr. Dogovoren izlazak u četvrtak u 8 h.">{lead.adminNote}</textarea>
+                <div class="flex justify-end">
+                  <Button type="submit" variant="secondary" size="sm" icon="check">Spremi bilješku</Button>
+                </div>
+              </form>
+            </Card>
+
+            <Card title="Ponude" flush>
+              <Button slot="actions" href={`/admin/ponude/nova?upit=${lead.id}`} variant="ghost" size="sm" icon="plus">Nova</Button>
+              {quotes.length === 0 ? (
+                <p class="a-muted px-4 py-5 text-[0.9375rem] md:px-6">Za ovaj upit još nema ponude.</p>
+              ) : (
+                <ul role="list">
+                  {quotes.map((q) => (
+                    <li>
+                      <a href={`/admin/ponude/${q.id}`} class="a-row">
+                        <span class="grid min-w-0 flex-1 gap-0.5">
+                          <span class="a-mono font-medium">{q.number}</span>
+                          <span class="a-muted truncate text-[0.875rem]">{[q.title, formatDay(q.issueDate)].filter(Boolean).join(' · ')}</span>
+                        </span>
+                        <span class="grid justify-items-end gap-1">
+                          <span class="a-mono text-[0.9375rem]">{formatEur(q.total)}</span>
+                          <Badge tone={QUOTE_STATUS_TONE[q.status]}>{QUOTE_STATUS_LABEL[q.status]}</Badge>
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            <div class="flex justify-end">
+              <Button variant="danger" size="sm" icon="trash" data-delete data-id={lead.id}>Obriši upit</Button>
+            </div>
+          </div>
+        </div>
+      </>
+    )
+  }
+</Admin>
+
+<style>
+  .urgent {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding: 0.8rem 1rem;
+    border-left: 3px solid var(--color-crvena);
+    background: rgb(184 15 21 / 0.05);
+    color: var(--color-redline-dark);
+    font-size: 0.9375rem;
+  }
+  .urgent strong {
+    font-weight: 700;
+  }
+  .quick {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .quick__q {
+    grid-column: 1 / -1;
+  }
+  .quick__b {
+    min-height: 52px;
+  }
+  .quick__wa :global(svg) {
+    color: #1a9e4b;
+  }
+  @media (width >= 40rem) {
+    .quick {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    .quick__q {
+      margin-left: auto;
+    }
+  }
+  .facts {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, auto) 1fr;
+    gap: 0.6rem 1rem;
+    font-size: 0.9375rem;
+  }
+  .facts dt {
+    color: var(--a-muted);
+    font-size: 0.875rem;
+  }
+  .facts dd {
+    min-width: 0;
+  }
+  .facts a {
+    color: var(--color-tinta);
+  }
+  .maplink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--color-redline-dark) !important;
+  }
+  .photos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  @media (width >= 40rem) {
+    .photos {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .photos a {
+    display: block;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--color-papir-2);
+  }
+  .photos img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 200ms var(--ease-press);
+  }
+  .photos a:hover img {
+    transform: scale(1.03);
+  }
+  .seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+  }
+  .seg__o {
+    position: relative;
+  }
+  .seg__o input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+  }
+  .seg__o span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 0.6rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 3px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      background 150ms var(--ease-draft),
+      border-color 150ms var(--ease-draft);
+  }
+  .seg__o input:checked + span {
+    background: var(--color-tinta);
+    border-color: var(--color-tinta);
+    color: #fff;
+  }
+  .seg__o input:focus-visible + span {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+  .seg[aria-busy='true'] {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  import { api, toast, errorMessage, confirmDialog, withBusy } from '@/lib/admin/ui';
+
+  const seg = document.querySelector<HTMLFieldSetElement>('[data-status]');
+  if (seg) {
+    const id = seg.dataset.id;
+    let current = seg.querySelector<HTMLInputElement>('input:checked')?.value;
+    seg.addEventListener('change', async (e) => {
+      const input = e.target as HTMLInputElement;
+      seg.setAttribute('aria-busy', 'true');
+      try {
+        await api(`/api/admin/leads/${id}`, { method: 'PUT', body: { status: input.value } });
+        current = input.value;
+        toast(`Status: ${input.nextElementSibling?.textContent ?? ''}.`);
+      } catch (err) {
+        toast(errorMessage(err), 'error');
+        const prev = seg.querySelector<HTMLInputElement>(`input[value="${current}"]`);
+        if (prev) prev.checked = true;
+      } finally {
+        seg.removeAttribute('aria-busy');
+      }
+    });
+  }
+
+  const note = document.querySelector<HTMLFormElement>('form[data-note]');
+  note?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = note.querySelector<HTMLButtonElement>('button[type="submit"]');
+    try {
+      await withBusy(btn, () =>
+        api(`/api/admin/leads/${seg?.dataset.id}`, { method: 'PUT', body: { adminNote: (note.elements.namedItem('adminNote') as HTMLTextAreaElement).value } }),
+      );
+      toast('Bilješka je spremljena.');
+    } catch (err) {
+      toast(errorMessage(err), 'error');
+    }
+  });
+
+  // "Napravi ponudu": novi upit prelazi u "U obradi" (ponuda se sprema tek kad je spremite u uređivaču)
+  document.querySelector<HTMLAnchorElement>('[data-make-quote]')?.addEventListener('click', () => {
+    const checked = seg?.querySelector<HTMLInputElement>('input:checked');
+    if (seg && checked?.value === 'novo') {
+      fetch(`/api/admin/leads/${seg.dataset.id}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status: 'u_obradi' }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+  });
+
+  const del = document.querySelector<HTMLButtonElement>('[data-delete]');
+  del?.addEventListener('click', async () => {
+    const ok = await confirmDialog({
+      title: 'Obrisati upit?',
+      message: 'Upit i fotografije klijenta trajno se brišu. Ponude napravljene iz upita ostaju.',
+      confirmLabel: 'Obriši',
+      danger: true,
+    });
+    if (!ok) return;
+    try {
+      await withBusy(del, () => api(`/api/admin/leads/${del.dataset.id}`, { method: 'DELETE' }));
+      location.href = `/admin/upiti?poruka=${encodeURIComponent('Upit je obrisan.')}`;
+    } catch (err) {
+      toast(errorMessage(err), 'error');
+    }
+  });
+</script>

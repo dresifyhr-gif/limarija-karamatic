@@ -2,24 +2,26 @@
 /**
  * Recenzije (id="recenzije", bijela) — zaglavlje + četiri brojke kao lančana kota + (kad postoje) recenzije.
  *
- *  Brojke (iz site.ts `stats`) crta zajednička `ui/StatLine.astro` (kota, odbrojavanje, crtanje linije).
+ *  Brojke (`stats` iz admina, getContent) crta zajednička `ui/StatLine.astro` (kota, odbrojavanje, crtanje linije).
  *  Bez recenzija i bez Google poveznice zaglavlje glasi "U brojkama · Brojke iza svakog krova."
  *
- *  Recenzije: `reviews` u site.ts je za sada PRAZAN — tada sekcija prikazuje samo brojke i ocjenu
- *  (bez kartica, bez niza, bez izmišljenih imena). Čim se u popis dodaju stvarne recenzije, kartice
- *  i vodoravni niz (native scroll-snap, bez autoplaya) pojave se sami.
+ *  Recenzije dolaze iz admina (samo objavljene, getContent). Dok ih nema, sekcija prikazuje samo brojke
+ *  i ocjenu (bez kartica, bez niza, bez izmišljenih imena). Čim vlasnik objavi stvarne recenzije, kartice
+ *  i vodoravni niz (native scroll-snap, bez autoplaya) pojave se sami (nakon "Objavi na stranicu").
  *  Link "Sve recenzije na Googleu" prikazuje se samo kad je `site.googleReviewsUrl` upisan.
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon from '@/components/ui/Icon.astro';
 import StatLine from '@/components/ui/StatLine.astro';
-import { site, reviews as allReviews, type Review } from '@/data/site';
+import { getContent, type ContentReview } from '@/lib/content';
+
+const { contact: site, reviews: allReviews } = await getContent();
 
 interface Props {
   /** zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju */
   index?: string;
-  /** recenzije za prikaz (default: sve iz site.ts) */
-  items?: Review[];
+  /** recenzije za prikaz (default: sve objavljene iz admina) */
+  items?: ContentReview[];
 }
 const { items = allReviews } = Astro.props;
 const list = items.filter((r) => r && r.text);
@@ -86,7 +88,9 @@ const head = voices
                 </blockquote>
                 <footer class="mt-8">
                   <p class="font-semibold">{r.name}</p>
-                  {r.place && <p class="mt-0.5 text-[0.9375rem] text-tinta/70">{r.place}</p>}
+                  {(r.place || r.source) && (
+                    <p class="mt-0.5 text-[0.9375rem] text-tinta/70">{[r.place, r.source].filter(Boolean).join(" · ")}</p>
+                  )}
                 </footer>
               </article>
             </li>

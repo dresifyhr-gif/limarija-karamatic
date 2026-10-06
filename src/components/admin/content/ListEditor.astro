@@ -1,0 +1,177 @@
+---
+/**
+ * Uređivač popisa kratkih tekstova (npr. "Što je izvedeno", "Što uključuje").
+ *   <ListEditor name="scope" label="Što je izvedeno" items={p.scope} placeholder="npr. Opšav atike s okapnicom" max={20} />
+ * Polja imaju data-list → formData() vraća string[] (prazni redovi se izbacuju).
+ * Kad nema nijednog reda, ključ ne postoji u formData() — u skripti koristi `?? []`.
+ * Redoslijed: povuci ručku (ili fokus na ručku + strelice).
+ */
+import '@/components/admin/content/content.css';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+
+interface Props {
+  name: string;
+  label: string;
+  hint?: string;
+  items?: string[];
+  placeholder?: string;
+  max?: number;
+  maxLength?: number;
+  addLabel?: string;
+}
+const { name, label, hint, items = [], placeholder = '', max = 20, maxLength = 200, addLabel = 'Dodaj stavku' } = Astro.props;
+const uid = `le-${name.replace(/[^\w-]/g, '-')}`;
+---
+
+<div class="le a-field" data-le data-max={max}>
+  <div class="flex items-baseline justify-between gap-3">
+    <p class="a-label" id={`${uid}-l`}>{label}</p>
+    <span class="cb-counter" data-le-count>{items.length}/{max}</span>
+  </div>
+  {hint && <p class="a-hint -mt-0.5">{hint}</p>}
+  <ul class="le-list" role="list" aria-labelledby={`${uid}-l`} data-le-list>
+    {
+      items.map((it) => (
+        <li class="le-row" data-sort-item>
+          <button type="button" class="cb-handle" data-sort-handle aria-label="Promijeni redoslijed (povuci ili strelice)">
+            <AdminIcon name="grip" size={20} />
+          </button>
+          <textarea class="a-input le-input" name={name} rows="1" placeholder={placeholder} maxlength={maxLength} data-list aria-label={label}>{it}</textarea>
+          <button type="button" class="le-del" data-le-del aria-label="Ukloni stavku">
+            <AdminIcon name="close" size={18} />
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+  <button type="button" class="a-btn a-btn--secondary a-btn--sm w-fit" data-le-add>
+    <AdminIcon name="plus" size={18} />
+    {addLabel}
+  </button>
+  <p class="a-error" data-field-error={name} hidden role="alert"></p>
+  <template data-le-tpl>
+    <li class="le-row" data-sort-item>
+      <button type="button" class="cb-handle" data-sort-handle aria-label="Promijeni redoslijed (povuci ili strelice)">
+        <AdminIcon name="grip" size={20} />
+      </button>
+      <textarea class="a-input le-input" name={name} rows="1" placeholder={placeholder} maxlength={maxLength} data-list aria-label={label}></textarea>
+      <button type="button" class="le-del" data-le-del aria-label="Ukloni stavku">
+        <AdminIcon name="close" size={18} />
+      </button>
+    </li>
+  </template>
+</div>
+
+<style>
+  .le-list {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .le-list:empty {
+    display: none;
+  }
+  .le-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 3px;
+    background: transparent;
+  }
+  .le-row .a-input {
+    flex: 1;
+    min-width: 0;
+  }
+  .le-input {
+    display: block;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.4;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+  .le-row {
+    align-items: flex-start;
+  }
+  .le-del {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 48px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: rgb(21 24 27 / 0.45);
+  }
+  .le-del:hover {
+    color: var(--color-redline-dark);
+    background: rgb(184 15 21 / 0.05);
+  }
+  [data-le][data-full] [data-le-add] {
+    display: none;
+  }
+</style>
+
+<script>
+  import { makeSortable } from '@/components/admin/content/client';
+
+  // visina prati tekst (dulje stavke na mobitelu se lome u više redova)
+  const grow = (t: HTMLTextAreaElement) => {
+    t.style.height = 'auto';
+    t.style.height = `${t.scrollHeight + 2}px`;
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-le]').forEach((root) => {
+    const list = root.querySelector<HTMLUListElement>('[data-le-list]')!;
+    const tpl = root.querySelector<HTMLTemplateElement>('[data-le-tpl]')!;
+    const count = root.querySelector<HTMLElement>('[data-le-count]')!;
+    const max = Number(root.dataset.max || 20);
+    const changed = () => {
+      count.textContent = `${list.children.length}/${max}`;
+      root.toggleAttribute('data-full', list.children.length >= max);
+      root.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    root.toggleAttribute('data-full', list.children.length >= max);
+    root.querySelector('[data-le-add]')!.addEventListener('click', () => {
+      if (list.children.length >= max) return;
+      const li = tpl.content.firstElementChild!.cloneNode(true) as HTMLLIElement;
+      list.appendChild(li);
+      grow(li.querySelector('textarea')!);
+      li.querySelector('textarea')!.focus();
+      changed();
+    });
+    list.addEventListener('click', (e) => {
+      const del = (e.target as HTMLElement).closest('[data-le-del]');
+      if (!del) return;
+      const li = del.closest('li')!;
+      const next = (li.nextElementSibling ?? li.previousElementSibling)?.querySelector('textarea');
+      li.remove();
+      next?.focus();
+      changed();
+    });
+    // Enter u zadnjem polju → novi red (ne šalje formu)
+    list.addEventListener('keydown', (e) => {
+      const t = e.target as HTMLTextAreaElement;
+      if (e.key !== 'Enter' || !t.matches('[data-list]')) return;
+      e.preventDefault();
+      if (t.closest('li') === list.lastElementChild && t.value.trim()) root.querySelector<HTMLButtonElement>('[data-le-add]')!.click();
+    });
+    makeSortable(list, { onChange: changed });
+    list.querySelectorAll<HTMLTextAreaElement>('textarea').forEach(grow);
+    list.addEventListener('input', (e) => {
+      const t = e.target as HTMLTextAreaElement;
+      if (t.matches('textarea')) {
+        // novi redovi nisu dopušteni u stavci
+        if (t.value.includes('\n')) t.value = t.value.replace(/\s*\n\s*/g, ' ');
+        grow(t);
+      }
+    });
+    // širina se mijenja (rotacija) → ponovno izmjeri
+    let lastW = list.clientWidth;
+    new ResizeObserver(() => {
+      if (list.clientWidth === lastW) return;
+      lastW = list.clientWidth;
+      list.querySelectorAll<HTMLTextAreaElement>('textarea').forEach(grow);
+    }).observe(list);
+  });
+</script>

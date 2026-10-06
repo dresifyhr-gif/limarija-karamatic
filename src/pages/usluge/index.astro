@@ -14,7 +14,9 @@ import Photo from '@/components/ui/Photo.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
 import Icon from '@/components/ui/Icon.astro';
 import FinalCta from '@/components/home/FinalCta.astro';
-import { services, site, waHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { services, contact: site, waHref } = await getContent();
 
 const crumbs = [homeCrumb, { href: '/usluge', label: 'Usluge' }];
 /* fokus kadra kod rezanja portretnih fotografija */

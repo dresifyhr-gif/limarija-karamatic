@@ -6,19 +6,19 @@ import '@/styles/global.css';
 import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
 import archivoLatinExt from '@fontsource-variable/archivo/files/archivo-latin-ext-wdth-normal.woff2?url';
 
-import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
 import UtilityBar from '@/components/layout/UtilityBar.astro';
 import Header from '@/components/layout/Header.astro';
 import Footer from '@/components/layout/Footer.astro';
 import MobileCtaBar from '@/components/layout/MobileCtaBar.astro';
-import { site, PROTOTYPE } from '@/data/site';
+import { PROTOTYPE } from '@/data/site';
+import { getContent, isRemoteImage, type SiteImage } from '@/lib/content';
 import ogDefault from '@/assets/projects/krov-crijep-lim-zalazak.jpg';
 
 interface Props {
   title: string;
   description: string;
-  image?: ImageMetadata;
+  image?: SiteImage;
   noindex?: boolean;
   /** dodatni JSON-LD objekti (Service, FAQPage, BreadcrumbList…) */
   schema?: Record<string, unknown>[];
@@ -39,12 +39,13 @@ const {
   hideMobileBar = false,
   preload,
 } = Astro.props;
+const { contact: site } = await getContent();
 
 // kanonski URL bez završne kose crte — isto kao svi interni linkovi
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const canonical = new URL(path, Astro.site);
 // landscape 1200×630 za WhatsApp / Facebook pregled
-const og = await getImage({ src: image, width: 1200, height: 630, fit: 'cover', position: 'center', format: 'jpg', quality: 72 });
+const og = await getImage({ src: isRemoteImage(image) ? image.src : image, width: 1200, height: 630, fit: 'cover', position: 'center', format: 'jpg', quality: 72 });
 const ogUrl = new URL(og.src, Astro.site).toString();
 
 const business = {
@@ -120,7 +121,7 @@ const business = {
       })();
     </script>
 
-    <script type="application/ld+json" set:html={JSON.stringify([business, ...schema])} />
+    <script type="application/ld+json" set:html={JSON.stringify([business, ...schema]).replace(/</g, '\\u003c')} />
   </head>
   <body class="bg-grafit text-linija antialiased">
     <a

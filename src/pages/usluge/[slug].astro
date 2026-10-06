@@ -23,10 +23,12 @@ import Gallery from './_parts/Gallery.astro';
 import Scope from './_parts/Scope.astro';
 import Proof from './_parts/Proof.astro';
 import { faqFor, radova, servicePhotos } from './_parts/media';
-import { services, projects, site, type Service } from '@/data/site';
+import { getContent, type ContentService as Service } from '@/lib/content';
 import detailPhoto from '@/assets/projects/atika-opsav-kut-detalj.jpg';
 
-export function getStaticPaths() {
+/* slugovi usluga su fiksni (site.ts), a tekstovi, fotografije i pitanja dolaze iz admina */
+export async function getStaticPaths() {
+  const { services } = await getContent();
   return services.map((service) => ({ params: { slug: service.slug }, props: { service } }));
 }
 
@@ -34,6 +36,8 @@ interface Props {
   service: Service;
 }
 const { service } = Astro.props;
+const content = await getContent();
+const { services, projects, faq, contact: site } = content;
 
 /* Popravak je landing za Google Ads: telefon je glavni gumb (kreativni smjer §4). */
 const urgent = service.slug === 'popravak-krova';
@@ -44,7 +48,7 @@ const crumbs = [homeCrumb, { href: '/usluge', label: 'Usluge' }, { href: `/uslug
 
 /* hero → kartice radova → galerija → sličice: svaka fotografija jednom
    (fotografija iz Detalja je rezervirana, da se ne ponovi u galeriji) */
-const { heroProject, cards, gallery: allGallery, thumbs } = servicePhotos(service, hasDetail ? [detailPhoto] : []);
+const { heroProject, cards, gallery: allGallery, thumbs } = servicePhotos(service, content, hasDetail ? [detailPhoto] : []);
 /* manje gužve: galerija + kartice radova zajedno najviše 3 fotografije (kartice imaju prednost) */
 const gallery = allGallery.slice(0, Math.max(0, 3 - cards.length));
 const others = services.filter((s) => s.slug !== service.slug);
@@ -56,9 +60,9 @@ const showTile = cards.length < 3;
 const lgSpan = cards.length % 3 === 0 ? 3 : 3 - (cards.length % 3);
 const smSpan = cards.length % 2 === 0 ? 2 : 1;
 
-const faqItems = faqFor(service);
+const faqItems = faqFor(service, faq);
 
-/* hrvatski navodnici u tekstu iz site.ts */
+/* hrvatski navodnici u tekstu (site.ts / admin) */
 const hr = (t: string) => t.replace(/"([^"]+)"/g, '„$1“');
 
 /* svijetle pozadine se izmjenjuju (vidi ritam gore); pitanja su uvijek bijela, forma papir */

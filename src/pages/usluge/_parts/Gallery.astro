@@ -9,13 +9,13 @@
  * Svijetla sekcija (tone 'light', default); pozadinu bira stranica (`bg`: bg-papir | bg-white | bg-papir-2)
  * da se svijetle sekcije izmjenjuju. tone 'dark' ostaje samo radi kompatibilnosti.
  */
-import type { ImageMetadata } from 'astro';
+import type { SiteImage } from '@/lib/content';
 import Photo from '@/components/ui/Photo.astro';
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Icon from '@/components/ui/Icon.astro';
 
 interface Props {
-  images: { src: ImageMetadata; alt: string; href?: string; hrefLabel?: string }[];
+  images: { src: SiteImage; alt: string; href?: string; hrefLabel?: string }[];
   tone?: 'dark' | 'light';
   /** pozadina svijetle sekcije (default bg-papir) */
   bg?: string;

@@ -24,7 +24,9 @@
 import Icon from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
 import RadniNalog from '@/components/form/RadniNalog.astro';
-import { site, services, telHref, waHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, services, telHref, waHref } = await getContent();
 
 interface Props {
   title?: string;

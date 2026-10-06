@@ -1,0 +1,264 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from '@/components/admin/content/SaveBar.astro';
+import { getSetting } from '@/lib/server/repo/settings';
+import type { StatSetting } from '@/lib/types';
+
+export const prerender = false;
+
+const stats = await getSetting('stats');
+const MAX = 8;
+const fmt = (s: StatSetting) =>
+  `${s.prefix ?? ''}${s.value.toLocaleString('hr-HR', { minimumFractionDigits: s.decimals ?? 0, maximumFractionDigits: s.decimals ?? 0 })}${s.suffix ?? ''}`;
+---
+
+<Admin title="Brojke" active="postavke">
+  <PageHeader title="Brojke" back={{ href: '/admin/postavke', label: 'Postavke' }} description="Brojke uz recenzije i na stranicama usluga. Upisujte samo ono što je točno i što možete dokazati." />
+
+  <form class="cb-form" data-guard data-stats-form data-max={MAX} novalidate>
+    <Card flush>
+      <ol role="list" class="st-list" data-st-list>
+        {
+          stats.map((s, i) => (
+            <li class="st-row" data-sort-item>
+              <button type="button" class="cb-handle mt-6" data-sort-handle aria-label="Promijeni redoslijed (povuci ili strelice)">
+                <AdminIcon name="grip" size={20} />
+              </button>
+              <div class="st-fields">
+                <p class="st-preview" data-st-preview aria-hidden="true">
+                  <span class="a-mono" data-st-big>{fmt(s)}</span> <span data-st-label>{s.label}</span>
+                </p>
+                <div class="st-grid">
+                  <label class="a-field st-value">
+                    <span class="a-label">Broj</span>
+                    <input class="a-input" name={`${i}.value`} value={String(s.value).replace('.', ',')} inputmode="decimal" autocomplete="off" data-st="value" />
+                  </label>
+                  <label class="a-field st-label">
+                    <span class="a-label">Opis</span>
+                    <input class="a-input" name={`${i}.label`} value={s.label} maxlength="80" autocomplete="off" data-st="label" />
+                  </label>
+                  <label class="a-field">
+                    <span class="a-label">Ispred</span>
+                    <input class="a-input" name={`${i}.prefix`} value={s.prefix ?? ''} maxlength="10" autocomplete="off" placeholder="—" data-st="prefix" />
+                  </label>
+                  <label class="a-field">
+                    <span class="a-label">Iza</span>
+                    <input class="a-input" name={`${i}.suffix`} value={s.suffix ?? ''} maxlength="16" autocomplete="off" placeholder="npr. +" data-st="suffix" />
+                  </label>
+                  <label class="a-field">
+                    <span class="a-label">Decimale</span>
+                    <select class="a-select" name={`${i}.decimals`} data-st="decimals">
+                      {[0, 1, 2].map((n) => <option value={String(n)} selected={(s.decimals ?? 0) === n}>{n}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <p class="a-error" data-field-error={`${i}.value`} hidden role="alert"></p>
+                <p class="a-error" data-field-error={`${i}.label`} hidden role="alert"></p>
+              </div>
+              <button type="button" class="st-del" data-st-del aria-label="Ukloni brojku">
+                <AdminIcon name="trash" size={18} />
+              </button>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--a-line)] p-4 sm:px-6" data-st-foot>
+        <button type="button" class="a-btn a-btn--secondary a-btn--sm" data-st-add>
+          <AdminIcon name="plus" size={18} /> Dodaj brojku
+        </button>
+        <span class="cb-counter" data-st-count>{stats.length}/{MAX}</span>
+      </div>
+    </Card>
+    <p class="a-hint px-0.5">Primjer: broj 15, iza „+”, opis „godina u limariji” → <span class="a-mono">15+</span> godina u limariji.</p>
+
+    <template data-st-tpl>
+      <li class="st-row" data-sort-item>
+        <button type="button" class="cb-handle mt-6" data-sort-handle aria-label="Promijeni redoslijed (povuci ili strelice)">
+          <AdminIcon name="grip" size={20} />
+        </button>
+        <div class="st-fields">
+          <p class="st-preview" data-st-preview aria-hidden="true"><span class="a-mono" data-st-big>0</span> <span data-st-label></span></p>
+          <div class="st-grid">
+            <label class="a-field st-value"><span class="a-label">Broj</span><input class="a-input" inputmode="decimal" autocomplete="off" data-st="value" /></label>
+            <label class="a-field st-label"><span class="a-label">Opis</span><input class="a-input" maxlength="80" autocomplete="off" data-st="label" /></label>
+            <label class="a-field"><span class="a-label">Ispred</span><input class="a-input" maxlength="10" autocomplete="off" placeholder="—" data-st="prefix" /></label>
+            <label class="a-field"><span class="a-label">Iza</span><input class="a-input" maxlength="16" autocomplete="off" placeholder="npr. +" data-st="suffix" /></label>
+            <label class="a-field"><span class="a-label">Decimale</span><select class="a-select" data-st="decimals"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></label>
+          </div>
+          <p class="a-error" data-err="value" hidden role="alert"></p>
+          <p class="a-error" data-err="label" hidden role="alert"></p>
+        </div>
+        <button type="button" class="st-del" data-st-del aria-label="Ukloni brojku"><AdminIcon name="trash" size={18} /></button>
+      </li>
+    </template>
+
+    <SaveBar cancelHref="/admin/postavke" />
+  </form>
+</Admin>
+
+<style>
+  .st-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 1rem 0.5rem 1.25rem 0.75rem;
+    border-bottom: 1px solid var(--a-line);
+  }
+  .st-row:last-child {
+    border-bottom: 0;
+  }
+  @media (width >= 48rem) {
+    .st-row {
+      padding: 1.25rem 1rem 1.5rem 1.25rem;
+    }
+  }
+  .st-fields {
+    display: grid;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+  }
+  .st-preview {
+    min-height: 2rem;
+    padding-right: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--a-muted);
+  }
+  .st-preview .a-mono {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--color-tinta);
+    letter-spacing: -0.01em;
+    white-space: pre;
+    margin-right: 0.35rem;
+  }
+  .st-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+  .st-value {
+    grid-column: span 1;
+  }
+  .st-label {
+    grid-column: span 2;
+  }
+  @media (width >= 48rem) {
+    .st-grid {
+      grid-template-columns: 7rem minmax(0, 1fr) 5.5rem 6.5rem 6rem;
+    }
+    .st-label {
+      grid-column: span 1;
+    }
+  }
+  .st-del {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: rgb(21 24 27 / 0.45);
+  }
+  .st-del:hover {
+    color: var(--color-redline-dark);
+    background: rgb(184 15 21 / 0.05);
+  }
+  [data-stats-form][data-full] [data-st-add] {
+    display: none;
+  }
+</style>
+
+<script>
+  import { toast, showErrors } from '@/lib/admin/ui';
+  import { makeSortable } from '@/components/admin/content/client';
+  import { bindSettingsForm } from '@/components/admin/content/settingsSave';
+
+  const form = document.querySelector<HTMLFormElement>('[data-stats-form]');
+  if (form) {
+    const list = form.querySelector<HTMLOListElement>('[data-st-list]')!;
+    const tpl = form.querySelector<HTMLTemplateElement>('[data-st-tpl]')!;
+    const count = form.querySelector<HTMLElement>('[data-st-count]')!;
+    const max = Number(form.dataset.max || 8);
+    const num = (s: string) => Number(s.trim().replace(/\s/g, '').replace(',', '.'));
+
+    const preview = (li: HTMLElement) => {
+      const get = (k: string) => li.querySelector<HTMLInputElement>(`[data-st="${k}"]`)!.value;
+      const v = num(get('value'));
+      const dec = Number(get('decimals') || 0);
+      const shown = Number.isFinite(v) ? v.toLocaleString('hr-HR', { minimumFractionDigits: dec, maximumFractionDigits: dec }) : '?';
+      li.querySelector('[data-st-big]')!.textContent = `${get('prefix')}${shown}${get('suffix')}`;
+      li.querySelector('[data-st-label]')!.textContent = get('label');
+    };
+    // imena polja = put greške s API-ja ('0.value', '2.label'…)
+    const renumber = () => {
+      [...list.children].forEach((li, i) => {
+        li.querySelectorAll<HTMLInputElement>('[data-st]').forEach((el) => (el.name = `${i}.${el.dataset.st}`));
+        li.querySelectorAll<HTMLElement>('.a-error').forEach((p, j) => p.setAttribute('data-field-error', `${i}.${j === 0 ? 'value' : 'label'}`));
+      });
+      count.textContent = `${list.children.length}/${max}`;
+      form.toggleAttribute('data-full', list.children.length >= max);
+    };
+    renumber();
+    list.addEventListener('input', (e) => preview((e.target as HTMLElement).closest('li')!));
+    list.addEventListener('change', (e) => preview((e.target as HTMLElement).closest('li')!));
+    form.querySelector('[data-st-add]')!.addEventListener('click', () => {
+      if (list.children.length >= max) return;
+      const li = tpl.content.firstElementChild!.cloneNode(true) as HTMLLIElement;
+      list.appendChild(li);
+      renumber();
+      li.querySelector('input')!.focus();
+      form.dispatchEvent(new Event('change'));
+    });
+    list.addEventListener('click', (e) => {
+      const del = (e.target as HTMLElement).closest('[data-st-del]');
+      if (!del) return;
+      del.closest('li')!.remove();
+      renumber();
+      form.dispatchEvent(new Event('change'));
+    });
+    makeSortable(list, {
+      onChange: () => {
+        renumber();
+        form.dispatchEvent(new Event('change'));
+      },
+    });
+
+    bindSettingsForm(
+      form,
+      'stats',
+      () => {
+        const rows = [...list.children] as HTMLElement[];
+        const errors: Record<string, string> = {};
+        const value = rows.map((li, i) => {
+          const get = (k: string) => li.querySelector<HTMLInputElement>(`[data-st="${k}"]`)!.value.trim();
+          const v = num(get('value'));
+          if (!get('value') || !Number.isFinite(v)) errors[`${i}.value`] = 'Upišite broj.';
+          if (!get('label')) errors[`${i}.label`] = 'Upišite opis.';
+          const out: Record<string, unknown> = { value: v, label: get('label') };
+          const dec = Number(get('decimals') || 0);
+          if (dec) out.decimals = dec;
+          // razmak ispred/iza je namjeran (npr. " / 5"), zato bez trima
+          const prefix = li.querySelector<HTMLInputElement>('[data-st="prefix"]')!.value;
+          const suffix = li.querySelector<HTMLInputElement>('[data-st="suffix"]')!.value;
+          if (prefix) out.prefix = prefix;
+          if (suffix) out.suffix = suffix;
+          return out;
+        });
+        if (Object.keys(errors).length) {
+          showErrors(form, errors);
+          toast('Provjerite označena polja.', 'error');
+          return undefined;
+        }
+        return value;
+      },
+      { publicContent: true },
+    );
+  }
+</script>

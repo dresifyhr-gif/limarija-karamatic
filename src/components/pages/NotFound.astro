@@ -6,7 +6,9 @@
  * zatim se povuče crvena kota (draft). Bez JS-a/pokreta crtež je odmah u završnom stanju.
  */
 import Icon from '@/components/ui/Icon.astro';
-import { site, telHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref } = await getContent();
 
 const links = [
   { href: '/', label: 'Naslovnica', hint: 'Počnite ispočetka' },

@@ -1,0 +1,37 @@
+---
+/**
+ * Tekstualno polje s oznakom.
+ *   <Input name="phone" label="Telefon" type="tel" inputmode="tel" value={c.phone} required />
+ *   <Input name="unitPrice" label="Cijena (€)" number />   → data-number: formData() vraća broj, prihvaća "12,50"
+ */
+import type { HTMLAttributes } from 'astro/types';
+import Field from './Field.astro';
+
+type Props = HTMLAttributes<'input'> & {
+  name: string;
+  label?: string;
+  hint?: string;
+  error?: string;
+  /** decimalni broj s hrvatskim zarezom (type=text, inputmode=decimal, data-number) */
+  number?: boolean;
+  class?: string;
+  fieldClass?: string;
+};
+const { name, label, hint, error, number = false, class: className = '', fieldClass, id, required, ...rest } = Astro.props;
+const inputId = id ?? `f-${name.replace(/[^\w-]/g, '-')}`;
+const numberAttrs = number ? { inputmode: 'decimal' as const, 'data-number': '', autocomplete: 'off' } : {};
+---
+
+<Field label={label} for={inputId} name={name} hint={hint} error={error} required={!!required} class={fieldClass}>
+  <input
+    id={inputId}
+    name={name}
+    class:list={['a-input', className]}
+    required={required}
+    aria-invalid={error ? 'true' : undefined}
+    aria-describedby={hint ? `${inputId}-hint` : undefined}
+    {...numberAttrs}
+    {...rest}
+    type={number ? 'text' : (rest.type ?? 'text')}
+  />
+</Field>

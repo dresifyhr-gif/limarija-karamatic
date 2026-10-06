@@ -1,0 +1,46 @@
+---
+/**
+ * Broj na Pregledu.
+ *   <StatCard label="Novi upiti" value={3} href="/admin/upiti?status=novo" hint="čekaju odgovor" highlight />
+ */
+import AdminIcon, { type AdminIconName } from './AdminIcon.astro';
+
+interface Props {
+  label: string;
+  value: number | string;
+  href?: string;
+  hint?: string;
+  icon?: AdminIconName;
+  /** crvena crta lijevo (nešto čeka radnju) */
+  highlight?: boolean;
+}
+const { label, value, href, hint, icon, highlight = false } = Astro.props;
+const Tag = href ? 'a' : 'div';
+---
+
+<Tag href={href} class:list={['a-card statcard relative grid gap-1 p-4 text-inherit no-underline sm:p-5', highlight && 'is-hl', href && 'is-link']}>
+  <span class="flex items-center justify-between gap-2">
+    <span class="a-eyebrow">{label}</span>
+    {icon && <AdminIcon name={icon} size={18} class="text-tinta/45" />}
+  </span>
+  <span class="type-mono text-[2rem] leading-none font-medium tracking-tight sm:text-[2.25rem]">{value}</span>
+  {hint && <span class="a-hint">{hint}</span>}
+</Tag>
+
+<style>
+  .statcard.is-hl::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: -1px;
+    bottom: -1px;
+    width: 3px;
+    background: var(--color-crvena);
+  }
+  .statcard.is-link {
+    transition: border-color 150ms var(--ease-draft);
+  }
+  .statcard.is-link:hover {
+    border-color: var(--a-line-strong);
+  }
+</style>

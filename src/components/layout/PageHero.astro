@@ -10,7 +10,7 @@
  *  lead?        string                uvod ispod naslova
  *  crumbs?      {href,label}[]        putanja; prva stavka je `homeCrumb` ("Naslovnica"), zadnja je
  *                                     trenutna stranica (bez linka, aria-current)
- *  image?       ImageMetadata         portretna fotografija desno (Photo, eager, fetchpriority high, data-scan)
+ *  image?       SiteImage             portretna fotografija desno (Photo, eager, fetchpriority high, data-scan)
  *  imageAlt?    string                alt fotografije (obavezan uz image)
  *  imageHref?   string                ispod fotografije tiha poveznica "Pogledajte rad" (rad kojem fotografija pripada)
  *  profile?     Profile               presjek lima: ProfileIcon (animate) + kotna linija
@@ -43,9 +43,8 @@
  *  kotna linija: DrawSVG 'draft' tek kad je scan fotografije gotov (data-revealed),
  *  tako da se u jednom trenutku miče samo jedna crvena stvar.
  */
-import type { ImageMetadata } from 'astro';
 import type { Profile } from '@/data/site';
-import { site, telHref, waHref } from '@/data/site';
+import { getContent, type SiteImage } from '@/lib/content';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import Photo from '@/components/ui/Photo.astro';
@@ -80,12 +79,14 @@ export const profileNames: Record<Profile, string> = {
   trapez: 'Trapezni lim',
 };
 
+const { contact: site, telHref, waHref } = await getContent();
+
 interface Props {
   eyebrow?: string;
   title: string;
   lead?: string;
   crumbs?: Crumb[];
-  image?: ImageMetadata;
+  image?: SiteImage;
   imageAlt?: string;
   imageHref?: string;
   profile?: Profile;

@@ -1,0 +1,135 @@
+---
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from '@/components/admin/content/SaveBar.astro';
+import { getSetting } from '@/lib/server/repo/settings';
+
+export const prerender = false;
+
+const c = await getSetting('contact');
+---
+
+<Admin title="Kontakt" active="postavke">
+  <PageHeader title="Kontakt" back={{ href: '/admin/postavke', label: 'Postavke' }} description="Prikazuje se na cijeloj stranici: zaglavlje, gumbi za poziv i WhatsApp, podnožje." />
+
+  <form class="cb-form" data-guard data-contact-form novalidate>
+    <Card title="Telefon i WhatsApp">
+      <div class="cb-grid">
+        <Input name="phoneDisplay" label="Telefon (kako se prikazuje)" value={c.phoneDisplay} required maxlength="40" inputmode="tel" autocomplete="off" placeholder="098 958 8171" />
+        <Input
+          name="phoneE164"
+          label="Telefon za poziv"
+          value={c.phoneE164}
+          required
+          maxlength="20"
+          inputmode="tel"
+          autocomplete="off"
+          placeholder="+385989588171"
+          hint="Međunarodni oblik, bez razmaka: +385…"
+        />
+        <div class="grid gap-2">
+          <Input
+            name="whatsapp"
+            label="WhatsApp broj"
+            value={c.whatsapp}
+            maxlength="20"
+            inputmode="numeric"
+            autocomplete="off"
+            placeholder="385989588171"
+            hint="Samo znamenke, bez + i razmaka."
+          />
+          <button type="button" class="cb-reset w-fit" data-wa-same>
+            <AdminIcon name="whatsapp" size={14} /> Isti broj kao telefon
+          </button>
+        </div>
+      </div>
+    </Card>
+
+    <Card title="E-pošta i Google">
+      <div class="cb-grid">
+        <Input name="email" label="E-pošta" type="email" value={c.email} required maxlength="200" autocomplete="off" inputmode="email" />
+        <Input
+          name="googleReviewsUrl"
+          label="Google profil (link za recenzije)"
+          value={c.googleReviewsUrl}
+          maxlength="1000"
+          type="url"
+          inputmode="url"
+          autocomplete="off"
+          placeholder="https://g.page/r/…"
+          hint="Link na Google profil tvrtke, gdje klijenti ostavljaju recenzije."
+        />
+      </div>
+    </Card>
+
+    <Card title="Radno vrijeme">
+      <div class="cb-grid">
+        <Input name="hours" label="Radno vrijeme" value={c.hours} maxlength="120" autocomplete="off" placeholder="Pon–Pet 7–17 h · Sub 8–13 h" />
+        <Input name="hoursShort" label="Kratko" value={c.hoursShort} maxlength="60" autocomplete="off" placeholder="Pon–Sub od 7 h" hint="Za uska mjesta, npr. mobilni izbornik." />
+        <Input name="responseTime" label="Vrijeme odgovora" value={c.responseTime} maxlength="120" autocomplete="off" placeholder="Javljamo se isti radni dan" />
+      </div>
+    </Card>
+
+    <Card title="Područje rada">
+      <div class="cb-grid">
+        <div class="cb-grid cb-grid--2">
+          <Input name="city" label="Sjedište (grad)" value={c.city} maxlength="80" autocomplete="off" />
+          <Input name="area" label="Područje (kratko)" value={c.area} maxlength="120" autocomplete="off" placeholder="Zagreb i šire" />
+        </div>
+        <Input name="areaLine" label="Područje (rečenica)" value={c.areaLine} maxlength="300" autocomplete="off" />
+      </div>
+    </Card>
+
+    <details class="a-card cb-details">
+      <summary>
+        <span class="grid gap-0.5">
+          <span>Naziv i slogan</span>
+          <span class="a-hint font-normal">{c.name} · {c.tagline}</span>
+        </span>
+        <AdminIcon name="chevron-down" size={20} class="cb-chev text-tinta/60" />
+      </summary>
+      <div class="cb-details__body">
+        <Input name="name" label="Naziv" value={c.name} required maxlength="120" autocomplete="off" />
+        <Input name="tagline" label="Slogan" value={c.tagline} maxlength="200" autocomplete="off" />
+      </div>
+    </details>
+
+    <SaveBar cancelHref="/admin/postavke" />
+  </form>
+</Admin>
+
+<script>
+  import { bindSettingsForm } from '@/components/admin/content/settingsSave';
+
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  if (form) {
+    const field = (n: string) => form.querySelector<HTMLInputElement>(`[name="${n}"]`)!;
+    const e164 = (display: string) => {
+      const d = display.replace(/[^\d+]/g, '');
+      if (d.startsWith('+')) return '+' + d.slice(1).replace(/\D/g, '');
+      if (d.startsWith('00')) return '+' + d.slice(2);
+      if (d.startsWith('0')) return '+385' + d.slice(1);
+      return d ? '+' + d : '';
+    };
+    let derived = e164(field('phoneDisplay').value) === field('phoneE164').value;
+    field('phoneE164').addEventListener('input', () => (derived = false));
+    field('phoneDisplay').addEventListener('input', () => {
+      if (!derived) return;
+      field('phoneE164').value = e164(field('phoneDisplay').value);
+    });
+    form.querySelector('[data-wa-same]')!.addEventListener('click', () => {
+      field('whatsapp').value = field('phoneE164').value.replace(/\D/g, '');
+      field('whatsapp').dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    bindSettingsForm(
+      form,
+      'contact',
+      (d) => ({ ...d, phoneE164: String(d.phoneE164).replace(/\s/g, ''), whatsapp: String(d.whatsapp).replace(/\D/g, '') }),
+      { publicContent: true },
+    );
+  }
+</script>

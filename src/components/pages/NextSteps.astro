@@ -5,7 +5,9 @@
  *  tone   light (default) | dark
  *  title  mono oznaka iznad liste
  */
-import { site } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site } = await getContent();
 
 interface Props {
   title?: string;

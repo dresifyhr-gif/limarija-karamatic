@@ -1,0 +1,97 @@
+---
+/**
+ * Forma čestog pitanja (novo i uređivanje). Na naslovnici najviše FAQ_HOME_MAX (5) pitanja.
+ * POST /api/admin/faq · PUT/DELETE /api/admin/faq/:id
+ */
+import '@/components/admin/content/content.css';
+import Card from '@/components/admin/Card.astro';
+import Input from '@/components/admin/Input.astro';
+import Textarea from '@/components/admin/Textarea.astro';
+import Toggle from '@/components/admin/Toggle.astro';
+import Button from '@/components/admin/Button.astro';
+import SaveBar from './SaveBar.astro';
+import type { AdminFaq } from '@/lib/server/repo/faq';
+
+interface Props {
+  faq?: AdminFaq | null;
+  /** koliko je pitanja na naslovnici (bez ovoga) */
+  homeCount: number;
+  homeMax: number;
+}
+const { faq = null, homeCount, homeMax } = Astro.props;
+const isNew = !faq;
+const f = faq ?? { q: '', a: '', onHome: false, published: true };
+const full = homeCount >= homeMax && !f.onHome;
+---
+
+<form class="cb-form" data-guard data-faq-form data-mode={isNew ? 'new' : 'edit'} data-id={faq?.id} novalidate>
+  <Card title="Pitanje i odgovor">
+    <div class="cb-grid">
+      <Input name="q" label="Pitanje" value={f.q} required maxlength="300" autocomplete="off" placeholder="npr. Koliko traje izrada krova?" />
+      <Textarea name="a" label="Odgovor" value={f.a} rows={6} required maxlength="4000" hint="Kratko i konkretno, kako biste odgovorili klijentu na telefon." />
+    </div>
+  </Card>
+
+  <Card title="Prikaz na stranici">
+    <div class="grid gap-3">
+      <Toggle name="published" label="Prikaži na stranici" checked={f.published} hint="Pitanja se prikazuju na stranici s pitanjima." />
+      <Toggle
+        name="onHome"
+        label="Prikaži i na naslovnici"
+        checked={f.onHome}
+        disabled={full}
+        hint={full ? `Na naslovnici je već ${homeMax} pitanja (najviše). Prvo maknite jedno na popisu pitanja.` : `Na naslovnici: ${homeCount + (f.onHome ? 1 : 0)} od najviše ${homeMax}.`}
+      />
+      <p class="a-error" data-field-error="onHome" hidden role="alert"></p>
+    </div>
+  </Card>
+
+  {
+    !isNew && (
+      <Card title="Brisanje" description="Pitanje se trajno briše sa stranice.">
+        <Button variant="danger" icon="trash" data-delete-faq>Obriši pitanje</Button>
+      </Card>
+    )
+  }
+
+  <SaveBar label={isNew ? 'Dodaj pitanje' : 'Spremi promjene'} always={isNew} cleanText={isNew ? 'Novo pitanje' : 'Sve je spremljeno'} cancelHref="/admin/pitanja" />
+</form>
+
+<script>
+  import { api, formData } from '@/lib/admin/ui';
+  import { save, allowLeave, confirmDelete } from '@/components/admin/content/client';
+  import type { AdminFaq } from '@/lib/server/repo/faq';
+
+  const form = document.querySelector<HTMLFormElement>('[data-faq-form]');
+  if (form) {
+    const isNew = form.dataset.mode === 'new';
+    const id = form.dataset.id;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const d = formData(form) as Record<string, any>;
+      const onHomeInput = form.querySelector<HTMLInputElement>('[name="onHome"]')!;
+      const body = { q: d.q, a: d.a, published: !!d.published, onHome: onHomeInput.checked };
+      if (isNew) {
+        const res = await save(form, () => api<AdminFaq>('/api/admin/faq', { method: 'POST', body }), { success: null });
+        if (res) {
+          allowLeave();
+          location.href = `/admin/pitanja?poruka=${encodeURIComponent('Pitanje je dodano.')}`;
+        }
+      } else {
+        await save(form, () => api<AdminFaq>(`/api/admin/faq/${id}`, { method: 'PUT', body }));
+      }
+    });
+    form.querySelector<HTMLButtonElement>('[data-delete-faq]')?.addEventListener('click', async (e) => {
+      const ok = await confirmDelete({
+        title: 'Obrisati pitanje?',
+        message: 'Pitanje se trajno briše. Ovo se ne može poništiti.',
+        path: `/api/admin/faq/${id}`,
+        button: e.currentTarget as HTMLButtonElement,
+      });
+      if (ok) {
+        allowLeave();
+        location.href = `/admin/pitanja?poruka=${encodeURIComponent('Pitanje je obrisano.')}`;
+      }
+    });
+  }
+</script>

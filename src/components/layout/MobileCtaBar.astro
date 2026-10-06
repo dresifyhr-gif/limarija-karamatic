@@ -14,7 +14,9 @@
  * "Besplatna procjena" vodi na /procjena; skripta u Headeru je prebacuje na #procjena kad stranica ima obrazac.
  */
 import Icon from '@/components/ui/Icon.astro';
-import { waHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { waHref } = await getContent();
 ---
 
 <nav class="kr-dock lg:hidden" aria-label="Brzi kontakt" data-mobile-cta>

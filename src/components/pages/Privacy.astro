@@ -6,7 +6,9 @@
  * Tipografija: Archivo 100 % širine, max-w-prose, 1,7 prored; lijevo sadržaj (sticky na desktopu).
  */
 import Icon from '@/components/ui/Icon.astro';
-import { site, telHref } from '@/data/site';
+import { getContent } from '@/lib/content';
+
+const { contact: site, telHref } = await getContent();
 
 const toc = [
   { id: 'voditelj', t: 'Voditelj obrade' },

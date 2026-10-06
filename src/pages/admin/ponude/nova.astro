@@ -1,0 +1,84 @@
+---
+/**
+ * /admin/ponude/nova — nova ponuda (ništa se ne sprema dok ne pritisnete "Spremi"; broj se tada dodjeljuje).
+ * ?upit=<id> → klijent, telefon, e-pošta, gradilište i naslov iz upita (ponuda ostaje vezana uz upit).
+ */
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import EmptyState from '@/components/admin/EmptyState.astro';
+import QuoteEditor, { type QuoteDraft } from '@/components/admin/quotes/QuoteEditor.astro';
+import { getSettings } from '@/lib/server/repo/settings';
+import { listTemplates, type QuoteTemplate } from '@/lib/server/repo/templates';
+import { getLead, type Lead } from '@/lib/server/repo/leads';
+import { thumbUrls } from '@/lib/server/images';
+import { jobLabel, quoteTitleFromJob } from '@/lib/quotes/labels';
+import { leadNumber, todayZagreb } from '@/lib/quotes/shared';
+import type { SettingsMap } from '@/lib/types';
+
+export const prerender = false;
+
+let s: SettingsMap | null = null;
+let templates: QuoteTemplate[] = [];
+let lead: Lead | null = null;
+let thumbs: (string | null)[] = [];
+let failed = false;
+try {
+  const leadId = Number(Astro.url.searchParams.get('upit'));
+  [s, templates, lead] = await Promise.all([getSettings(), listTemplates(), Number.isInteger(leadId) && leadId > 0 ? getLead(leadId) : null]);
+  if (lead) thumbs = await thumbUrls(lead.photos.slice(0, 4), 160);
+} catch (e) {
+  failed = true;
+  console.error('[admin] nova ponuda:', (e as Error).message);
+}
+
+const draft: QuoteDraft | null = s
+  ? {
+      issueDate: todayZagreb(),
+      clientName: lead?.name ?? '',
+      clientPhone: lead?.phone ?? '',
+      clientEmail: lead?.email ?? '',
+      clientAddress: '',
+      clientOib: '',
+      location: lead?.location ?? '',
+      title: lead ? quoteTitleFromJob(lead.jobType) : '',
+      intro: '',
+      items: [],
+      notes: s.quote.notes,
+      paymentTerms: s.quote.paymentTerms,
+      validDays: s.quote.validDays,
+      pdvEnabled: s.quote.pdvEnabled,
+      pdvRate: s.quote.pdvRate,
+      leadId: lead?.id ?? null,
+    }
+  : null;
+const leadInfo = lead
+  ? {
+      id: lead.id,
+      no: leadNumber(lead.id),
+      name: lead.name,
+      job: jobLabel(lead.jobType),
+      location: lead.location,
+      note: lead.note,
+      thumbs: thumbs.filter((x): x is string => !!x),
+      photos: lead.photos.length,
+    }
+  : null;
+---
+
+<Admin title="Nova ponuda" active="ponude" wide>
+  <PageHeader
+    title="Nova ponuda"
+    eyebrow={lead ? `Iz upita #U-${leadNumber(lead.id)}` : 'Ponuda'}
+    back={lead ? { href: `/admin/upiti/${lead.id}`, label: 'Upit' } : { href: '/admin/ponude', label: 'Ponude' }}
+  />
+  {
+    failed || !s || !draft ? (
+      <Card>
+        <EmptyState icon="alert" title="Uređivač trenutno nije dostupan" text="Baza se ne javlja. Osvježite stranicu za minutu." />
+      </Card>
+    ) : (
+      <QuoteEditor quote={null} draft={draft} templates={templates} pdvDefault={s.quote} lead={leadInfo} company={s.company.naziv || s.contact.name} />
+    )
+  }
+</Admin>

@@ -1,0 +1,35 @@
+---
+/**
+ * Naslov stranice admina + radnje.
+ *   <PageHeader title="Radovi" description="Fotografije i opisi radova na stranici.">
+ *     <Button slot="actions" icon="plus" href="/admin/radovi/novi">Dodaj rad</Button>
+ *   </PageHeader>
+ *   <PageHeader title="Uredi rad" back={{ href: '/admin/radovi', label: 'Radovi' }} />
+ */
+import AdminIcon from './AdminIcon.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  back?: { href: string; label: string };
+}
+const { title, description, eyebrow, back } = Astro.props;
+---
+
+<header class="mb-5 grid gap-4 sm:mb-7 sm:flex sm:items-end sm:justify-between">
+  <div class="grid min-w-0 gap-1.5">
+    {
+      back && (
+        <a href={back.href} class="a-muted -ml-1 inline-flex w-fit items-center gap-1 py-1 text-[0.875rem] font-semibold no-underline hover:text-tinta">
+          <AdminIcon name="chevron-left" size={18} />
+          {back.label}
+        </a>
+      )
+    }
+    {eyebrow && <p class="a-eyebrow">{eyebrow}</p>}
+    <h1 class="a-h1">{title}</h1>
+    {description && <p class="a-muted max-w-2xl text-[0.9375rem]">{description}</p>}
+  </div>
+  {Astro.slots.has('actions') && <div class="flex flex-wrap items-center gap-2"><slot name="actions" /></div>}
+</header>
