@@ -8,6 +8,7 @@ import Button from '@/components/admin/Button.astro';
 import Badge from '@/components/admin/Badge.astro';
 import ListRow from '@/components/admin/ListRow.astro';
 import EmptyState from '@/components/admin/EmptyState.astro';
+import PushPromo from '@/components/admin/PushPromo.astro';
 import AdminIcon, { type AdminIconName } from '@/components/admin/AdminIcon.astro';
 import { getDashboard, type Dashboard } from '@/lib/server/dashboard';
 import { listQuotes, type QuoteListItem } from '@/lib/server/repo/quotes';
@@ -100,6 +101,8 @@ const quick: { href: string; label: string; hint: string; icon: AdminIconName }[
             </Button>
           </section>
         )}
+
+        <PushPromo />
 
         <section aria-label="Brojke" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatCard label="Novi upiti" value={d.leads.novo} href="/admin/upiti?status=novo" hint="čekaju odgovor" icon="inbox" highlight={d.leads.novo > 0} />

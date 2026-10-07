@@ -1,0 +1,584 @@
+---
+/**
+ * Postavke → Obavijesti: push obavijesti na mobitel (PWA admina).
+ * Stanje "ovog uređaja" zna samo preglednik (pretplata + dozvola), pa se ploha slaže u skripti:
+ *   iOS u Safariju (nije instalirano) → koraci "Dijeli → Dodaj na početni zaslon"; Android → "Instaliraj aplikaciju";
+ *   blokirano → kako ponovno dopustiti; inače "Uključi obavijesti na ovom uređaju" (dozvola se traži TEK na dodir).
+ */
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import { listDevices, vapidPublicKey, isPushConfigured, type PushDevice } from '@/lib/server/push';
+
+export const prerender = false;
+
+let items: PushDevice[] = [];
+let failed = false;
+try {
+  items = await listDevices();
+} catch (e) {
+  failed = true;
+  console.error('[admin] obavijesti:', (e as Error).message);
+}
+const state = { publicKey: vapidPublicKey(), configured: isPushConfigured(), items, ok: !failed };
+const stateJson = JSON.stringify(state).replace(/</g, '\\u003c');
+
+const events = [
+  { key: 'lead', label: 'Novi upit s web stranice', hint: 'Odmah kad netko pošalje upit. Vrsta posla i mjesto, bez broja telefona.' },
+  { key: 'accepted', label: 'Klijent je prihvatio ponudu', hint: 'Broj ponude, ime klijenta i iznos.' },
+  { key: 'opened', label: 'Klijent je otvorio ponudu', hint: 'Samo prvi put. Vaša otvaranja i pregledi poveznice (WhatsApp) se ne broje.' },
+];
+---
+
+<Admin title="Obavijesti" active="postavke">
+  <PageHeader
+    title="Obavijesti"
+    back={{ href: '/admin/postavke', label: 'Postavke' }}
+    description="Obavijest na mobitel čim stigne novi upit ili klijent prihvati ponudu."
+  />
+
+  {
+    failed && (
+      <div class="a-card a-card__body mb-5" role="alert">
+        <p class="a-h2">Podaci trenutno nisu dostupni</p>
+        <p class="a-hint mt-1">Baza se ne javlja. Osvježite stranicu za minutu.</p>
+      </div>
+    )
+  }
+
+  <div class="grid gap-5 sm:gap-6" data-push data-state={stateJson}>
+    <!-- ovaj uređaj -->
+    <section class="a-card" aria-labelledby="pn-this">
+      <div class="a-card__body grid gap-5">
+        <div class="pn-status" data-status="loading">
+          <span class="pn-status__icon" aria-hidden="true">
+            <span data-icon-on hidden><AdminIcon name="bell" size={22} /></span>
+            <span data-icon-off><AdminIcon name="bell-off" size={22} /></span>
+          </span>
+          <div class="grid min-w-0 gap-0.5">
+            <p class="a-eyebrow" id="pn-this">Ovaj uređaj</p>
+            <p class="a-h2" data-status-text aria-live="polite">Provjeravam…</p>
+            <p class="a-hint" data-status-hint></p>
+          </div>
+        </div>
+
+        <!-- isključeno → uključi -->
+        <div data-panel="off" hidden class="grid gap-3">
+          <button type="button" class="a-btn a-btn--primary a-btn--block pn-big" data-enable>
+            <AdminIcon name="bell" size={20} class="flex-none" />
+            <span data-enable-text>Uključi obavijesti na ovom uređaju</span>
+          </button>
+          <p class="a-hint">Preglednik će pitati smijete li primati obavijesti. Odaberite <strong>Dopusti</strong>.</p>
+        </div>
+
+        <!-- iPhone / iPad: prvo na početni zaslon -->
+        <div data-panel="ios-install" hidden class="grid gap-4">
+          <p class="text-[0.9375rem]">Postavlja se jednom, za minutu:</p>
+          <ol class="pn-steps">
+            <li>
+              <span class="pn-steps__n">1</span>
+              <span>U Safariju dodirnite <strong>Dijeli</strong> <span class="pn-inline"><AdminIcon name="share" size={18} /></span> (dolje na sredini ili gore desno; u novijem iOS-u najprije <strong>⋯</strong> pa <strong>Dijeli</strong>).</span>
+            </li>
+            <li>
+              <span class="pn-steps__n">2</span>
+              <span>Pomaknite se dolje i odaberite <strong>Dodaj na početni zaslon</strong> <span class="pn-inline"><AdminIcon name="add-square" size={18} /></span>, pa <strong>Dodaj</strong>.</span>
+            </li>
+            <li>
+              <span class="pn-steps__n">3</span>
+              <span>Zatvorite Safari i <strong>otvorite aplikaciju Karamatić</strong> s početnog zaslona (ikona s crvenim krovom).</span>
+            </li>
+            <li>
+              <span class="pn-steps__n">4</span>
+              <span>Prijavite se, otvorite <strong>Postavke → Obavijesti</strong> i dodirnite <strong>Uključi obavijesti</strong>.</span>
+            </li>
+          </ol>
+          <p class="a-hint" data-ios-version-note hidden>
+            Potreban je iOS 16.4 ili noviji. Provjera: Postavke → Općenito → Ažuriranje softvera.
+          </p>
+          <p class="a-hint" data-ios-not-safari hidden>Ako ne vidite "Dodaj na početni zaslon", otvorite ovu stranicu u Safariju.</p>
+        </div>
+
+        <!-- iOS prestar -->
+        <div data-panel="ios-old" hidden class="grid gap-2">
+          <p class="text-[0.9375rem]">
+            Obavijesti na iPhoneu rade od <strong>iOS-a 16.4</strong>. Ažurirajte telefon (Postavke → Općenito → Ažuriranje softvera) pa ponovno otvorite
+            aplikaciju.
+          </p>
+        </div>
+
+        <!-- blokirano -->
+        <div data-panel="denied" hidden class="grid gap-3">
+          <p class="text-[0.9375rem]">Obavijesti su za ovu stranicu blokirane. Dopustite ih ovako:</p>
+          <ol class="pn-steps" data-denied="ios" hidden>
+            <li><span class="pn-steps__n">1</span><span>Otvorite <strong>Postavke</strong> iPhonea → <strong>Obavijesti</strong>.</span></li>
+            <li><span class="pn-steps__n">2</span><span>Pronađite <strong>Karamatić</strong> i uključite <strong>Dopusti obavijesti</strong>.</span></li>
+            <li><span class="pn-steps__n">3</span><span>Vratite se u aplikaciju i dodirnite <strong>Provjeri ponovno</strong>.</span></li>
+          </ol>
+          <ol class="pn-steps" data-denied="android" hidden>
+            <li>
+              <span class="pn-steps__n">1</span>
+              <span>U Chromeu dodirnite ikonu lijevo od adrese (ili <strong>⋮ → Postavke → Postavke web-lokacije → Obavijesti</strong>).</span>
+            </li>
+            <li><span class="pn-steps__n">2</span><span>Za ovu stranicu odaberite <strong>Dopusti</strong>.</span></li>
+            <li>
+              <span class="pn-steps__n">3</span>
+              <span>Ako ste instalirali aplikaciju: dugo pritisnite ikonu Karamatić → <strong>Informacije o aplikaciji → Obavijesti</strong> → uključite.</span>
+            </li>
+            <li><span class="pn-steps__n">4</span><span>Vratite se ovamo i dodirnite <strong>Provjeri ponovno</strong>.</span></li>
+          </ol>
+          <ol class="pn-steps" data-denied="desktop" hidden>
+            <li><span class="pn-steps__n">1</span><span>Kliknite ikonu lokota ili postavki lijevo od adrese stranice.</span></li>
+            <li><span class="pn-steps__n">2</span><span>Kod <strong>Obavijesti</strong> odaberite <strong>Dopusti</strong>.</span></li>
+            <li><span class="pn-steps__n">3</span><span>Kliknite <strong>Provjeri ponovno</strong>.</span></li>
+          </ol>
+          <button type="button" class="a-btn a-btn--secondary a-btn--block sm:w-auto" data-recheck>
+            <AdminIcon name="refresh" size={18} class="flex-none" />
+            Provjeri ponovno
+          </button>
+        </div>
+
+        <!-- nije podržano -->
+        <div data-panel="unsupported" hidden class="grid gap-2">
+          <p class="text-[0.9375rem]" data-unsupported-text>
+            Ovaj preglednik ne podržava obavijesti. Na Android mobitelu otvorite admin u <strong>Chromeu</strong>, a na iPhoneu u <strong>Safariju</strong>.
+          </p>
+        </div>
+
+        <!-- poslužitelj -->
+        <div data-panel="server" hidden>
+          <p class="text-[0.9375rem]">Obavijesti još nisu postavljene na poslužitelju (nedostaju VAPID ključevi). Javite se osobi koja održava stranicu.</p>
+        </div>
+
+        <!-- uključeno -->
+        <div data-panel="on" hidden class="grid gap-5">
+          <form class="grid gap-1.5" data-label-form>
+            <label class="a-label" for="pn-label">Naziv uređaja</label>
+            <div class="flex gap-2">
+              <input id="pn-label" name="label" class="a-input" maxlength="60" autocomplete="off" placeholder="npr. Mobitel — Ivan" />
+              <button type="submit" class="a-btn a-btn--secondary flex-none">Spremi</button>
+            </div>
+            <p class="a-hint">Da na popisu uređaja znate koji je koji.</p>
+          </form>
+
+          <fieldset class="grid gap-3">
+            <legend class="a-label mb-2">Što ovaj uređaj prima</legend>
+            {
+              events.map((e) => (
+                <label class="a-toggle" for={`pn-${e.key}`}>
+                  <input type="checkbox" role="switch" id={`pn-${e.key}`} data-pref={e.key} />
+                  <span class="grid gap-0.5">
+                    <span class="a-label">{e.label}</span>
+                    <span class="a-hint">{e.hint}</span>
+                  </span>
+                </label>
+              ))
+            }
+          </fieldset>
+
+          <div class="grid gap-2 sm:flex sm:flex-wrap">
+            <button type="button" class="a-btn a-btn--secondary a-btn--block sm:w-auto" data-test>
+              <AdminIcon name="bell" size={18} class="flex-none" />
+              Pošalji probnu obavijest
+            </button>
+            <button type="button" class="a-btn a-btn--danger a-btn--block sm:w-auto" data-disable>
+              <AdminIcon name="bell-off" size={18} class="flex-none" />
+              Isključi na ovom uređaju
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Android / Chrome: instalacija -->
+    <section class="a-card" data-install hidden aria-labelledby="pn-install">
+      <div class="a-card__body grid gap-3">
+        <p class="a-eyebrow">Aplikacija</p>
+        <h2 class="a-h2" id="pn-install">Instalirajte admin kao aplikaciju</h2>
+        <p class="a-hint">Ikona Karamatić na početnom zaslonu, otvara se bez trake preglednika i odmah na pregledu upita.</p>
+        <button type="button" class="a-btn a-btn--dark a-btn--block sm:w-auto" data-install-btn>
+          <AdminIcon name="download" size={18} class="flex-none" />
+          Instaliraj aplikaciju
+        </button>
+      </div>
+    </section>
+
+    <section class="a-card" data-install-hint hidden>
+      <div class="a-card__body grid gap-1.5">
+        <p class="a-eyebrow">Aplikacija</p>
+        <p class="text-[0.9375rem]">
+          Za ikonu na početnom zaslonu: u Chromeu dodirnite <strong>⋮</strong> pa <strong>Dodaj na početni zaslon</strong> ili <strong>Instaliraj aplikaciju</strong>.
+        </p>
+      </div>
+    </section>
+
+    <!-- ostali uređaji -->
+    <Card title="Uređaji s obavijestima" eyebrow="Svi uređaji" flush>
+      <ul role="list" data-devices></ul>
+      <p class="a-hint px-4 py-5 sm:px-6" data-devices-empty hidden>Još nijedan uređaj ne prima obavijesti.</p>
+    </Card>
+
+    <p class="a-hint flex gap-2">
+      <span class="mt-0.5 flex-none"><AdminIcon name="lock" size={16} /></span>
+      <span>Obavijesti se vide i na zaključanom zaslonu, zato nikad ne sadrže broj telefona ni e-poštu klijenta. Dodirom na obavijest otvara se upit ili ponuda.</span>
+    </p>
+  </div>
+</Admin>
+
+<style>
+  .pn-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+  }
+  .pn-status__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    background: var(--color-papir);
+    color: var(--a-muted);
+  }
+  .pn-status[data-status='on'] .pn-status__icon {
+    background: rgb(21 128 61 / 0.1);
+    color: var(--a-ok);
+  }
+  .pn-status[data-status='denied'] .pn-status__icon,
+  .pn-status[data-status='server'] .pn-status__icon {
+    background: rgb(215 20 26 / 0.08);
+    color: var(--color-crvena);
+  }
+  .pn-big {
+    min-height: 56px;
+    font-size: 1rem;
+  }
+  .pn-steps {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .pn-steps li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  .pn-steps__n {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--color-tinta);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+  .pn-inline {
+    display: inline-grid;
+    vertical-align: -3px;
+    color: #0a6cff;
+  }
+  :global(.pn-dev) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 64px;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--a-line);
+  }
+  :global(.pn-dev:first-child) {
+    border-top: 0;
+  }
+  @media (width >= 48rem) {
+    :global(.pn-dev) {
+      padding: 0.75rem 1.5rem;
+    }
+  }
+  :global(.pn-dev__main) {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+    flex: 1;
+  }
+  :global(.pn-dev__title) {
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+</style>
+
+<script>
+  import { api, toast, confirmDialog, errorMessage, withBusy } from '@/lib/admin/ui';
+  import { timeAgo, formatDate } from '@/lib/admin/labels';
+  import {
+    detectEnv,
+    adminRegistration,
+    thisDevice,
+    subscribeThisDevice,
+    unsubscribeThisDevice,
+    suggestLabel,
+    type PushState,
+    type PushDevice,
+    type PushPrefs,
+  } from '@/lib/admin/push';
+
+  type Status = 'loading' | 'on' | 'off' | 'denied' | 'ios-install' | 'ios-old' | 'unsupported' | 'server';
+  const STATUS: Record<Status, { text: string; hint: string }> = {
+    loading: { text: 'Provjeravam…', hint: '' },
+    on: { text: 'Obavijesti su uključene', hint: 'Ovaj uređaj prima obavijesti odabrane ispod.' },
+    off: { text: 'Obavijesti nisu uključene', hint: 'Uključite ih jednim dodirom.' },
+    denied: { text: 'Obavijesti su blokirane', hint: 'Dozvola je odbijena u postavkama preglednika ili telefona.' },
+    'ios-install': { text: 'Prvo dodajte aplikaciju na početni zaslon', hint: 'iPhone šalje obavijesti samo aplikacijama s početnog zaslona.' },
+    'ios-old': { text: 'Potreban je noviji iOS', hint: 'Obavijesti rade od iOS-a 16.4.' },
+    unsupported: { text: 'Ovaj preglednik ne podržava obavijesti', hint: '' },
+    server: { text: 'Obavijesti nisu postavljene', hint: '' },
+  };
+
+  type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+  const w = window as unknown as { __krInstall?: InstallEvent | null };
+
+  const root = document.querySelector<HTMLElement>('[data-push]');
+  if (root) init(root);
+
+  async function init(root: HTMLElement) {
+    const state = JSON.parse(root.dataset.state || '{}') as PushState;
+    const env = detectEnv();
+    const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const statusEl = $('[data-status]');
+    let reg: ServiceWorkerRegistration | null = null;
+    let sub: PushSubscription | null = null;
+    let device: PushDevice | null = null;
+
+    function setStatus(s: Status) {
+      statusEl.dataset.status = s;
+      $('[data-status-text]').textContent = STATUS[s].text;
+      $('[data-status-hint]').textContent = STATUS[s].hint;
+      $('[data-icon-on]').hidden = s !== 'on';
+      $('[data-icon-off]').hidden = s === 'on';
+      root.querySelectorAll<HTMLElement>('[data-panel]').forEach((p) => (p.hidden = p.dataset.panel !== s));
+      if (s === 'denied') root.querySelectorAll<HTMLElement>('[data-denied]').forEach((o) => (o.hidden = o.dataset.denied !== env.platform));
+      if (s === 'ios-install') {
+        $('[data-ios-version-note]').hidden = !(env.iosVersion !== null && env.iosVersion < 16.04);
+        $('[data-ios-not-safari]').hidden = env.isSafari;
+      }
+      if (s === 'unsupported' && env.inApp) {
+        $('[data-unsupported-text]').textContent =
+          'Admin je otvoren unutar druge aplikacije (npr. WhatsApp). Otvorite ga u pregledniku: Chrome na Androidu, Safari na iPhoneu.';
+      }
+      if (s === 'on' && device) {
+        const input = $<HTMLInputElement>('#pn-label');
+        if (document.activeElement !== input) input.value = device.label;
+        root.querySelectorAll<HTMLInputElement>('[data-pref]').forEach((t) => (t.checked = device!.prefs[t.dataset.pref as keyof PushPrefs]));
+      }
+      renderInstall();
+      renderDevices();
+    }
+
+    function compute(): Status {
+      if (!state.configured || !state.publicKey) return 'server';
+      if (env.platform === 'ios' && !env.standalone) return 'ios-install';
+      if (env.platform === 'ios' && !env.supported) return 'ios-old';
+      if (!env.supported) return 'unsupported';
+      if (Notification.permission === 'denied') return 'denied';
+      if (device && Notification.permission === 'granted') return 'on';
+      return 'off';
+    }
+
+    /* ── instalacija (Android/Chrome) ── */
+    function renderInstall() {
+      const can = !env.standalone && !!w.__krInstall;
+      $('[data-install]').hidden = !can;
+      $('[data-install-hint]').hidden = can || env.standalone || env.platform !== 'android' || env.inApp;
+    }
+    document.addEventListener('kr:installable', renderInstall);
+    document.addEventListener('kr:installed', () => {
+      renderInstall();
+      toast('Aplikacija je instalirana. Otvorite je s početnog zaslona.', 'success', 6000);
+    });
+    $('[data-install-btn]').addEventListener('click', async () => {
+      const ev = w.__krInstall;
+      if (!ev) return;
+      await ev.prompt();
+      const choice = await ev.userChoice.catch(() => null);
+      w.__krInstall = null;
+      renderInstall();
+      if (choice?.outcome === 'accepted') toast('Instalacija je pokrenuta.', 'success');
+    });
+
+    /* ── popis uređaja ── */
+    function renderDevices() {
+      const ul = $('[data-devices]');
+      ul.replaceChildren();
+      const list = [...state.items].sort((a, b) => Number(b.id === device?.id) - Number(a.id === device?.id));
+      $('[data-devices-empty]').hidden = list.length > 0;
+      for (const d of list) {
+        const li = document.createElement('li');
+        li.className = 'pn-dev';
+        const main = document.createElement('div');
+        main.className = 'pn-dev__main';
+        const title = document.createElement('span');
+        title.className = 'pn-dev__title';
+        title.textContent = d.label || d.platform;
+        if (d.id === device?.id) {
+          const b = document.createElement('span');
+          b.className = 'a-badge a-badge--success ml-2 align-middle';
+          b.textContent = 'Ovaj uređaj';
+          title.append(' ', b);
+        }
+        const meta = document.createElement('span');
+        meta.className = 'a-hint';
+        const last = d.lastSuccessAt ? `zadnja obavijest ${timeAgo(d.lastSuccessAt)}` : 'još bez obavijesti';
+        meta.textContent = [d.label ? d.platform : '', `dodano ${formatDate(d.createdAt)}`, last, d.failureCount > 2 ? 'ne javlja se' : ''].filter(Boolean).join(' · ');
+        main.append(title, meta);
+        li.append(main);
+        if (d.id !== device?.id) {
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.className = 'a-btn a-btn--ghost a-btn--icon';
+          rm.setAttribute('aria-label', `Ukloni uređaj ${d.label || d.platform}`);
+          rm.title = 'Ukloni';
+          rm.innerHTML =
+            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16M9.5 6.5V4h5v2.5M6.5 6.5 7.5 20h9l1-13.5"/><path d="M10 10.5v6M14 10.5v6"/></svg>';
+          rm.addEventListener('click', async () => {
+            const ok = await confirmDialog({
+              title: 'Ukloniti uređaj?',
+              message: `${d.label || d.platform} više neće primati obavijesti.`,
+              confirmLabel: 'Ukloni',
+              danger: true,
+            });
+            if (!ok) return;
+            try {
+              await api(`/api/admin/push/${d.id}`, { method: 'DELETE' });
+              state.items = state.items.filter((x) => x.id !== d.id);
+              renderDevices();
+              toast('Uređaj je uklonjen.');
+            } catch (e) {
+              toast(errorMessage(e), 'error');
+            }
+          });
+          li.append(rm);
+        }
+        ul.append(li);
+      }
+    }
+
+    /* ── radnje ── */
+    $('[data-enable]').addEventListener('click', (e) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      if (!reg || !state.publicKey) return void toast('Obavijesti trenutno nisu dostupne. Osvježite stranicu.', 'error');
+      // subscribe() mora krenuti odmah u dodiru (traži dozvolu) — zato bez withBusy/await prije njega
+      const label = device?.label || suggestLabel(env);
+      const txt = btn.querySelector('[data-enable-text]')!;
+      const idle = txt.textContent;
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      txt.textContent = 'Uključujem…';
+      subscribeThisDevice(reg, state.publicKey, label, sub)
+        .then(async (d) => {
+          sub = (await reg!.pushManager.getSubscription()) ?? sub;
+          device = d;
+          state.items = [...state.items.filter((x) => x.id !== d.id), d];
+          setStatus('on');
+          toast('Obavijesti su uključene. Pošaljite probnu obavijest.', 'success', 5000);
+        })
+        .catch((err: unknown) => {
+          if (Notification.permission === 'denied') setStatus('denied');
+          else if (Notification.permission === 'default') toast('Dozvola nije dana. Dodirnite ponovno i odaberite Dopusti.', 'info', 5000);
+          else toast(errorMessage(err) || 'Uključivanje nije uspjelo. Pokušajte ponovno.', 'error');
+        })
+        .finally(() => {
+          btn.disabled = false;
+          btn.removeAttribute('aria-busy');
+          txt.textContent = idle;
+        });
+    });
+
+    $('[data-disable]').addEventListener('click', async (e) => {
+      const ok = await confirmDialog({ title: 'Isključiti obavijesti na ovom uređaju?', confirmLabel: 'Isključi', danger: true });
+      if (!ok) return;
+      await withBusy(e.currentTarget as HTMLButtonElement, async () => {
+        try {
+          await unsubscribeThisDevice(reg, device?.id ?? null);
+          state.items = state.items.filter((x) => x.id !== device?.id);
+          device = null;
+          sub = null;
+          setStatus(compute());
+          toast('Obavijesti su isključene na ovom uređaju.');
+        } catch (err) {
+          toast(errorMessage(err), 'error');
+        }
+      });
+    });
+
+    $('[data-test]').addEventListener('click', async (e) => {
+      if (!device) return;
+      await withBusy(e.currentTarget as HTMLButtonElement, async () => {
+        try {
+          await api('/api/admin/push/test', { method: 'POST', body: { id: device!.id } });
+          toast('Probna obavijest je poslana. Trebala bi stići za nekoliko sekundi.', 'success', 5000);
+        } catch (err) {
+          toast(errorMessage(err), 'error');
+          if ((err as { status?: number }).status === 410 || (err as { status?: number }).status === 404) {
+            // pretplata je istekla/uklonjena → odjavi je i lokalno, da sljedeći dodir na "Uključi" napravi NOVU
+            state.items = state.items.filter((x) => x.id !== device?.id);
+            device = null;
+            await sub?.unsubscribe().catch(() => {});
+            sub = null;
+            setStatus(compute());
+          }
+        }
+      });
+    });
+
+    root.querySelectorAll<HTMLInputElement>('[data-pref]').forEach((t) =>
+      t.addEventListener('change', async () => {
+        if (!device) return;
+        const key = t.dataset.pref as keyof PushPrefs;
+        try {
+          device = await api<PushDevice>(`/api/admin/push/${device.id}`, { method: 'PATCH', body: { prefs: { [key]: t.checked } } });
+          state.items = state.items.map((x) => (x.id === device!.id ? device! : x));
+          toast('Spremljeno.');
+        } catch (err) {
+          t.checked = !t.checked;
+          toast(errorMessage(err), 'error');
+        }
+      }),
+    );
+
+    $<HTMLFormElement>('[data-label-form]').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!device) return;
+      const input = $<HTMLInputElement>('#pn-label');
+      try {
+        device = await api<PushDevice>(`/api/admin/push/${device.id}`, { method: 'PATCH', body: { label: input.value.trim() } });
+        state.items = state.items.map((x) => (x.id === device!.id ? device! : x));
+        renderDevices();
+        toast('Naziv je spremljen.');
+      } catch (err) {
+        toast(errorMessage(err), 'error');
+      }
+    });
+
+    $('[data-recheck]').addEventListener('click', () => location.reload());
+
+    /* ── početno stanje ── */
+    setStatus('loading');
+    if (env.supported) {
+      reg = await adminRegistration();
+      ({ sub, device } = await thisDevice(state, reg));
+      // lokalna pretplata koju server ne poznaje (istekla ili uklonjena s drugog uređaja) → odjavi je,
+      // da "Uključi" napravi novu umjesto da ponovno pošalje mrtvu adresu
+      if (sub && !device && state.ok) {
+        await sub.unsubscribe().catch(() => {});
+        sub = null;
+      }
+    }
+    setStatus(compute());
+  }
+</script>

@@ -6,10 +6,11 @@
  */
 import type { APIContext } from 'astro';
 import { json, route, HttpError } from '@/lib/server/http';
-import { getQuoteByToken, acceptQuoteByClient } from '@/lib/server/repo/quotes';
+import { getQuoteByToken, acceptQuoteByClient, markQuoteFirstViewed } from '@/lib/server/repo/quotes';
 import { clientKey, hit } from '@/lib/server/rate-limit';
 import { PRIVATE_HEADERS, sameSite } from '@/lib/quotes/server';
 import { formatDay, isExpired, validUntil } from '@/lib/quotes/shared';
+import { notifyQuoteAccepted } from '@/lib/server/push';
 
 export const prerender = false;
 
@@ -27,6 +28,10 @@ async function accept(ctx: APIContext): Promise<{ acceptedAt: string; token: str
     throw new HttpError(409, `Rok valjanosti ponude istekao je ${formatDay(validUntil(q.issueDate, q.validDays))}. Javite nam se za ažuriranu ponudu.`);
   const u = await acceptQuoteByClient(q.id);
   if (!u) throw new HttpError(409, 'Ova ponuda trenutno nije aktivna. Javite nam se za novu ponudu.');
+  // samo stvarni prijelaz poslana → prihvaćena (uvjet u UPDATE-u) šalje obavijest; ponovljeni zahtjev ne
+  notifyQuoteAccepted(u);
+  // prihvaćanje znači i otvaranje (npr. bez JS-a beacon nije javio) — bilježi se tiho, bez zasebne obavijesti
+  if (!q.viewedAt) await markQuoteFirstViewed(q.id).catch(() => false);
   return { acceptedAt: u.acceptedAt ?? new Date().toISOString(), token };
 }
 

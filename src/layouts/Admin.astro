@@ -16,6 +16,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@/styles/global.css';
 import '@/styles/admin.css';
 import Logo from '@/components/ui/Logo.astro';
+import PwaHead from '@/components/admin/PwaHead.astro';
 import AdminIcon, { type AdminIconName } from '@/components/admin/AdminIcon.astro';
 import Toast from '@/components/admin/Toast.astro';
 import ConfirmDialog from '@/components/admin/ConfirmDialog.astro';
@@ -65,7 +66,7 @@ const dirty = !!publish?.dirty;
     <meta name="referrer" content="same-origin" />
     <title>{`${title} · Admin · Karamatić`}</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <PwaHead />
   </head>
   <body class="min-h-dvh">
     <a href="#sadrzaj" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-3 focus:py-2">Preskoči na sadržaj</a>

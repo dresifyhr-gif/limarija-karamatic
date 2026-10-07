@@ -23,6 +23,26 @@ export function verifyPhotoSig(url: string, sig: unknown): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/* ── vlasnikov pregled javne ponude ──────────────────────────────────────── */
+
+/**
+ * Gumb "Kao klijent" u adminu otvara /ponuda/:token?pregled=<potpis>. Na iPhoneu se poveznica otvara u Safariju,
+ * koji ne dijeli prijavu s aplikacijom na početnom zaslonu — potpis dokazuje da je to vlasnikov pregled,
+ * pa se ne broji kao "klijent je otvorio ponudu". (Potpis zna samo server; vezan je uz token ponude.)
+ */
+export const OWNER_PREVIEW_PARAM = 'pregled';
+/** Kolačić s istim potpisom (putanja samo /ponuda/:token) — i osvježavanje stranice ostaje vlasnikov pregled. */
+export const OWNER_PREVIEW_COOKIE = 'kr_pregled';
+export function ownerPreviewSig(token: string): string {
+  return createHmac('sha256', requireEnv('SESSION_SECRET')).update(`quote-owner-preview:${token}`).digest('base64url').slice(0, 22);
+}
+export function verifyOwnerPreviewSig(token: string, sig: unknown): boolean {
+  if (typeof sig !== 'string' || sig.length !== 22 || !token) return false;
+  const a = Buffer.from(ownerPreviewSig(token));
+  const b = Buffer.from(sig);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
 /* ── zaglavlja javnih ruta ───────────────────────────────────────────────── */
 
 /** Zaglavlja za javne on-demand stranice/rute s tokenom u URL-u (noindex, bez keša, bez referera). */

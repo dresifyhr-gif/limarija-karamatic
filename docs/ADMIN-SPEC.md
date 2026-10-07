@@ -60,7 +60,7 @@ Oblici vrijednosti su u `src/lib/types.ts` (`SettingsMap`):
 - `content_updated_at` (ISO)
 
 ### `rate_events`: ograničavanje učestalosti
-`id bigint PK, bucket text, key_hash text (HMAC IP-a, nikad sirova IP adresa), ts timestamptz`. Indeks je `(bucket, key_hash, ts desc)`. Bucketi: `login-fail` (5/15 min po IP-u), `login-fail-all` (ključ `global`, 50/h sa svih adresa), `upit` (5/h), `upit-foto` (30/h), `ponuda-prihvat` (20/h), `ponuda-pdf` (60/h). Brojanje je **atomsko** (`hit()`, vidi §3).
+`id bigint PK, bucket text, key_hash text (HMAC IP-a, nikad sirova IP adresa), ts timestamptz`. Indeks je `(bucket, key_hash, ts desc)`. Bucketi: `login-fail` (5/15 min po IP-u), `login-fail-all` (ključ `global`, 50/h sa svih adresa), `upit` (5/h), `upit-foto` (30/h), `ponuda-prihvat` (20/h), `ponuda-pdf` (60/h), `push-test` (20 probnih obavijesti / 10 min), `ponuda-otvoreno` (30/h, beacon prvog otvaranja ponude), `push-lead` (ključ `sve`: nakon 5 lead-obavijesti u 10 min ostale samo tiho zamjenjuju zbirnu obavijest). Brojanje je **atomsko** (`hit()`, vidi §3).
 
 ### `services`: fiksni skup slugova iz site.ts (override stupci)
 `slug text PK, sort int`. Svi ostali stupci su **nullable**, a NULL znači da se koristi zadano iz `site.ts`:
@@ -135,6 +135,20 @@ Jedinice su u `QUOTE_UNITS = ['m²','m','kom','sat','paušal','kg','set']`; dopu
 
 ### `quote_item_templates`: cjenik i predlošci stavki
 `id PK, name, description, unit ('m²'), unit_price numeric(12,2), category, sort, created_at, updated_at`. Tablica je prazna; vlasnik je puni sam.
+
+### `push_subscriptions`: uređaji koji primaju push obavijesti (migracija `002_push_subscriptions.sql`)
+| stupac | tip |
+|---|---|
+| id | integer identity PK |
+| endpoint | text UNIQUE NOT NULL, `https://…` (samo poznati push servisi: FCM, Apple, Mozilla, WNS) |
+| p256dh, auth | text (ključevi pretplate, base64url 65 / 16 bajtova) |
+| label | text '' (naziv uređaja, npr. "Mobitel — Ivan") |
+| user_agent | text '' (za prikaz "iPhone · Safari") |
+| prefs | jsonb `{lead, accepted, opened}` (bool, zadano sve true) |
+| created_at, updated_at, last_success_at | timestamptz |
+| failure_count | int (greške osim 404/410; uspjeh ga vraća na 0) |
+
+Endpoint i ključevi nikad ne izlaze iz baze (API vraća `endpointHash` = sha256(endpoint)[0..32]).
 
 ### Nova migracija
 Dodaj datoteku `db/migrations/002_opis.sql`. Koristi `IF NOT EXISTS` i `ADD COLUMN IF NOT EXISTS`. **Nikad ne mijenjaj `001_init.sql`**, jer skripta provjerava sha256. Pokreni `npm run db:migrate`, a status provjeri s `node scripts/db-migrate.mjs --status`.
@@ -302,6 +316,13 @@ Konvencije:
 | POST `/api/admin/quotes/:id/duplicate` | | 201 `Quote` |
 | GET `/api/admin/leads?status=&limit=&offset=` | | `{items: Lead[], counts}` |
 | GET/PUT/DELETE `/api/admin/leads/:id` | PUT `{status?, adminNote?}` | `Lead` / `{ok}` (briše i fotografije) |
+| GET `/api/admin/push` | | `{ publicKey, configured, items: PushDevice[] }` |
+| GET `/api/admin/push/key` | | `{ publicKey }` (javni VAPID ključ, null ako nije postavljen) |
+| POST `/api/admin/push` | `{ subscription: {endpoint, keys:{p256dh, auth}}, label?, prefs?, replaces? }` | 201 `PushDevice` (upsert po endpointu) · 400 nepoznat push servis/ključevi · 409 > 20 uređaja · 503 bez VAPID-a |
+| PATCH (PUT) / DELETE `/api/admin/push/:id` | `{ label?, prefs?: {lead?, accepted?, opened?} }` | `PushDevice` / `{ok}` |
+| POST `/api/admin/push/test` | `{ id? }` | `{sent, failed, removed, total}` · 410 pretplata istekla (obrisana) · 502 push servis odbio · 429 |
+
+`PushDevice` = `{ id, label, platform ('iPhone · Safari'…), prefs, createdAt, lastSuccessAt, failureCount, endpointHash }`.
 
 `QuoteInput` = `{ issueDate?, clientName, clientPhone, clientEmail, clientAddress, clientOib (11 znamenki ili ''), location, title, intro, items: QuoteItem[], notes, paymentTerms, validDays, pdvEnabled, pdvRate, leadId? }`.
 
@@ -445,6 +466,7 @@ Dizajn:
 - **Privremene** stranice za zamjenu: `src/pages/admin/{upiti,ponude,radovi,usluge,recenzije,pitanja,postavke}.astro`. Kad gradiš odjeljak s podstranicama, **obriši** `X.astro` i napravi `X/index.astro` (+ `X/[id].astro`, `X/novi.astro`…).
 - Pregled već linka na `/admin/ponude/nova`, `/admin/radovi/novi`, `/admin/upiti/:id`, `/admin/upiti?status=novo` i `/admin/ponude?status=…`. Napravi te rute.
 - Postavke trebaju formu za promjenu lozinke (`POST /api/admin/password`) i PDV prekidač (`settings.quote`).
+- `/admin/postavke/obavijesti`: push obavijesti (vidi §11).
 
 ---
 
@@ -473,7 +495,7 @@ Dizajn:
 | Admin upiti | `/admin/upiti` (filtri `?status=`, `?str=`), `/admin/upiti/:id` (nazovi, WhatsApp, status, bilješka, ponude, brisanje) |
 | Admin ponude | `/admin/ponude` (filtri, pretraga `?q=`, zbroj), `/admin/ponude/nova` (`?upit=<id>` popuni iz upita; ništa se ne sprema prije "Spremi"), `/admin/ponude/:id`, `/admin/ponude/predlosci` (cjenik) |
 | Uređivač | `src/components/admin/quotes/QuoteEditor.astro` |
-| Javna ponuda | `/ponuda/:token` (noindex, `Referrer-Policy: no-referrer`, bilježi `viewed_at` osim za admina i robote), `GET /api/ponuda/:token/pdf` (`?prikaz=1` inline), `POST /api/ponuda/:token/prihvat` (JSON ili forma; prihvaća se SAMO status `poslana` — `acceptQuoteByClient()` ima uvjet u UPDATE-u; 409 za nacrt/odbijenu/isteklu). PDF ima ograničenje 60/h po IP-u. |
+| Javna ponuda | `/ponuda/:token` (noindex, `Referrer-Policy: no-referrer`, prvo otvaranje bilježi beacon `POST /api/ponuda/:token/otvoreno` — ne admin, vlasnikov pregled `?pregled=`, nacrt ni roboti; vidi §11), `GET /api/ponuda/:token/pdf` (`?prikaz=1` inline), `POST /api/ponuda/:token/prihvat` (JSON ili forma; prihvaća se SAMO status `poslana` — `acceptQuoteByClient()` ima uvjet u UPDATE-u; 409 za nacrt/odbijenu/isteklu). PDF ima ograničenje 60/h po IP-u. |
 | PDF | `src/lib/quotes/pdf.ts` → `renderQuotePdf(quote, settings)`; fontovi u `src/lib/quotes/fonts/` (vidi README) |
 
 Dodano u zajedničke datoteke (aditivno):
@@ -492,3 +514,45 @@ Dodano u zajedničke datoteke (aditivno):
 - **Postavke → Lozinka:** kartica „Odjava sa svih uređaja” (`POST /api/admin/logout` s `sve=1`).
 - **Vrsta posla:** `isKnownJob`/`jobLabel` koriste `Object.hasOwn` (`constructor` više nije „poznata vrsta”).
 
+
+---
+
+## 11. PWA admina i push obavijesti
+
+**Samo admin je aplikacija.** Javna stranica nema manifest ni service worker (provjereno i u `.vercel/output/static/**/*.html`).
+
+| Što | Gdje |
+|---|---|
+| Manifest | `public/admin.webmanifest` → `/admin.webmanifest` (`application/manifest+json`). `id`/`start_url` `/admin`, **`scope` `/admin`** (ne `/admin/`: tada `/admin` bez kose crte ne bi bio u opsegu, pa Chrome odbaci scope), `display: standalone`, grafit `#0E1013`, `lang: hr`, prečaci "Nova ponuda" → `/admin/ponude/nova` i "Upiti" → `/admin/upiti`. |
+| Ikone | `public/pwa/`: `icon-192.png`, `icon-512.png` (any), `icon-maskable-192/512.png` (Λ u sigurnoj zoni), `apple-touch-icon.png` (180), `badge-96.png` (bijeli Λ na prozirnom, za Android traku). Izvor: Λ monogram iz `Logo.astro` (bijelo sljeme + crveni zabat na grafitu); generirano sharpom. Javni `/apple-touch-icon.png` se ne dira. |
+| Head | `src/components/admin/PwaHead.astro` (u `Admin.astro` i `admin/login.astro`): manifest, apple-touch-icon, `apple-mobile-web-app-capable`, `-title` "Karamatić", `-status-bar-style` "black"; registrira `/admin-sw.js` s `{ scope: '/admin', updateViaCache: 'none' }`; hvata `beforeinstallprompt` u `window.__krInstall` i javlja `kr:installable` / `kr:installed`. |
+| Service worker | `public/admin-sw.js` → `/admin-sw.js` (statična datoteka, middleware je ne vidi; `vercel.json`: `no-cache`). **push** → `showNotification` (title, body, icon, badge, tag, renotify, `data.url`); **notificationclick** → `openAdminUrl()`: fokusira otvoreni prozor admina i `navigate()` (ili poruka `kr:navigate`), inače `openWindow`; URL je uvijek /admin/** na našoj domeni. **fetch** → samo GET navigacije unutar /admin: mreža prvo (navigation preload), bez mreže ugrađena stranica "Nema veze — pokušajte ponovno" (503). **Cache Storage se ne koristi** (activate briše sve keševe) → API i HTML admina nikad nisu offline. **pushsubscriptionchange** → nova pretplata na `POST /api/admin/push` s `replaces` (server novoj pretplati prepiše naziv i postavke stare, pa staru briše). |
+| Server | `src/lib/server/push.ts`: `sendPush(event, payload)` (svim uređajima s uključenim događajem, paralelno, timeout 6 s, TTL 1 dan, urgency `high` za lead/accepted, `normal` za opened, Topic iz taga; 404/410 → brisanje; ostalo → `failure_count+1`), `sendTestPush(id?)`, `listDevices / upsertDevice / updateDevice / deleteDevice / countDevices`, `isAllowedEndpoint` (strogo: https, bez korisnika/porta, host samo `[a-z0-9-.]` i na popisu push servisa, adresa kanonska `u.href === endpoint` i počinje s `https://<host>/`, a Nodeov stari `url.parse` — koji koristi web-push — mora vidjeti isti host; provjera se ponavlja u `deliver()` prije SVAKOG slanja i nedopušteni retci se brišu), `scrub(text)` (vidi niže), `notifyNewLead / notifyQuoteAccepted / notifyQuoteOpened`. Okruženje: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (privatni ključ se nikad ne logira). Lokalno (`astro dev`) svaki okidač zapiše `[push:dev] <event> {payload}` u log (`npx astro dev logs`); na Vercelu se sadržaj ne logira. |
+| Pozadina | `src/lib/server/background.ts` → `background(promise)`: `waitUntil` iz `@vercel/functions` (odgovor posjetitelju ne čeka slanje); lokalno obećanje samo teče dalje. |
+| Roboti | `src/lib/server/bots.ts` → `isBotUserAgent(ua)`, `isPrefetch(request)`, `isPreviewRequest(request)` (= ne-GET ili robot ili prefetch), `isInAppBrowser(ua)`. Roboti se prepoznaju po imenu **robota** (`TelegramBot`, `LinkedInBot`, `Discordbot`, `Slackbot`, `SkypeUriPreview`, WhatsApp, facebookexternalhit/iMessage, Viber, tražilice, curl, headless…), ne po golom imenu aplikacije. **Ugrađeni preglednici** (Android `; wv)` ili iOS `Mobile/` + `Viber/`, `Telegram-Android/`, `LinkedInApp`, `Teams/`, `FBAN/FBAV`, `Instagram`, `Line/`) provjeravaju se PRIJE popisa robota i broje se kao čovjek. Prazan UA = robot. |
+
+**Okidači** (svi preko `background()`):
+| Događaj | Gdje | Naslov · tekst · URL · tag |
+|---|---|---|
+| `lead` | `/api/upit` → `save()` nakon `createLead` (JSON i obična forma; zamka za botove ne šalje) | "Novi upit #U-0017" · "<vrsta posla> · <mjesto>" · `/admin/upiti/:id` · `lead-:id` (renotify). Zaštita od poplave: nakon 5 lead-obavijesti u 10 min (`hit('push-lead','sve')`) svaka sljedeća je zbirna "Više novih upita s web stranice" · "N upita u zadnjih 10 minuta…" · `/admin/upiti` · tag `lead-burst`, **bez** renotify (tiho zamjenjuje). |
+| `accepted` | `/api/ponuda/:token/prihvat` samo kad `acceptQuoteByClient()` stvarno prijeđe poslana → prihvaćena (ponovljeni zahtjev ne) | "Ponuda KR-2026-001 prihvaćena" · "<prvo ime klijenta ili naslov> · 1.234,50 €" · `/admin/ponude/:id` · `quote-:id-accepted` |
+| `opened` | **beacon** `POST /api/ponuda/:token/otvoreno` (vidi niže) kad `markQuoteFirstViewed(id)` vrati true | "Klijent je otvorio ponudu KR-…" · isto · `/admin/ponude/:id` · `quote-:id-opened` |
+
+- `markQuoteFirstViewed(id): Promise<boolean>` (repo/quotes.ts, novo): atomski `UPDATE … WHERE viewed_at IS NULL RETURNING id` — **`viewed_at` je trenutak prvog otvaranja** (zato nema zasebnog `first_viewed_at`); obavijest ide samo jednom po ponudi, i kod istodobnih otvaranja. `markQuoteViewed` ostaje za kompatibilnost.
+- Tekst obavijesti nikad ne sadrži telefon, e-poštu ni poveznice (zaključani zaslon); mjesto i ime prolaze kroz `scrub()` (miče e-poštu i "ime [at] gmail", `http(s)://`/`www.` poveznice, nazive domena `*.com/.hr/…`, brojeve ≥ 7 znamenki).
+- **Prvo otvaranje ponude (`opened`) — kako se broji** (popravak nakon QA-a):
+  - `/ponuda/[token]` samim GET-om **ne** bilježi ništa. Ako je otvaranje kandidat, stranica ispiše `<span hidden data-opened="/api/ponuda/:token/otvoreno">`, a skripta tek kad je stranica stvarno **vidljiva** (ne u prerenderu/pozadini; +600 ms) pošalje `POST` (keepalive). Roboti za pregled poveznica i skeneri obično ne izvršavaju JS.
+  - Kandidat = nije admin sesija, nije vlasnikov pregled, status nije `nacrt`, `viewed_at` je prazan, metoda GET, `!isBotUserAgent(ua)`. Prefetch smije dobiti skriptu (čeka vidljivost).
+  - `POST /api/ponuda/:token/otvoreno` → uvijek 204 (403 tuđa domena/bez Origina, 429 > 30/h po IP-u); ponovno provjerava robota (UA), prefetch zaglavlja, admin sesiju i nacrt, pa `markQuoteFirstViewed` → push.
+  - **Vlasnikov pregled**: gumb "Kao klijent" u adminu vodi na `/ponuda/:token?pregled=<ownerPreviewSig(token)>` (HMAC-SHA256(SESSION_SECRET, `quote-owner-preview:<token>`), 22 znaka; `src/lib/quotes/server.ts`). Ispravan potpis → ne broji se i postavlja kolačić `kr_pregled` (HttpOnly, SameSite=Lax, putanja samo `/ponuda/:token`, 180 dana) pa ni osvježavanje ne broji; skripta makne `?pregled` iz adrese. Potrebno jer iPhone aplikacija s početnog zaslona otvara `/ponuda` u Safariju, koji nema admin prijavu. Poveznica za kopiranje/WhatsApp ostaje bez potpisa.
+  - `POST /api/ponuda/:token/prihvat` tiho postavlja i `viewed_at` (bez zasebne `opened` obavijesti).
+
+**Admin UI:**
+- `/admin/postavke/obavijesti` (+ redak u Postavkama): stanje ovog uređaja (prepoznaje ga `endpointHash`), "Uključi obavijesti na ovom uređaju" (`pushManager.subscribe` izravno u dodiru — dozvola se traži tek tada), naziv uređaja, 3 prekidača (lead/accepted/opened), "Pošalji probnu obavijest", "Isključi na ovom uređaju", popis svih uređaja s uklanjanjem. Stanja: iPhone/iPad nije instaliran → 4 koraka "Dijeli → Dodaj na početni zaslon → otvori aplikaciju → Uključi" (napomena iOS 16.4+); iOS < 16.4; blokirano → upute za iOS/Android/računalo + "Provjeri ponovno"; nepodržano (i ugrađeni preglednici WhatsAppa/Facebooka); poslužitelj bez VAPID-a. Android/Chrome: kartica "Instaliraj aplikaciju" (`beforeinstallprompt`) ili uputa ⋮ → Dodaj na početni zaslon.
+- Istekle pretplate: kad server ne zna lokalnu pretplatu (uklonjena s drugog uređaja ili 404/410), stranica je pri učitavanju odjavi u pregledniku (samo ako je popis uređaja uspješno učitan, `state.ok`); na 410/404 iz "Pošalji probnu obavijest" također `sub.unsubscribe()` — sljedeći dodir na "Uključi" uvijek radi NOVU pretplatu. iPhone upute spominju i "⋯ → Dijeli" (noviji iOS).
+- Pregled: `src/components/admin/PushPromo.astro` — kartica "Obavijest na mobitel za svaki novi upit" kad ovaj uređaj nema pretplatu (ako preglednik ima pretplatu, provjerava `GET /api/admin/push` zna li je server — istekla/uklonjena pretplata opet prikazuje karticu) (na iPhoneu "Pokaži kako"); "Ne sada" se pamti u `localStorage` (`kr:push-promo-dismissed`).
+- Klijent: `src/lib/admin/push.ts` (`detectEnv`, `adminRegistration`, `subscribeThisDevice`, `unsubscribeThisDevice`, `thisDevice`, `endpointHash`, `suggestLabel`). Nove ikone u `AdminIcon`: `bell`, `bell-off`, `share`, `add-square`.
+
+**Sigurnost:** sve `/api/admin/push/**` iza sesije i CSRF provjere middlewarea; endpoint samo https na poznatim push servisima uz strogu provjeru oba URL parsera (popravljen zaobilazak `https://127.0.0.1;x.push.apple.com/`) i ponovnu provjeru prije slanja (nema SSRF-a), najviše 20 uređaja; manifest, ikone i SW su javni ali bez podataka; SW ne sprema ništa i otvara samo /admin/**.
+
+**Testiranje:** headless Chrome (`playwright-core`, `channel: 'chrome'`) s `launchPersistentContext` (incognito kontekst daje installability grešku `in-incognito`) i `grantPermissions(['notifications'])`. Prva FCM registracija u svježem profilu traje ~25 s. Sintetički push: CDP `ServiceWorker.deliverPushMessage`; prikazane obavijesti: `registration.getNotifications()`. Testne pretplate imaju naziv `TEST …` i brišu se na kraju.

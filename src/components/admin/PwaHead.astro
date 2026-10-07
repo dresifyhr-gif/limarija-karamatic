@@ -1,0 +1,48 @@
+---
+/**
+ * PWA admina: manifest, ikone, iOS meta oznake i registracija service workera (opseg /admin).
+ * Uključuju ga SAMO Admin.astro i admin/login.astro — javna stranica nema manifest ni service worker.
+ *
+ * Skripta: registrira /admin-sw.js, hvata `beforeinstallprompt` (Android/Chrome) u window.__krInstall i javlja
+ * događaje `kr:installable` / `kr:installed` na document (gumb "Instaliraj aplikaciju" u Postavke → Obavijesti).
+ */
+---
+
+<link rel="manifest" href="/admin.webmanifest" />
+<link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png" />
+<meta name="application-name" content="Karamatić" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Karamatić" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=no" />
+
+<script>
+  type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+  const w = window as unknown as { __krInstall?: InstallEvent | null };
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // prikazujemo vlastiti gumb (Postavke → Obavijesti)
+    w.__krInstall = e as InstallEvent;
+    document.dispatchEvent(new CustomEvent('kr:installable'));
+  });
+  window.addEventListener('appinstalled', () => {
+    w.__krInstall = null;
+    document.dispatchEvent(new CustomEvent('kr:installed'));
+  });
+
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    const register = () =>
+      navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin', updateViaCache: 'none' }).catch((err) => {
+        console.warn('[pwa] service worker nije registriran:', err?.message ?? err);
+      });
+    if (document.readyState === 'complete') register();
+    else window.addEventListener('load', register, { once: true });
+
+    // klik na obavijest dok je admin otvoren u prozoru koji SW ne kontrolira
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      const d = e.data as { type?: string; url?: string } | null;
+      if (d?.type === 'kr:navigate' && typeof d.url === 'string' && /^\/admin(\/|$|\?)/.test(d.url)) location.href = d.url;
+    });
+  }
+</script>

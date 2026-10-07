@@ -134,6 +134,16 @@ export async function markQuoteViewed(id: number): Promise<void> {
   await db()`UPDATE quotes SET viewed_at = now() WHERE id = ${id} AND viewed_at IS NULL`;
 }
 
+/**
+ * Kao markQuoteViewed, ali vraća true SAMO prvi put (atomski: uvjet viewed_at IS NULL u istom UPDATE-u),
+ * pa istodobna otvaranja ne mogu dvaput poslati obavijest "Klijent je otvorio ponudu".
+ * viewed_at je trenutak PRVOG otvaranja (kasnija otvaranja ga ne mijenjaju).
+ */
+export async function markQuoteFirstViewed(id: number): Promise<boolean> {
+  const rows = await db()`UPDATE quotes SET viewed_at = now() WHERE id = ${id} AND viewed_at IS NULL RETURNING id`;
+  return rows.length > 0;
+}
+
 /** Prazne stavke (bez naziva, opisa i cijene) se ne spremaju — inače se ispišu kao "Stavka 0,00 €". */
 export function dropEmptyItems(items: QuoteItem[]): QuoteItem[] {
   return items.filter((it) => it.type !== 'item' || !!it.title.trim() || !!it.description.trim() || !!it.unitPrice);

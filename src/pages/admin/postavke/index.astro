@@ -5,17 +5,20 @@ import Card from '@/components/admin/Card.astro';
 import ListRow from '@/components/admin/ListRow.astro';
 import Badge from '@/components/admin/Badge.astro';
 import { getSettings } from '@/lib/server/repo/settings';
+import { countDevices } from '@/lib/server/push';
 
 export const prerender = false;
 
-const s = await getSettings();
+const [s, devices] = await Promise.all([getSettings(), countDevices().catch(() => null)]);
+const devicesMeta =
+  devices === null ? 'Obavijesti na mobitel' : devices === 0 ? 'Još nijedan uređaj' : devices === 1 ? '1 uređaj prima obavijesti' : `${devices} uređaja prima obavijesti`;
 const c = s.company;
 const companyFilled = [c.naziv, c.oib, c.adresa, c.iban].filter(Boolean).length;
 const pdv = s.quote.pdvEnabled ? `U sustavu PDV-a (${String(s.quote.pdvRate).replace('.', ',')} %)` : 'Nije u sustavu PDV-a';
 ---
 
 <Admin title="Postavke" active="postavke">
-  <PageHeader title="Postavke" description="Kontakt na stranici, brojke, podaci tvrtke za ponude i lozinka." />
+  <PageHeader title="Postavke" description="Kontakt na stranici, brojke, podaci tvrtke za ponude, obavijesti i lozinka." />
   <div class="grid gap-5 sm:gap-6">
     <Card title="Na stranici" eyebrow="Javno" flush>
       <ul role="list">
@@ -31,6 +34,15 @@ const pdv = s.quote.pdvEnabled ? `U sustavu PDV-a (${String(s.quote.pdvRate).rep
           </ListRow>
         </li>
         <li><ListRow href="/admin/postavke/ponude" title="PDV i uvjeti ponude" meta={`${pdv} · vrijedi ${s.quote.validDays} dana`} /></li>
+      </ul>
+    </Card>
+    <Card title="Obavijesti" eyebrow="Mobitel" flush>
+      <ul role="list">
+        <li>
+          <ListRow href="/admin/postavke/obavijesti" title="Obavijesti na mobitelu" meta={`Novi upit, prihvaćena i otvorena ponuda · ${devicesMeta}`}>
+            {devices === 0 && <Badge slot="end" tone="warning">Isključeno</Badge>}
+          </ListRow>
+        </li>
       </ul>
     </Card>
     <Card title="Pristup" eyebrow="Sigurnost" flush>

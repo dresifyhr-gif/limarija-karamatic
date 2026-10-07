@@ -1,0 +1,103 @@
+---
+/**
+ * Kartica na Pregledu: "Primajte obavijesti na mobitel" — prikazuje se SAMO kad ovaj uređaj nema pretplatu
+ * (preglednik to zna, pa je kartica skrivena dok skripta ne provjeri). Može se zatvoriti (pamti se u localStorage).
+ * Ne traži dozvolu sama — vodi na Postavke → Obavijesti (dozvola tek na dodir tamo).
+ */
+import AdminIcon from './AdminIcon.astro';
+---
+
+<section class="a-card pp" data-push-promo hidden aria-labelledby="pp-title">
+  <span class="pp__icon" aria-hidden="true"><AdminIcon name="bell" size={22} /></span>
+  <div class="grid min-w-0 gap-1">
+    <p class="a-h2" id="pp-title">Obavijest na mobitel za svaki novi upit</p>
+    <p class="a-hint" data-pp-text>Uključite obavijesti i saznajte odmah kad stigne upit ili klijent prihvati ponudu.</p>
+    <div class="mt-2 flex flex-wrap gap-2">
+      <a href="/admin/postavke/obavijesti" class="a-btn a-btn--dark" data-pp-cta>
+        <AdminIcon name="bell" size={18} class="flex-none" />
+        <span data-pp-cta-text>Uključi obavijesti</span>
+      </a>
+      <button type="button" class="a-btn a-btn--ghost" data-pp-close>Ne sada</button>
+    </div>
+  </div>
+  <button type="button" class="pp__x" aria-label="Zatvori" data-pp-close><AdminIcon name="close" size={20} /></button>
+</section>
+
+<style>
+  .pp {
+    position: relative;
+    display: flex;
+    gap: 0.875rem;
+    padding: 1rem 3rem 1rem 1rem;
+    border-left: 3px solid var(--color-tinta);
+  }
+  @media (width >= 48rem) {
+    .pp {
+      padding: 1.25rem 3.5rem 1.25rem 1.5rem;
+    }
+  }
+  .pp__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--color-papir);
+  }
+  .pp__x {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--a-muted);
+  }
+</style>
+
+<script>
+  import { detectEnv, adminRegistration, thisDevice, type PushState } from '@/lib/admin/push';
+  import { api } from '@/lib/admin/ui';
+
+  const KEY = 'kr:push-promo-dismissed';
+  const card = document.querySelector<HTMLElement>('[data-push-promo]');
+  (async () => {
+    if (!card) return;
+    try {
+      if (localStorage.getItem(KEY)) return;
+    } catch {}
+    const env = detectEnv();
+    const iosNeedsInstall = env.platform === 'ios' && !env.standalone;
+    if (!iosNeedsInstall) {
+      if (!env.supported) return; // preglednik bez obavijesti — ne nudimo
+      if (Notification.permission === 'granted') {
+        const reg = await adminRegistration();
+        const sub = await reg?.pushManager.getSubscription().catch(() => null);
+        if (sub) {
+          // pretplata postoji u pregledniku — provjeri zna li je i server (možda je istekla ili uklonjena s drugog uređaja)
+          const state = await api<PushState>('/api/admin/push').catch(() => null);
+          if (!state) return; // ne znamo → ne smetamo
+          const { device } = await thisDevice({ ...state, ok: true }, reg ?? null);
+          if (device) return; // ovaj uređaj već prima obavijesti
+        }
+      }
+    } else {
+      card.querySelector('[data-pp-text]')!.textContent = 'Na iPhoneu najprije dodajte admin na početni zaslon — pokazat ćemo kako, u 4 koraka.';
+      card.querySelector('[data-pp-cta-text]')!.textContent = 'Pokaži kako';
+    }
+    card.hidden = false;
+    card.querySelectorAll('[data-pp-close]').forEach((b) =>
+      b.addEventListener('click', () => {
+        card.hidden = true;
+        try {
+          localStorage.setItem(KEY, String(Date.now()));
+        } catch {}
+      }),
+    );
+  })();
+</script>

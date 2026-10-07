@@ -15,6 +15,7 @@ import { QUOTE_STATUS_LABEL, QUOTE_STATUS_TONE } from '@/lib/admin/labels';
 import { jobLabel } from '@/lib/quotes/labels';
 import { leadNumber } from '@/lib/quotes/shared';
 import type { SettingsMap } from '@/lib/types';
+import { OWNER_PREVIEW_PARAM, ownerPreviewSig } from '@/lib/quotes/server';
 
 export const prerender = false;
 
@@ -63,6 +64,8 @@ const leadInfo = lead
   ? { id: lead.id, no: leadNumber(lead.id), name: lead.name, job: jobLabel(lead.jobType), location: lead.location, note: lead.note, thumbs: thumbs.filter((x): x is string => !!x), photos: lead.photos.length }
   : null;
 const publicUrl = q ? new URL(`/ponuda/${q.publicToken}`, Astro.url.origin).toString() : '';
+// "Kao klijent": potpisani vlasnikov pregled — ne broji se kao klijentovo otvaranje (iPhone ga otvara u Safariju bez prijave)
+const previewUrl = q ? `${publicUrl}?${OWNER_PREVIEW_PARAM}=${ownerPreviewSig(q.publicToken)}` : '';
 ---
 
 <Admin title={q ? `Ponuda ${q.number}` : 'Ponuda'} active="ponude" wide>
@@ -76,7 +79,7 @@ const publicUrl = q ? new URL(`/ponuda/${q.publicToken}`, Astro.url.origin).toSt
         <PageHeader title={q.number} eyebrow={q.clientName || 'Ponuda'} back={{ href: '/admin/ponude', label: 'Ponude' }}>
           <Badge slot="actions" tone={QUOTE_STATUS_TONE[q.status]}>{QUOTE_STATUS_LABEL[q.status]}</Badge>
         </PageHeader>
-        <QuoteEditor quote={q} draft={draft} templates={templates} pdvDefault={s.quote} lead={leadInfo} publicUrl={publicUrl} company={s.company.naziv || s.contact.name} />
+        <QuoteEditor quote={q} draft={draft} templates={templates} pdvDefault={s.quote} lead={leadInfo} publicUrl={publicUrl} previewUrl={previewUrl} company={s.company.naziv || s.contact.name} />
       </>
     )
   }

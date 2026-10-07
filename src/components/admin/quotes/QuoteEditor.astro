@@ -51,9 +51,11 @@ interface Props {
   pdvDefault: QuoteSettings;
   lead?: { id: number; no: string; name: string; job: string; location: string; note: string; thumbs: string[]; photos: number } | null;
   publicUrl?: string;
+  /** "Kao klijent": javna poveznica s potpisom vlasnikova pregleda (ne broji se kao otvaranje) */
+  previewUrl?: string;
   company: string;
 }
-const { quote, draft: d, templates, pdvDefault, lead, publicUrl = '', company } = Astro.props;
+const { quote, draft: d, templates, pdvDefault, lead, publicUrl = '', previewUrl = '', company } = Astro.props;
 const t = computeTotals(d.items, d.pdvEnabled, d.pdvRate);
 const num = (n: number) => String(n).replace('.', ',');
 /** prihvaćena ponuda: stavke i iznosi su zaključani (klijent je prihvatio točno njih) */
@@ -181,7 +183,7 @@ const stamps = quote
                   <AdminIcon name="download" size={18} />
                   PDF
                 </a>
-                <a href={publicUrl} target="_blank" rel="noopener" class="a-btn a-btn--secondary a-btn--sm" data-preview>
+                <a href={previewUrl || publicUrl} target="_blank" rel="noopener noreferrer" class="a-btn a-btn--secondary a-btn--sm" data-preview>
                   <AdminIcon name="eye" size={18} />
                   Kao klijent
                 </a>

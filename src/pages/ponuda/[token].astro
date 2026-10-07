@@ -11,10 +11,11 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@/styles/global.css';
 import Logo from '@/components/ui/Logo.astro';
 import Icon from '@/components/ui/Icon.astro';
-import { getQuoteByToken, markQuoteViewed, type Quote } from '@/lib/server/repo/quotes';
+import { getQuoteByToken, type Quote } from '@/lib/server/repo/quotes';
+import { isBotUserAgent } from '@/lib/server/bots';
 import { getSettings } from '@/lib/server/repo/settings';
 import { readSession } from '@/lib/server/auth';
-import { applyPrivateHeaders } from '@/lib/quotes/server';
+import { applyPrivateHeaders, OWNER_PREVIEW_COOKIE, OWNER_PREVIEW_PARAM, verifyOwnerPreviewSig } from '@/lib/quotes/server';
 import { computeTotals } from '@/lib/quote-math';
 import { PDV_EXEMPT_NOTE, QUOTE_STATUS_LABEL, type SettingsMap } from '@/lib/types';
 import { formatDay, formatEur, formatIban, formatMoment, formatPercent, formatQty, groupItems, isExpired, validUntil, waLink } from '@/lib/quotes/shared';
@@ -37,15 +38,27 @@ if (!failed && !q) Astro.response.status = 404;
 if (failed) Astro.response.status = 503;
 
 const admin = await readSession(Astro).catch(() => null);
-const ua = Astro.request.headers.get('user-agent') ?? '';
-const isBot = /bot|crawler|spider|preview|whatsapp|facebookexternalhit|telegram|slack|discord|viber|skype|linkedin|embedly|curl|wget/i.test(ua);
-if (q && !admin && !isBot && !q.viewedAt) {
-  try {
-    await markQuoteViewed(q.id);
-  } catch {
-    /* nije presudno */
-  }
+// vlasnikov pregled ("Kao klijent" u adminu): potpis u ?pregled= ili kolačić iz prethodnog pregleda istog preglednika
+const previewParam = Astro.url.searchParams.get(OWNER_PREVIEW_PARAM);
+const ownerPreview = !!q && (verifyOwnerPreviewSig(token, previewParam) || verifyOwnerPreviewSig(token, Astro.cookies.get(OWNER_PREVIEW_COOKIE)?.value));
+if (q && previewParam && ownerPreview) {
+  Astro.cookies.set(OWNER_PREVIEW_COOKIE, previewParam, {
+    path: `/ponuda/${encodeURIComponent(token)}`,
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: Astro.url.protocol === 'https:',
+    maxAge: 60 * 60 * 24 * 180,
+  });
 }
+/**
+ * "Klijent je otvorio ponudu": NE bilježi se na sam GET, nego malom skriptom (beacon) kad je stranica stvarno
+ * prikazana — roboti za pregled poveznica (WhatsApp, Viber, SMS/RCS, skeneri e-pošte) uglavnom ne izvršavaju JS.
+ * Skripta se ne ispisuje adminu, vlasnikovu pregledu, nacrtu (još nije poslan), već otvorenoj ponudi ni poznatim
+ * robotima (User-Agent). Prefetch smije dobiti skriptu — ona čeka dok stranica stvarno ne postane vidljiva.
+ */
+const trackOpen =
+  !!q && !admin && !ownerPreview && q.status !== 'nacrt' && !q.viewedAt && Astro.request.method === 'GET' && !isBotUserAgent(Astro.request.headers.get('user-agent'));
+const openedUrl = `/api/ponuda/${encodeURIComponent(token)}/otvoreno`;
 
 const qs = Astro.url.searchParams;
 const errorCode = qs.get('greska');
@@ -412,10 +425,35 @@ const days = q ? `${q.validDays} ${q.validDays % 10 === 1 && q.validDays % 100 !
         </div>
       )
     }
+    {trackOpen && <span hidden data-opened={openedUrl} />}
   </body>
 </html>
 
 <script>
+  // Prvo otvaranje (vidi trackOpen): javi serveru tek kad je stranica stvarno prikazana (ne u prerenderu/pozadini).
+  const opened = document.querySelector<HTMLElement>('[data-opened]');
+  if (opened) {
+    let sent = false;
+    const ping = () => {
+      if (sent || document.visibilityState !== 'visible') return;
+      sent = true;
+      setTimeout(() => {
+        fetch(opened.dataset.opened!, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', credentials: 'same-origin', keepalive: true }).catch(() => {});
+      }, 600);
+    };
+    const doc = document as Document & { prerendering?: boolean };
+    if (doc.prerendering) document.addEventListener('prerenderingchange', ping, { once: true });
+    else ping();
+    document.addEventListener('visibilitychange', ping);
+  }
+  // vlasnikov pregled: makni potpis iz adrese (kolačić ga pamti), da se kopirana adresa ne pošalje klijentu
+  if (new URLSearchParams(location.search).has('pregled')) {
+    const u = new URL(location.href);
+    u.searchParams.delete('pregled');
+    history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+  }
+
+
   // Prihvaćanje: prvi klik traži potvrdu, drugi šalje (bez JS-a forma šalje odmah → 303 natrag ovamo).
   const form = document.querySelector<HTMLFormElement>('form[data-accept]');
   if (form) {

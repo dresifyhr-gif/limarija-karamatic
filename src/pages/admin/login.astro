@@ -5,6 +5,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import '@/styles/global.css';
 import '@/styles/admin.css';
 import Logo from '@/components/ui/Logo.astro';
+import PwaHead from '@/components/admin/PwaHead.astro';
 import AdminIcon from '@/components/admin/AdminIcon.astro';
 import { readSession } from '@/lib/server/auth';
 
@@ -44,7 +45,7 @@ Astro.response.headers.set('cache-control', 'no-store');
     <meta name="theme-color" content="#0e1013" />
     <title>Prijava · Admin · Karamatić</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <PwaHead />
   </head>
   <body class="login grid-paper a-dark min-h-dvh bg-grafit text-white">
     <main class="mx-auto flex min-h-dvh w-full max-w-[25rem] flex-col justify-center px-5 py-10">

@@ -25,6 +25,7 @@ import { leadNumber } from '@/lib/quotes/shared';
 import { isKnownJob } from '@/lib/quotes/labels';
 import type { BlobImageRef } from '@/lib/types';
 import { getContent } from '@/lib/content';
+import { notifyNewLead } from '@/lib/server/push';
 
 export const prerender = false;
 
@@ -117,6 +118,8 @@ function validate(ctx: APIContext, raw: Raw) {
 async function save(ctx: APIContext, raw: Raw, photos: BlobImageRef[]) {
   const input = parse(LeadCreateSchema, toLeadInput(raw, photos, ctx));
   const lead = await createLead(input);
+  // push na mobitele vlasnika — u pozadini (waitUntil), odgovor posjetitelju ne čeka
+  notifyNewLead({ id: lead.id, jobType: input.jobType, location: input.location });
   return { number: leadNumber(lead.id), job: input.jobType, photos: photos.length };
 }
 
