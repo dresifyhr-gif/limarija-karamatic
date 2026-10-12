@@ -10,7 +10,8 @@
     "check": "astro check",
     "shot": "node scripts/shot.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
-    "db:seed": "node scripts/db-seed.mjs"
+    "db:seed": "node scripts/db-seed.mjs",
+    "admin:nova-lozinka": "node scripts/admin-nova-lozinka.mjs"
   },
   "dependencies": {
     "@astrojs/vercel": "^11.0.11",
