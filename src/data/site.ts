@@ -121,7 +121,7 @@ export const services: Service[] = [
     gallery: [imgSnjegobrani, imgZalazak, imgSnjegobraniOdozgo, imgSpojRadnik],
     seoTitle: 'Limeni krovovi — Zagreb i šire | Limarija Karamatić',
     seoDescription:
-      'Novi limeni krovovi i zamjena crijepa limom u Zagrebu i šire. Crijep-lim i trapez, antracit RAL 7016. Besplatna procjena.',
+      'Novi limeni krovovi i zamjena crijepa limom u Zagrebu i šire. Crijep-lim i trapez, antracit RAL 7016. Procjena na terenu.',
     h1: 'Limeni krovovi',
     includesTitle: 'Cijeli krov, sloj po sloj.',
     galleryTitle: 'Crijep-lim u antracitu.',
@@ -245,7 +245,7 @@ export const services: Service[] = [
     gallery: [imgTrapezGromobran, imgAtikaKutDetalj, imgAtikaSljunak, imgTrapezMedvednica],
     seoTitle: 'Opšav atike — Zagreb i šire | Limarija Karamatić',
     seoDescription:
-      'Opšav atike i limarija ravnih krovova, Zagreb i šire. Kape atika po mjeri, kutovi na geru, trapezni lim. Besplatna procjena.',
+      'Opšav atike i limarija ravnih krovova, Zagreb i šire. Kape atika po mjeri, kutovi na geru, trapezni lim. Procjena na terenu.',
     h1: 'Opšav atike',
     lead: 'Kape atika s pravim kutovima i preklopima koji ne puštaju. Trapezni lim za ravne krovove.',
     includesTitle: 'Što uključuje opšav atike.',
@@ -576,7 +576,7 @@ export const steps = [
   {
     n: '02',
     title: 'Dolazimo izmjeriti',
-    text: 'Besplatno izlazimo na teren, mjerimo i fotografiramo krov. Pokažemo vam gdje je problem.',
+    text: 'Izlazimo na teren, mjerimo i fotografiramo krov. Pokažemo vam gdje je problem.',
   },
   {
     n: '03',
@@ -635,11 +635,11 @@ export const areas = [
 export const faq = [
   {
     q: 'Koliko košta limeni krov po m²?',
-    a: 'Cijena ovisi o vrsti lima, složenosti krova (uvale, dimnjaci, prozori) i stanju konstrukcije. Nakon besplatnog mjerenja dobivate pisanu ponudu stavku po stavku, bez skrivenih troškova. Ponudu šaljemo nekoliko dana nakon mjerenja.',
+    a: 'Cijena ovisi o vrsti lima, složenosti krova (uvale, dimnjaci, prozori) i stanju konstrukcije. Nakon mjerenja dobivate pisanu ponudu stavku po stavku, bez skrivenih troškova. Ponudu šaljemo nekoliko dana nakon mjerenja.',
   },
   {
-    q: 'Je li procjena stvarno besplatna?',
-    a: 'Da. Dolazimo, mjerimo, fotografiramo i dajemo ponudu bez ikakve obveze. Za brzu orijentaciju pošaljite slike krova na WhatsApp.',
+    q: 'Kako izgleda procjena?',
+    a: 'Dođemo na teren, izmjerimo i fotografiramo krov te vam pošaljemo pisanu ponudu stavku po stavku. Za brzu orijentaciju pošaljite slike krova na WhatsApp.',
   },
   {
     q: 'Koliko traje izrada novog krova?',
@@ -706,3 +706,48 @@ export const jobTypes = [
 ];
 
 export const roofSizes = ['do 50 m²', '50–120 m²', '120–250 m²', 'više od 250 m²', 'ne znam'];
+
+/* ── Natpisi gumba (admin: Naslovnica → Natpisi gumba; settings.labels) ── */
+/* Neutralan naziv: ne piše da je procjena bez naplate ni da se plaća (zahtjev vlasnika). */
+export const labels = {
+  cta: 'Procjena',
+  ctaPhone: 'Nazovite za procjenu',
+  ctaWhatsapp: 'Pošaljite slike',
+};
+
+/* ── Tekstovi naslovnice (admin: Naslovnica; settings.homepage) ─────────── */
+/* Zadane vrijednosti. Admin sprema samo izmjene; prazno polje = ovaj tekst.
+ * hero.trust[2] je zadano contact.responseTime; zaglavlje recenzija ovisi o tome postoje li recenzije
+ * (vidi resolveHomepage u src/lib/defaults.ts). Koraci "Kako radimo" su `steps` iznad. */
+export const homepage = {
+  hero: {
+    eyebrow: 'limeni krovovi, opšavi i oluci',
+    title: 'Sedam puta mjerimo.\nJednom savijemo.',
+    lead: 'Limeni i falcani krovovi, popravci, opšavi atika i dimnjaka, oluci i snjegobrani — sve krojeno i savijeno po mjeri vašeg krova.',
+    trust: ['Procjena na terenu', 'Pisana ponuda stavku po stavku'],
+  },
+  services: {
+    eyebrow: 'Usluge',
+    title: 'Sve što se na krovu radi limom.',
+    lead: 'Od cijelog novog krova do jednog opšava uz dimnjak. Lim krojimo i savijamo po mjeri vašeg krova.',
+  },
+  projects: { eyebrow: 'Radovi', title: 'Ovo nije render.', lead: 'Pravi krovovi s naših gradilišta.' },
+  process: { eyebrow: 'Kako radimo', title: 'Od poziva do pisanog jamstva.', lead: 'Pet koraka, uvijek istim redom.' },
+  /** kad postoje objavljene recenzije ili Google poveznica */
+  reviews: { eyebrow: 'Recenzije', title: 'Pitajte one kojima više ne curi.', lead: '' },
+  /** dok nema recenzija ni Google poveznice (sekcija tada prikazuje samo brojke) */
+  reviewsStatsOnly: { eyebrow: 'U brojkama', title: 'Brojke iza svakog krova.', lead: '' },
+  managers: {
+    eyebrow: 'Stambene zgrade',
+    title: 'Krov zgrade bez natezanja sa suvlasnicima.',
+    lead: '',
+    points: ['Ponuda za odluku suvlasnika', 'Račun na zgradu, plaćanje iz pričuve', 'Fotografije prije i poslije radova'],
+    cta: 'Sve za upravitelje zgrada',
+  },
+  faq: { eyebrow: 'Česta pitanja', title: 'Pitanja koja čujemo na svakom krovu.' },
+  finalCta: {
+    eyebrow: 'Procjena',
+    title: 'Ne čekajte da počne kapati.',
+    lead: 'Procjena na terenu. Pisana ponuda stavku po stavku.',
+  },
+};

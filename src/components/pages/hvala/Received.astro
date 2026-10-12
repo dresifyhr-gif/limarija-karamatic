@@ -13,7 +13,7 @@ import NextSteps from '@/components/pages/NextSteps.astro';
 import { jobTypes } from '@/data/site';
 import { getContent } from '@/lib/content';
 
-const { contact: site, telHref, waHref, services } = await getContent();
+const { contact: site, telHref, waHref, services, labels } = await getContent();
 
 // samo poznate vrijednosti (nikad slobodan tekst iz URL-a)
 const jobs: Record<string, string> = {
@@ -80,7 +80,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
               <div class="px-5 py-4 sm:px-7 sm:py-5">
                 <p class="type-display text-[1.25rem] tracking-[0.01em] uppercase sm:text-[1.5rem]">Upit za procjenu</p>
                 <p class="mt-1.5 font-mono text-[0.6875rem] leading-snug tracking-[0.06em] text-tinta/70 uppercase">
-                  Besplatno · bez obveze
+                  {site.responseTime}
                 </p>
               </div>
               <dl class="flex flex-col justify-center border-l border-tinta/15 px-4 font-mono sm:px-6">
@@ -96,7 +96,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
               </div>
               <div>
                 <dt>Posao</dt>
-                <dd data-hv-job>Besplatna procjena krova</dd>
+                <dd data-hv-job>Procjena krova</dd>
               </div>
               <div>
                 <dt>Slike</dt>
@@ -124,7 +124,7 @@ const waDefault = waHref('Pozdrav, šaljem slike krova uz upit za procjenu.');
             Pošaljite tri slike krova na WhatsApp, uz broj upita. Iz slika često već znamo o čemu se radi.
           </p>
           <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
-            <Button href={waDefault} variant="whatsapp" icon="whatsapp" data-hv-wa>Pošaljite slike</Button>
+            <Button href={waDefault} variant="whatsapp" icon="whatsapp" data-hv-wa>{labels.ctaWhatsapp}</Button>
             <a
               href={telHref}
               class="inline-flex min-h-11 items-center gap-2.5 font-mono text-[1rem] tracking-[0.02em] text-tinta underline decoration-transparent underline-offset-[6px] transition-colors duration-150 hover:decoration-current"

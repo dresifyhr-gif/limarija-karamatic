@@ -9,7 +9,7 @@ import Icon, { type IconName } from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
 import { getContent } from '@/lib/content';
 
-const { contact: site, telHref } = await getContent();
+const { contact: site, telHref, labels } = await getContent();
 
 interface Props {
   class?: string;
@@ -75,7 +75,7 @@ const items: { icon: IconName; title: string; text: string }[] = [
           Adresa zgrade je dovoljna. Ostalo pitamo mi.
         </p>
         <div class="mt-auto flex flex-col items-start gap-3 pt-8">
-          <Button href="/procjena" iconRight="arrow-right" data-quote-link>Besplatna procjena</Button>
+          <Button href="/procjena" iconRight="arrow-right" data-quote-link>{labels.cta}</Button>
           <a
             href={telHref}
             class="inline-flex min-h-11 items-center gap-2.5 font-mono text-[1rem] tracking-[0.02em] text-tinta underline decoration-transparent underline-offset-[6px] transition-colors duration-150 hover:decoration-current"

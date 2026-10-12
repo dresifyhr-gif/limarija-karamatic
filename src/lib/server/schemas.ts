@@ -2,7 +2,7 @@
  * Sheme ulaza za API (validate.ts). Imena polja su camelCase — isto kao u JSON odgovorima.
  * Za djelomično ažuriranje koristi v.partial(Shema).
  */
-import { v, type Infer } from './validate';
+import { v, type Infer, type Validator } from './validate';
 import { LEAD_STATUSES, QUOTE_STATUSES } from '@/lib/types';
 import { SERVICE_SLUGS } from '@/lib/defaults';
 
@@ -53,11 +53,137 @@ export const StatsSchema = v.array(
   }),
   { max: 8 },
 );
+
+/* ── naslovnica i natpisi gumba (settings.homepage / settings.labels) ───── */
+
+/** Najveće duljine tekstova naslovnice (dijeli ih i admin za brojač znakova). */
+export const HOMEPAGE_LIMITS = {
+  eyebrow: 60,
+  title: 120,
+  lead: 320,
+  trust: 70,
+  stepTitle: 60,
+  stepText: 300,
+  point: 80,
+  cta: 50,
+  label: 40,
+} as const;
+
+/** kontrolni znakovi (osim \n), znakovi nulte širine, U+2028/2029 i BOM → razmak */
+const CONTROL_CHARS = new RegExp('[\\u0000-\\u0009\\u000b-\\u001f\\u007f\\u200b-\\u200d\\u2028\\u2029\\ufeff]', 'g');
+
+/**
+ * Jedan redak teksta: trim, bez kontrolnih znakova, razmaci sažeti.
+ * breaks > 0 dopušta toliko prijeloma retka ("\n"); višak redaka spaja se razmakom.
+ */
+function line(max: number, breaks = 0): Validator<string> {
+  const inner = v.string({ max });
+  return {
+    run(input, path, errors) {
+      // null = prazno (vrati zadano); broj, objekt, popis… se odbijaju (v.string bi broj pretvorio u tekst)
+      if (input != null && typeof input !== 'string') {
+        errors[path || '_'] ??= 'Mora biti tekst.';
+        return undefined as never;
+      }
+      if (typeof input === 'string') {
+        const lines = input
+          .replace(/\r\n?/g, '\n')
+          .replace(CONTROL_CHARS, ' ')
+          .split('\n')
+          .map((l) => l.replace(/\s+/g, ' ').trim())
+          .filter(Boolean);
+        input = breaks > 0 ? [...lines.slice(0, breaks), lines.slice(breaks).join(' ')].filter(Boolean).join('\n') : lines.join(' ');
+      }
+      return inner.run(input, path, errors);
+    },
+  };
+}
+const opt = <T>(x: Validator<T>) => v.optional(x);
+const exactly = <T>(item: Validator<T>, n: number): Validator<T[]> => {
+  const arr = v.array(item, { min: n, max: n });
+  return {
+    run(input, path, errors) {
+      if (Array.isArray(input) && input.length !== n) {
+        errors[path || '_'] ??= `Točno ${n} ${n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'stavke' : 'stavki'}.`;
+        return undefined as never;
+      }
+      return arr.run(input, path, errors);
+    },
+  };
+};
+const L = HOMEPAGE_LIMITS;
+const homeHead = () => ({ eyebrow: opt(line(L.eyebrow)), title: opt(line(L.title)), lead: opt(line(L.lead)) });
+
+/** Makni prazne tekstove, prazne popise (sve stavke prazne) i prazne sekcije → u bazu ide samo ono što je izmijenjeno. */
+function prune(x: unknown): unknown {
+  if (typeof x === 'string') return x === '' ? undefined : x;
+  if (Array.isArray(x)) {
+    const empty = (e: unknown): boolean => (typeof e === 'string' ? e === '' : !!e && typeof e === 'object' && Object.values(e).every(empty));
+    return x.every(empty) ? undefined : x;
+  }
+  if (x && typeof x === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(x)) {
+      const p = prune(val);
+      if (p !== undefined) out[k] = p;
+    }
+    return Object.keys(out).length ? out : undefined;
+  }
+  return x;
+}
+const pruned = <T>(inner: Validator<T>): Validator<T> => ({
+  run(input, path, errors) {
+    const r = inner.run(input, path, errors);
+    return (r === undefined ? r : (prune(r) ?? {})) as T;
+  },
+});
+
+export const HomepageSchema = pruned(
+  v.object({
+    hero: opt(
+      v.object({
+        eyebrow: opt(line(L.eyebrow)),
+        title: opt(line(L.title, 2)),
+        lead: opt(line(L.lead)),
+        trust: opt(exactly(line(L.trust), 3)),
+      }),
+    ),
+    services: opt(v.object(homeHead())),
+    projects: opt(v.object(homeHead())),
+    process: opt(
+      v.object({
+        ...homeHead(),
+        steps: opt(exactly(v.object({ title: line(L.stepTitle), text: line(L.stepText) }), 5)),
+      }),
+    ),
+    reviews: opt(v.object(homeHead())),
+    managers: opt(
+      v.object({
+        ...homeHead(),
+        points: opt(exactly(line(L.point), 3)),
+        cta: opt(line(L.cta)),
+      }),
+    ),
+    faq: opt(v.object({ eyebrow: opt(line(L.eyebrow)), title: opt(line(L.title)) })),
+    finalCta: opt(v.object(homeHead())),
+  }),
+);
+
+export const LabelsSchema = pruned(
+  v.object({
+    cta: opt(line(L.label)),
+    ctaPhone: opt(line(L.label)),
+    ctaWhatsapp: opt(line(L.label)),
+  }),
+);
+
 export const SETTINGS_SCHEMAS = {
   contact: ContactSchema,
   company: CompanySchema,
   quote: QuoteSettingsSchema,
   stats: StatsSchema,
+  homepage: HomepageSchema,
+  labels: LabelsSchema,
 } as const;
 
 /* ── usluge (null = vrati na zadano iz site.ts) ────────────────────────── */

@@ -28,10 +28,10 @@ const {
 } = Astro.props;
 
 const base =
-  'group/btn relative inline-flex items-center justify-center gap-2.5 font-semibold whitespace-nowrap select-none transition-[background-color,color,border-color,transform] duration-150 ease-[var(--ease-press)] active:translate-y-px focus-visible:outline-offset-4';
+  'group/btn relative inline-flex max-w-full items-center justify-center gap-2.5 font-semibold whitespace-nowrap select-none transition-[background-color,color,border-color,transform] duration-150 ease-[var(--ease-press)] active:translate-y-px focus-visible:outline-offset-4';
 const sizes = {
-  md: 'h-11 px-5 text-[0.9375rem]',
-  lg: 'h-13 px-6 text-base sm:h-14 sm:px-7',
+  md: 'min-h-11 px-5 py-2 text-[0.9375rem]',
+  lg: 'min-h-13 px-6 py-2 text-base sm:min-h-14 sm:px-7',
 };
 const variants = {
   primary: 'bg-crvena text-white hover:bg-crvena-hover',
@@ -53,7 +53,7 @@ const external = href?.startsWith('http');
       {...rest}
     >
       {icon && <Icon name={icon} size={size === 'lg' ? 20 : 18} />}
-      <span>
+      <span class="btn-label">
         <slot />
       </span>
       {iconRight && (
@@ -67,10 +67,22 @@ const external = href?.startsWith('http');
   ) : (
     <button type={type} class={cls} {...rest}>
       {icon && <Icon name={icon} size={size === 'lg' ? 20 : 18} />}
-      <span>
+      <span class="btn-label">
         <slot />
       </span>
       {iconRight && <Icon name={iconRight} size={18} />}
     </button>
   )
 }
+
+<style>
+  /* Natpisi iz admina mogu biti dulji: kratki ostaju u jednom retku (kao prije), dugi se prelome
+     unutar gumba umjesto da izađu iz ekrana (gumb ima min-height, ne fiksnu visinu). */
+  .btn-label {
+    min-width: 0;
+    white-space: normal;
+    text-wrap: balance;
+    line-height: 1.25;
+    text-align: center;
+  }
+</style>

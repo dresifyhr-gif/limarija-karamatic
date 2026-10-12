@@ -28,7 +28,7 @@ const strong = tone === 'dark' ? 'text-white' : 'text-tinta';
 const red = tone === 'dark' ? 'text-redline' : 'text-redline-dark';
 ---
 
-<header class:list={['max-w-3xl', align === 'center' && 'mx-auto text-center', className]}>
+<header class:list={['max-w-3xl min-w-0 [overflow-wrap:anywhere]', align === 'center' && 'mx-auto text-center', className]}>
   <p class:list={['eyebrow mb-4 flex items-center gap-3', muted, align === 'center' && 'justify-center']} data-reveal>
     <span>{eyebrow}</span>
   </p>

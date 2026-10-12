@@ -8,17 +8,22 @@
  */
 import SectionHead from '@/components/ui/SectionHead.astro';
 import Photo from '@/components/ui/Photo.astro';
-import { steps } from '@/data/site';
+import { getContent } from '@/lib/content';
 import poster from '@/assets/projects/krov-crijep-lim-spoj-radnik.jpg';
+
+/* Tekstovi iz admina (Naslovnica → Kako radimo): zaglavlje i točno 5 koraka; broj koraka je redni broj. */
+const { homepage } = await getContent();
+const head = homepage.process;
+const steps = head.steps.map((s, i) => ({ n: String(i + 1).padStart(2, '0'), ...s }));
 
 ---
 
 <section id="kako-radimo" class="bg-papir grid-paper-light py-24 text-tinta sm:py-28 lg:py-32" data-process>
   <div class="wrap">
     <SectionHead
-      eyebrow="Kako radimo"
-      title="Od poziva do pisanog jamstva."
-      lead="Pet koraka, uvijek istim redom."
+      eyebrow={head.eyebrow}
+      title={head.title}
+      lead={head.lead || undefined}
       tone="light"
     />
 

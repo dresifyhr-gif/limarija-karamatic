@@ -1,0 +1,503 @@
+---
+/**
+ * Admin → Naslovnica: tekstovi početne stranice (settings.homepage) i natpisi gumba (settings.labels).
+ * Kartice idu redom kao sekcije na stranici. Prazno polje = izvorni tekst (sivo u polju).
+ * Sprema: PUT /api/admin/settings { values: { homepage, labels } } — oboje se provjeri pa spremi zajedno (sve ili ništa);
+ * server provjerava duljine i broj stavki i sprema samo izmjene.
+ * Promjene idu na javnu stranicu tek nakon "Objavi na stranicu".
+ */
+import '@/components/admin/content/content.css';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from '@/components/admin/content/SaveBar.astro';
+import TextField from '@/components/admin/content/TextField.astro';
+import { getSettings, getStoredSetting } from '@/lib/server/repo/settings';
+import { HOMEPAGE_LIMITS as L } from '@/lib/server/schemas';
+import { db } from '@/lib/server/db';
+import { defaultHomepage, defaultLabels } from '@/lib/defaults';
+import type { HomepageSettings, LabelsSettings } from '@/lib/types';
+
+export const prerender = false;
+
+const [settings, storedHome, storedLabels, [rv]] = await Promise.all([
+  getSettings(),
+  getStoredSetting('homepage'),
+  getStoredSetting('labels'),
+  db()`SELECT count(*)::int AS n FROM reviews WHERE published`,
+]);
+const contact = settings.contact;
+const hasReviews = Number(rv?.n ?? 0) > 0 || /^https?:\/\//.test(contact.googleReviewsUrl || '');
+const def = defaultHomepage({ responseTime: contact.responseTime, hasReviews, cta: settings.labels.cta });
+const defLabels = defaultLabels();
+const s = (storedHome && typeof storedHome === 'object' ? storedHome : {}) as HomepageSettings;
+const lab = (storedLabels && typeof storedLabels === 'object' ? storedLabels : {}) as Partial<LabelsSettings>;
+const at = <T,>(arr: T[] | undefined, i: number): T | undefined => (Array.isArray(arr) ? arr[i] : undefined);
+
+/* početni prikaz pregleda (klijent ga osvježava pri svakom unosu) */
+const pv = (v: string | undefined, d: string) => (v && v.trim() ? v : d);
+const heroNow = {
+  eyebrow: pv(s.hero?.eyebrow, def.hero.eyebrow),
+  title: pv(s.hero?.title, def.hero.title),
+  lead: pv(s.hero?.lead, def.hero.lead),
+  trust: def.hero.trust.map((d, i) => pv(at(s.hero?.trust, i), d)),
+  cta: pv(lab.cta, defLabels.cta),
+  wa: pv(lab.ctaWhatsapp, defLabels.ctaWhatsapp),
+};
+
+const sections = [
+  { id: 'hero', label: 'Vrh stranice' },
+  { id: 'services', label: 'Usluge' },
+  { id: 'projects', label: 'Radovi' },
+  { id: 'process', label: 'Kako radimo' },
+  { id: 'reviews', label: 'Recenzije' },
+  { id: 'managers', label: 'Za zgrade' },
+  { id: 'faq', label: 'Pitanja' },
+  { id: 'finalCta', label: 'Procjena' },
+  { id: 'labels', label: 'Natpisi gumba' },
+];
+const heads = [
+  { key: 'services', title: 'Usluge', desc: 'Iznad šest kartica usluga.' },
+  { key: 'projects', title: 'Radovi', desc: 'Iznad niza fotografija radova.' },
+] as const;
+---
+
+<Admin title="Naslovnica" active="naslovnica">
+  <PageHeader
+    title="Naslovnica"
+    description="Tekstovi na početnoj stranici, redom kako se vide. Prazno polje znači izvorni tekst (vidi se sivo u polju)."
+  />
+
+  <form class="cb-form hp-form" data-guard data-home-form novalidate>
+    <p class="cb-note">
+      <AdminIcon name="info" size={18} class="mt-0.5 flex-none" />
+      <span>
+        Nakon spremanja promjene se na stranici vide tek kad pritisnete <strong>Objavi na stranicu</strong> (gore desno). Ako polje
+        ostavite prazno, ostaje izvorni tekst.
+      </span>
+    </p>
+
+    <nav class="hp-jump" aria-label="Sekcije naslovnice">
+      {sections.map((x) => <a href={`#${x.id}`} class="hp-jump__a">{x.label}</a>)}
+    </nav>
+
+    <!-- 1 · Hero -->
+    <Card id="hero" eyebrow="1 · Vrh stranice" title="Naslov i uvod" description="Prvo što posjetitelj vidi: oznaka, veliki naslov, uvodna rečenica i tri kratke stavke ispod gumba.">
+      <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+      <div class="grid gap-5">
+        <figure class="hp-prev" aria-label="Pregled vrha stranice" data-prev-root>
+          <figcaption class="hp-prev__tag">Pregled</figcaption>
+          <p class="hp-prev__kw"><span data-prev="hero.eyebrow">{heroNow.eyebrow}</span><span> · {contact.area}</span></p>
+          <p class="hp-prev__h1" data-prev="hero.title" data-prev-lines>
+            {heroNow.title.split('\n').map((l, i) => (<>{i > 0 && <br />}{l}</>))}
+          </p>
+          <p class="hp-prev__lead" data-prev="hero.lead">{heroNow.lead}</p>
+          <div class="hp-prev__btns">
+            <span class="hp-prev__btn hp-prev__btn--red"><span data-prev="labels.cta">{heroNow.cta}</span> <AdminIcon name="arrow-right" size={15} /></span>
+            <span class="hp-prev__btn hp-prev__btn--wa"><AdminIcon name="whatsapp" size={15} /> <span data-prev="labels.ctaWhatsapp">{heroNow.wa}</span></span>
+          </div>
+          <ul class="hp-prev__trust">
+            {heroNow.trust.map((t, i) => <li data-prev={`hero.trust.${i}`}>{t}</li>)}
+          </ul>
+        </figure>
+
+        <TextField name="hero.eyebrow" label="Oznaka iznad naslova" value={s.hero?.eyebrow} def={def.hero.eyebrow} max={L.eyebrow} hint={`Iza nje stranica sama dodaje područje rada („ · ${contact.area}“) iz Postavke → Kontakt.`} />
+        <TextField name="hero.title" label="Veliki naslov" value={s.hero?.title} def={def.hero.title} max={L.title} rows={2} hint="Novi redak (Enter) = prijelom naslova. Najviše 3 retka." />
+        <TextField name="hero.lead" label="Uvodna rečenica" value={s.hero?.lead} def={def.hero.lead} max={L.lead} rows={3} />
+        <fieldset class="hp-group">
+          <legend class="a-label">Tri stavke ispod gumba</legend>
+          <TextField name="hero.trust.0" label="Stavka 1" value={at(s.hero?.trust, 0)} def={def.hero.trust[0]} max={L.trust} />
+          <TextField name="hero.trust.1" label="Stavka 2" value={at(s.hero?.trust, 1)} def={def.hero.trust[1]} max={L.trust} />
+          <TextField name="hero.trust.2" label="Stavka 3" value={at(s.hero?.trust, 2)} def={def.hero.trust[2]} max={L.trust} hint="Izvorno: vrijeme odgovora iz Postavke → Kontakt." />
+        </fieldset>
+      </div>
+    </Card>
+
+    <!-- 2–3 · Usluge, Radovi -->
+    {
+      heads.map((h, i) => (
+        <Card id={h.key} eyebrow={`${i + 2} · ${h.title}`} title="Zaglavlje sekcije" description={h.desc}>
+          <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+          <div class="grid gap-5">
+            <TextField name={`${h.key}.eyebrow`} label="Oznaka" value={s[h.key]?.eyebrow} def={def[h.key].eyebrow} max={L.eyebrow} />
+            <TextField name={`${h.key}.title`} label="Naslov" value={s[h.key]?.title} def={def[h.key].title} max={L.title} />
+            <TextField name={`${h.key}.lead`} label="Uvod" value={s[h.key]?.lead} def={def[h.key].lead} max={L.lead} rows={2} />
+          </div>
+        </Card>
+      ))
+    }
+
+    <!-- 4 · Kako radimo -->
+    <Card id="process" eyebrow="4 · Kako radimo" title="Pet koraka" description="Zaglavlje i pet koraka, od prvog poziva do jamstva.">
+      <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+      <div class="grid gap-5">
+        <TextField name="process.eyebrow" label="Oznaka" value={s.process?.eyebrow} def={def.process.eyebrow} max={L.eyebrow} />
+        <TextField name="process.title" label="Naslov" value={s.process?.title} def={def.process.title} max={L.title} />
+        <TextField name="process.lead" label="Uvod" value={s.process?.lead} def={def.process.lead} max={L.lead} rows={2} />
+        <ol class="hp-steps" role="list">
+          {
+            def.process.steps.map((d, i) => (
+              <li class="hp-step">
+                <p class="hp-step__n a-mono" aria-hidden="true">{String(i + 1).padStart(2, '0')}</p>
+                <fieldset class="hp-group">
+                  <legend class="sr-only">Korak {i + 1}</legend>
+                  <TextField name={`process.steps.${i}.title`} label={`Korak ${i + 1}: naslov`} value={at(s.process?.steps, i)?.title} def={d.title} max={L.stepTitle} />
+                  <TextField name={`process.steps.${i}.text`} label="Opis" value={at(s.process?.steps, i)?.text} def={d.text} max={L.stepText} rows={2} />
+                </fieldset>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </Card>
+
+    <!-- 5 · Recenzije -->
+    <Card id="reviews" eyebrow="5 · Recenzije" title="Zaglavlje sekcije" description="Iznad brojki i recenzija klijenata.">
+      <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+      <div class="grid gap-5">
+        <p class="cb-note">
+          <AdminIcon name="info" size={18} class="mt-0.5 flex-none" />
+          <span>
+            {hasReviews
+              ? 'Izvorni naslov govori o recenzijama jer ih na stranici ima.'
+              : 'Dok nema objavljenih recenzija, izvorni naslov govori o brojkama. Kad objavite prvu recenziju, sam se mijenja (ako ga ovdje niste promijenili).'}
+          </span>
+        </p>
+        <TextField name="reviews.eyebrow" label="Oznaka" value={s.reviews?.eyebrow} def={def.reviews.eyebrow} max={L.eyebrow} />
+        <TextField name="reviews.title" label="Naslov" value={s.reviews?.title} def={def.reviews.title} max={L.title} />
+        <TextField name="reviews.lead" label="Uvod (neobavezno)" value={s.reviews?.lead} def={def.reviews.lead} max={L.lead} rows={2} hint="Izvorno nema uvoda." />
+      </div>
+    </Card>
+
+    <!-- 6 · Za zgrade -->
+    <Card id="managers" eyebrow="6 · Za zgrade" title="Traka za upravitelje zgrada" description="Naslov, tri kratke stavke i gumb prema stranici za upravitelje.">
+      <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+      <div class="grid gap-5">
+        <TextField name="managers.eyebrow" label="Oznaka" value={s.managers?.eyebrow} def={def.managers.eyebrow} max={L.eyebrow} />
+        <TextField name="managers.title" label="Naslov" value={s.managers?.title} def={def.managers.title} max={L.title} />
+        <TextField name="managers.lead" label="Uvod (neobavezno)" value={s.managers?.lead} def={def.managers.lead} max={L.lead} rows={2} hint="Izvorno nema uvoda." />
+        <fieldset class="hp-group">
+          <legend class="a-label">Tri stavke</legend>
+          {def.managers.points.map((d, i) => (
+            <TextField name={`managers.points.${i}`} label={`Stavka ${i + 1}`} value={at(s.managers?.points, i)} def={d} max={L.point} />
+          ))}
+        </fieldset>
+        <TextField name="managers.cta" label="Natpis gumba" value={s.managers?.cta} def={def.managers.cta} max={L.cta} />
+      </div>
+    </Card>
+
+    <!-- 7 · Pitanja -->
+    <Card id="faq" eyebrow="7 · Pitanja" title="Zaglavlje sekcije" description="Iznad čestih pitanja na naslovnici.">
+      <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+      <div class="grid gap-5">
+        <TextField name="faq.eyebrow" label="Oznaka" value={s.faq?.eyebrow} def={def.faq.eyebrow} max={L.eyebrow} />
+        <TextField name="faq.title" label="Naslov" value={s.faq?.title} def={def.faq.title} max={L.title} />
+        <p class="a-hint">
+          Pitanja i odgovore te koja se vide na naslovnici uređujete u
+          <a href="/admin/pitanja" class="font-semibold text-tinta underline decoration-1 underline-offset-2">Pitanja</a>.
+        </p>
+      </div>
+    </Card>
+
+    <!-- 8 · Procjena (završna forma) -->
+    <Card id="finalCta" eyebrow="8 · Procjena" title="Završna forma" description="Zadnja sekcija naslovnice, lijevo od forme za upit.">
+      <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+      <div class="grid gap-5">
+        <TextField name="finalCta.eyebrow" label="Oznaka" value={s.finalCta?.eyebrow} def={def.finalCta.eyebrow} max={L.eyebrow} hint="Prazno = isti natpis kao glavni gumb." />
+        <TextField name="finalCta.title" label="Naslov" value={s.finalCta?.title} def={def.finalCta.title} max={L.title} />
+        <TextField name="finalCta.lead" label="Uvod" value={s.finalCta?.lead} def={def.finalCta.lead} max={L.lead} rows={2} />
+      </div>
+    </Card>
+
+    <!-- Natpisi gumba (cijela stranica) -->
+    <Card id="labels" eyebrow="Cijela stranica" title="Natpisi gumba" description="Isti natpis vrijedi na svim stranicama: zaglavlje, izbornik, gumb na dnu mobitela, vrh stranice, usluge i radovi.">
+      <button slot="actions" type="button" class="cb-reset" data-section-reset>Vrati izvorno</button>
+      <div class="grid gap-5">
+        <TextField name="labels.cta" label="Glavni (crveni) gumb" value={lab.cta} def={defLabels.cta} max={L.label} hint="Vodi na formu za upit." />
+        <TextField name="labels.ctaPhone" label="Gumb za poziv" value={lab.ctaPhone} def={defLabels.ctaPhone} max={L.label} />
+        <TextField name="labels.ctaWhatsapp" label="WhatsApp gumb" value={lab.ctaWhatsapp} def={defLabels.ctaWhatsapp} max={L.label} />
+      </div>
+    </Card>
+
+    <SaveBar label="Spremi" cancelHref="/admin" />
+  </form>
+</Admin>
+
+<style is:global>
+  .hp-form .a-card {
+    scroll-margin-top: 8.5rem;
+  }
+  .hp-jump {
+    display: flex;
+    gap: 0.4rem;
+    margin: -0.25rem -1rem 0;
+    padding: 0.25rem 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .hp-jump::-webkit-scrollbar {
+    display: none;
+  }
+  @media (width >= 40rem) {
+    .hp-jump {
+      flex-wrap: wrap;
+      margin-inline: 0;
+      padding-inline: 0;
+    }
+  }
+  .hp-jump__a {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 0.8rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 999px;
+    background: #fff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-tinta);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color 150ms var(--ease-draft);
+  }
+  .hp-jump__a:hover {
+    border-color: var(--color-tinta);
+  }
+  .hp-group {
+    display: grid;
+    gap: 1rem;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .hp-group > legend {
+    margin-bottom: 0.75rem;
+    padding: 0;
+  }
+  .hp-steps {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .hp-step {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--a-line);
+  }
+  .hp-step__n {
+    padding-top: 0.05rem;
+    font-size: 0.8125rem;
+    letter-spacing: 0.06em;
+    color: var(--color-redline-dark);
+  }
+  /* pregled vrha stranice: grafit, kao na javnoj stranici (umanjeno) */
+  .hp-prev {
+    position: relative;
+    margin: 0;
+    padding: 1.25rem 1rem 1.1rem;
+    border-radius: var(--a-radius);
+    background-color: #0e1013;
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    background-size: 16px 16px;
+    color: #fff;
+    overflow: hidden;
+  }
+  @media (width >= 48rem) {
+    .hp-prev {
+      padding: 1.75rem 1.75rem 1.5rem;
+    }
+  }
+  .hp-prev__tag {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.45);
+  }
+  .hp-prev__kw {
+    padding-right: 4rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #a9b0b8;
+  }
+  .hp-prev__h1 {
+    margin-top: 0.6rem;
+    font-size: clamp(1.5rem, 6.4vw, 2.125rem);
+    line-height: 1.02;
+    font-weight: 800;
+    font-stretch: 118%;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+  .hp-prev__lead {
+    margin-top: 0.7rem;
+    max-width: 34rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #a9b0b8;
+  }
+  .hp-prev__btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+  }
+  .hp-prev__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 36px;
+    padding: 0 0.85rem;
+    border-radius: 2px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    max-width: 100%;
+  }
+  .hp-prev__btn--red {
+    background: var(--color-crvena);
+  }
+  .hp-prev__btn--wa {
+    background: #1fa855;
+  }
+  .hp-prev__trust {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: 0.9rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+    font-size: 0.8125rem;
+    color: #d5d9de;
+  }
+  @media (width >= 40rem) {
+    .hp-prev__trust {
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: 1rem;
+    }
+  }
+  .hp-prev__trust li::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 0.45rem;
+    vertical-align: 0.1em;
+    background: var(--color-redline);
+  }
+</style>
+
+<script>
+  import { api, ApiError, formData, toast } from '@/lib/admin/ui';
+  import { save } from '@/components/admin/content/client';
+  import { clearSection, initTextFields, refreshTextField } from '@/components/admin/content/textFields';
+
+  type Tree = Record<string, unknown>;
+
+  /** {'hero.trust.0': 'x'} → { hero: { trust: ['x'] } } (brojčani dijelovi → nizovi) */
+  function unflatten(flat: Record<string, unknown>): Tree {
+    const out: Tree = {};
+    for (const [path, val] of Object.entries(flat)) {
+      const parts = path.split('.');
+      let node: any = out;
+      parts.forEach((p, i) => {
+        const last = i === parts.length - 1;
+        if (last) node[p] = val;
+        else node = node[p] ??= /^\d+$/.test(parts[i + 1]) ? [] : {};
+      });
+    }
+    return out;
+  }
+  /** vrijednost po putanji 'process.steps.2.title' */
+  const get = (obj: unknown, path: string): unknown =>
+    path.split('.').reduce<any>((o, k) => (o == null ? undefined : o[k]), obj);
+
+  const form = document.querySelector<HTMLFormElement>('[data-home-form]');
+  if (form) {
+    initTextFields(form);
+    const inputs = () => [...form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[data-tf-input]')];
+
+    /* pregled vrha stranice */
+    const prev = form.querySelector<HTMLElement>('[data-prev-root]');
+    const renderPreview = () => {
+      if (!prev) return;
+      prev.querySelectorAll<HTMLElement>('[data-prev]').forEach((el) => {
+        const input = form.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${el.dataset.prev}"]`);
+        if (!input) return;
+        const text = input.value.trim() || input.dataset.default || '';
+        if (el.hasAttribute('data-prev-lines')) {
+          el.replaceChildren(
+            ...text.split('\n').flatMap((line, i) => (i ? [document.createElement('br'), document.createTextNode(line)] : [document.createTextNode(line)])),
+          );
+        } else el.textContent = text;
+      });
+    };
+    form.addEventListener('input', renderPreview);
+
+    /* "Vrati izvorno" za cijelu sekciju (samo isprazni polja; vrijedi tek nakon spremanja) */
+    form.querySelectorAll<HTMLButtonElement>('[data-section-reset]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const card = btn.closest<HTMLElement>('.a-card');
+        if (!card) return;
+        const n = clearSection(card);
+        toast(n ? 'Vraćeni su izvorni tekstovi. Spremite za potvrdu.' : 'Ova sekcija već ima izvorne tekstove.', 'info');
+      }),
+    );
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // tekst jednak izvornom šalje se prazan → ostaje "izvorno" (prati buduće promjene izvornog teksta)
+      const flat: Record<string, unknown> = {};
+      for (const [name, val] of Object.entries(formData(form))) {
+        const input = form.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[name="${name}"]`);
+        const v = String(val ?? '').trim();
+        flat[name] = input?.dataset.default !== undefined && v === input.dataset.default.trim() ? '' : v;
+      }
+      const tree = unflatten(flat);
+      const { labels, ...homepage } = tree as Tree & { labels?: Tree };
+
+      await save(
+        form,
+        async () => {
+          // homepage + labels jednim zahtjevom: server provjeri oboje pa sprema sve ili ništa
+          let saved: { homepage?: Tree; labels?: Tree };
+          try {
+            saved = await api('/api/admin/settings', { method: 'PUT', body: { values: { homepage, labels: labels ?? {} } } });
+          } catch (err) {
+            // "homepage.hero.title" → "hero.title" (ime polja u formi); "labels.cta" ostaje
+            if (err instanceof ApiError && err.fields)
+              throw new ApiError(err.status, err.message, Object.fromEntries(Object.entries(err.fields).map(([k, m]) => [k.replace(/^homepage\.?/, '') || '_', m])));
+            throw err;
+          }
+          const home = saved.homepage ?? {};
+          const lab = saved.labels ?? {};
+          // spremljeno stanje natrag u polja (server trima i sažima razmake); natpis jednak izvornom = prazno
+          for (const input of inputs()) {
+            const name = input.name;
+            let v = name.startsWith('labels.') ? String(get(lab, name.slice(7)) ?? '') : String(get(home, name) ?? '');
+            if (name.startsWith('labels.') && v === input.dataset.default) v = '';
+            input.value = v;
+            refreshTextField(input);
+          }
+          renderPreview();
+          return home;
+        },
+        { success: 'Spremljeno. Na stranici će se vidjeti nakon „Objavi na stranicu”.' },
+      );
+    });
+  }
+</script>

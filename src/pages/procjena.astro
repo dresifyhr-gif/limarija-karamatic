@@ -8,18 +8,18 @@ import Base from '@/layouts/Base.astro';
 import PageHero, { breadcrumbSchema, homeCrumb } from '@/components/layout/PageHero.astro';
 import FinalCta from '@/components/home/FinalCta.astro';
 
-const crumbs = [homeCrumb, { href: '/procjena', label: 'Besplatna procjena' }];
+const crumbs = [homeCrumb, { href: '/procjena', label: 'Procjena krova' }];
 ---
 
 <Base
-  title="Besplatna procjena krova | Limarija Karamatić"
-  description="Besplatna procjena krova, Zagreb i šire. Pošaljite upit u tri kratka koraka ili slike krova na WhatsApp. Pisana ponuda stavku po stavku."
+  title="Procjena krova | Limarija Karamatić"
+  description="Procjena krova na terenu, Zagreb i šire. Pošaljite upit u tri kratka koraka ili slike krova na WhatsApp. Pisana ponuda stavku po stavku."
   schema={[breadcrumbSchema(crumbs, Astro.site)]}
 >
   <PageHero
     compact
-    eyebrow="Besplatno · bez obveze"
-    title="Besplatna procjena"
+    eyebrow="Mjerenje na terenu · pisana ponuda"
+    title="Procjena krova"
     lead="Tri kratka koraka, minuta posla. Zatim vas nazovemo i dogovorimo izlazak."
     crumbs={crumbs}
     cta={false}

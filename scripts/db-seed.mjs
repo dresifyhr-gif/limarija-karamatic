@@ -180,7 +180,7 @@ try {
   if (faqCount === 0) {
     const home = new Set([
       'Koliko košta limeni krov po m²?',
-      'Je li procjena stvarno besplatna?',
+      'Kako izgleda procjena?',
       'Koliko traje izrada novog krova?',
       'Dajete li jamstvo?',
       'Radite li po kiši i zimi?',

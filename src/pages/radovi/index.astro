@@ -17,7 +17,7 @@ import { projectKinds, type ProjectKind } from '@/data/site';
 import { getContent } from '@/lib/content';
 import { pad, radova } from '../usluge/_parts/media';
 
-const { projects, contact: site, telHref, waHref } = await getContent();
+const { projects, contact: site, telHref, waHref, labels } = await getContent();
 
 const crumbs = [homeCrumb, { href: '/radovi', label: 'Radovi' }];
 
@@ -90,15 +90,15 @@ const listSchema = {
         }
         <li class="rf-cta" data-rf-cta>
           <div class="rf-cta-in">
-            <p class="eyebrow text-tinta/70">Besplatna procjena</p>
+            <p class="eyebrow text-tinta/70">{labels.cta}</p>
             <p class="rf-cta-t type-display text-tinta">Vaš krov je sljedeći.</p>
             <p class="rf-cta-d">Pošaljite tri slike krova. Javimo vam što vidimo i kada možemo izaći izmjeriti.</p>
             <div class="rf-cta-btns">
               <Button href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} variant="whatsapp" icon="whatsapp">
-                Pošaljite slike
+                {labels.ctaWhatsapp}
               </Button>
               <Button href="/procjena" variant="outline-dark" iconRight="arrow-right" data-quote-link>
-                Besplatna procjena
+                {labels.cta}
               </Button>
             </div>
           </div>
@@ -110,19 +110,19 @@ const listSchema = {
   <section data-hide-mobile-cta class="rc bg-papir grid-paper-light py-24 text-tinta sm:py-28 lg:py-32" aria-labelledby="rc-naslov">
     <div class="wrap grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-8">
       <div class="lg:col-span-7">
-        <p class="eyebrow text-tinta/70" data-reveal>Besplatna procjena</p>
+        <p class="eyebrow text-tinta/70" data-reveal>{labels.cta}</p>
         <h2 id="rc-naslov" class="type-display mt-4 text-[2.125rem] text-balance text-tinta sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)]" data-reveal>
           Izmjerimo i vaš krov.
         </h2>
         <p class="mt-5 max-w-xl text-lg leading-relaxed text-pretty text-tinta/75" data-reveal>
-          Pošaljite tri slike krova ili nas nazovite. Na teren izlazimo besplatno, ponuda stiže na papiru.
+          Pošaljite tri slike krova ili nas nazovite. Izlazimo na teren, a ponuda stiže na papiru.
         </p>
       </div>
       <div class="lg:col-span-5 lg:justify-self-end" data-reveal>
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:justify-end">
-          <Button href="/procjena" size="lg" iconRight="arrow-right" data-quote-link>Besplatna procjena</Button>
+          <Button href="/procjena" size="lg" iconRight="arrow-right" data-quote-link>{labels.cta}</Button>
           <Button href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} variant="whatsapp" size="lg" icon="whatsapp">
-            Pošaljite slike
+            {labels.ctaWhatsapp}
           </Button>
         </div>
         <a
@@ -130,7 +130,7 @@ const listSchema = {
           class="mt-5 inline-flex min-h-11 items-center gap-3 font-mono text-[1rem] text-tinta underline decoration-tinta/25 underline-offset-[6px] transition-colors duration-150 hover:decoration-tinta lg:float-right"
         >
           <Icon name="phone" size={18} class="text-tinta/60" />
-          <span class="sr-only">Nazovite </span>{site.phoneDisplay}
+          <span class="sr-only">{labels.ctaPhone}: </span>{site.phoneDisplay}
         </a>
       </div>
     </div>

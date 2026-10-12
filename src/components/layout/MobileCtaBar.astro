@@ -1,7 +1,7 @@
 ---
 /**
  * Mobilni "dok" (< lg): plutajuća pločica 12 px od rubova, 56 px visoka.
- *   [ WhatsApp ]  [ Besplatna procjena  → ]
+ *   [ WhatsApp ]  [ Procjena  → ]   (natpis: labels.cta iz admina)
  * Lijevo kvadrat 56 × 56: zelena WhatsApp tipka (samo ikona), desno crveni gumb do kraja.
  * Grafit 92 % + blur, tanka linija (linija/12), rubovi ≤ 4 px, gore suptilni odsjaj.
  *
@@ -11,12 +11,12 @@
  * Skriva se dok je na ekranu #procjena, footer ili [data-hide-mobile-cta], i dok je otvoren izbornik.
  * Ulazi odozdo 200 ms (ease-press); s reduced motion / isključenim animacijama samo se pojavi.
  * Bez JS-a: uvijek vidljiv.
- * "Besplatna procjena" vodi na /procjena; skripta u Headeru je prebacuje na #procjena kad stranica ima obrazac.
+ * Gumb "Procjena" vodi na /procjena; skripta u Headeru je prebacuje na #procjena kad stranica ima obrazac.
  */
 import Icon from '@/components/ui/Icon.astro';
 import { getContent } from '@/lib/content';
 
-const { waHref } = await getContent();
+const { waHref, labels } = await getContent();
 ---
 
 <nav class="kr-dock lg:hidden" aria-label="Brzi kontakt" data-mobile-cta>
@@ -27,7 +27,7 @@ const { waHref } = await getContent();
   </a>
   <a href="/procjena" class="kr-dock__go" data-quote-link>
     <span class="kr-dock__plate">
-      <span>Besplatna procjena</span>
+      <span class="kr-dock__label">{labels.cta}</span>
       <Icon name="arrow-right" size={18} class="kr-dock__arrow" />
     </span>
   </a>
@@ -167,6 +167,7 @@ const { waHref } = await getContent();
   }
   .kr-dock__plate {
     flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -183,6 +184,12 @@ const { waHref } = await getContent();
     transition:
       background-color 150ms var(--ease-press),
       transform 150ms var(--ease-press);
+  }
+  /* natpis iz admina (labels.cta): dulji se skrati na tri točke, dock ostaje 56 px */
+  .kr-dock__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .kr-dock__plate :global(.kr-dock__arrow) {
     flex: none;

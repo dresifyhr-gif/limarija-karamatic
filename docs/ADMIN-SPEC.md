@@ -38,7 +38,7 @@ JSON odgovori API-ja su **camelCase**. Mapiranje rade repo funkcije.
 ### `settings`: ključ → JSON
 | stupac | tip |
 |---|---|
-| key | text PK: `contact` \| `company` \| `quote` \| `stats` |
+| key | text PK: `contact` \| `company` \| `quote` \| `stats` \| `homepage` \| `labels` |
 | value | jsonb NOT NULL |
 | updated_at | timestamptz |
 
@@ -47,8 +47,10 @@ Oblici vrijednosti su u `src/lib/types.ts` (`SettingsMap`):
 - `company: CompanySettings`, polja: `{ naziv, oib, adresa, iban, banka, email, telefon, web }`. **Samo za ponude, ne prikazuje se na javnoj stranici.** Prazno polje se ne ispisuje.
 - `quote: QuoteSettings`, polja: `{ pdvEnabled, pdvRate (25), validDays (30), paymentTerms, notes, footer }`. Kad je `pdvEnabled=false`, ispiši `PDV_EXEMPT_NOTE` = "Obveznik nije u sustavu PDV-a (čl. 90. st. 1. Zakona o PDV-u)".
 - `stats: StatSetting[]`, polja: `{ value, decimals?, prefix?, suffix?, label }`. Javno.
+- `homepage: HomepageSettings`: **samo izmjene** tekstova naslovnice (vidi §12). Javno.
+- `labels: LabelsSettings`, polja: `{ cta, ctaPhone, ctaWhatsapp }` (natpisi gumba na cijeloj stranici; prazno = zadano). Javno.
 
-`getSettings()` uvijek vraća potpun objekt (baza preko zadanih vrijednosti iz site.ts).
+`getSettings()` uvijek vraća potpun objekt (baza preko zadanih vrijednosti iz site.ts). Iznimka: `homepage` su samo izmjene (razrješava ih `resolveHomepage`), a `labels` su razriješeni. `getStoredSetting(key)` vraća sirovu spremljenu vrijednost ili null.
 **Seed:** `quote.pdvEnabled = true`, 25 %. Vlasnik mora potvrditi je li u sustavu PDV-a.
 
 ### `admin_meta`: interni ključevi (nije sadržaj)
@@ -198,7 +200,7 @@ parse(schema, input): T   // baca HttpError(400, poruka, { 'polje.podpolje': 'po
 type Infer<typeof Schema>
 
 // schemas.ts: gotove sheme (camelCase)
-ContactSchema CompanySchema QuoteSettingsSchema StatsSchema SETTINGS_SCHEMAS
+ContactSchema CompanySchema QuoteSettingsSchema StatsSchema HomepageSchema LabelsSchema HOMEPAGE_LIMITS SETTINGS_SCHEMAS
 ServicePatchSchema ProjectSchema ProjectImagesSchema ReorderSchema ReviewSchema FaqSchema TemplateSchema
 LeadCreateSchema LeadPatchSchema QuoteSchema QuoteStatusSchema PasswordSchema LoginSchema
 
@@ -240,7 +242,7 @@ getDashboard(): { leads: Record<LeadStatus,n>, quotes: Record<QuoteStatus,n>, co
 ### Repo (`src/lib/server/repo/*`): koristi ih i u SSR stranicama (nema potrebe za fetchom na vlastiti API)
 ```ts
 // settings.ts
-getSettings(): SettingsMap; getSetting(key); saveSetting(key, value)   // validira; contact/stats → touchContent
+getSettings(): SettingsMap; getSetting(key); getStoredSetting(key); saveSetting(key, value)   // validira; contact/stats/homepage/labels → touchContent
 // services.ts
 listServices(): AdminService[]; getService(slug); updateService(slug, ServicePatch); reorderServices(slugs)
 //   AdminService = ServiceFields & { slug, sort, overridden: (keyof ServiceFields)[], defaults: ServiceFields, updatedAt }
@@ -298,7 +300,8 @@ Konvencije:
 | POST `/api/admin/upload` | multipart `file`, `folder?`, `alt?` | 201 `UploadedImage` · 413 · 415 |
 | DELETE `/api/admin/upload` | `{urls: string[], force?}` | `{deleted, skipped}` (skipped = još se koristi) |
 | GET `/api/admin/settings` | | `SettingsMap` |
-| GET/PUT `/api/admin/settings/:key` | PUT `{value}` (CIJELA vrijednost) | vrijednost |
+| PUT `/api/admin/settings` | `{values: {homepage?, labels?, …}}`: više ključeva odjednom, **sve ili ništa** (najprije se provjere svi, pa se spreme jednim upitom). Greške polja s prefiksom ključa (`homepage.hero.title`, `labels.cta`) | spremljene vrijednosti po ključu |
+| GET/PUT `/api/admin/settings/:key` | PUT `{value}` (CIJELA vrijednost). Ključevi: contact, company, quote, stats, homepage, labels (§12) | vrijednost |
 | GET `/api/admin/services` | | `{items: AdminService[]}` |
 | GET/PUT `/api/admin/services/:slug` | `ServicePatch` (null = vrati zadano) | `AdminService` |
 | POST `/api/admin/services/reorder` | `{slugs}` | `{ok}` |
@@ -357,6 +360,8 @@ c.services                      // ContentService[]: oblik kao Service iz site.t
 c.projects                      // ContentProject[]: samo objavljeni, poredani; image = gallery[0]; radovi bez fotografija se preskaču
 c.reviews                       // ContentReview[]: {name, place, text, stars, source?, date?}, samo objavljene
 c.faq; c.homeFaq                // {q,a}[] (homeFaq = on_home)
+c.homepage                      // HomepageContent: tekstovi naslovnice, potpuni (§12)
+c.labels                        // { cta, ctaPhone, ctaWhatsapp }: natpisi gumba za cijelu stranicu
 imageAlt(img, fallback)         // alt iz baze/site.ts za bilo koju SiteImage
 type SiteImage = ImageMetadata | RemoteImage   // RemoteImage = { src, width, height, remote: true }; isRemoteImage(img)
 ```
@@ -392,7 +397,7 @@ const { homeFaq, projects, contact } = await getContent();
 ## 7. Admin UI
 
 ### Layout: `src/layouts/Admin.astro`
-Props: `{ title: string; active?: 'pregled'|'upiti'|'ponude'|'radovi'|'usluge'|'recenzije'|'pitanja'|'postavke'; wide?: boolean }`. Stavlja noindex i ne koristi javno zaglavlje ni podnožje.
+Props: `{ title: string; active?: 'pregled'|'upiti'|'ponude'|'naslovnica'|'radovi'|'usluge'|'recenzije'|'pitanja'|'postavke'; wide?: boolean }`. Stavlja noindex i ne koristi javno zaglavlje ni podnožje.
 - Grafit traka sadrži KARAMATIĆ logo, gumb "Objavi na stranicu" i odjavu. Gumb je crven kad postoje neobjavljene promjene, a obrubljen ("Sve je objavljeno") kad ih nema.
 - Izbornik je ispod trake. Na mobitelu klizi vodoravno, a uz "Upiti" stoji broj novih upita.
 - `<Toast/>` i `<ConfirmDialog/>` su već uključeni.
@@ -462,7 +467,8 @@ Dizajn:
 
 ### Stranice
 - `/admin/login`: gotovo. Radi s JS-om (fetch, prikaz lozinke) i bez njega (form POST).
-- `/admin`: Pregled je gotov (brojke, zadnji upiti, stanje objave, sadržaj).
+- `/admin`: Pregled je gotov (brojke, zadnji upiti, stanje objave, sadržaj; brza radnja i redak „Naslovnica”).
+- `/admin/naslovnica`: tekstovi naslovnice i natpisi gumba (§12).
 - **Privremene** stranice za zamjenu: `src/pages/admin/{upiti,ponude,radovi,usluge,recenzije,pitanja,postavke}.astro`. Kad gradiš odjeljak s podstranicama, **obriši** `X.astro` i napravi `X/index.astro` (+ `X/[id].astro`, `X/novi.astro`…).
 - Pregled već linka na `/admin/ponude/nova`, `/admin/radovi/novi`, `/admin/upiti/:id`, `/admin/upiti?status=novo` i `/admin/ponude?status=…`. Napravi te rute.
 - Postavke trebaju formu za promjenu lozinke (`POST /api/admin/password`) i PDV prekidač (`settings.quote`).
@@ -556,3 +562,51 @@ Dodano u zajedničke datoteke (aditivno):
 **Sigurnost:** sve `/api/admin/push/**` iza sesije i CSRF provjere middlewarea; endpoint samo https na poznatim push servisima uz strogu provjeru oba URL parsera (popravljen zaobilazak `https://127.0.0.1;x.push.apple.com/`) i ponovnu provjeru prije slanja (nema SSRF-a), najviše 20 uređaja; manifest, ikone i SW su javni ali bez podataka; SW ne sprema ništa i otvara samo /admin/**.
 
 **Testiranje:** headless Chrome (`playwright-core`, `channel: 'chrome'`) s `launchPersistentContext` (incognito kontekst daje installability grešku `in-incognito`) i `grantPermissions(['notifications'])`. Prva FCM registracija u svježem profilu traje ~25 s. Sintetički push: CDP `ServiceWorker.deliverPushMessage`; prikazane obavijesti: `registration.getNotifications()`. Testne pretplate imaju naziv `TEST …` i brišu se na kraju.
+
+---
+
+## 12. Naslovnica i natpisi gumba (admin → Naslovnica)
+
+**Zahtjev vlasnika (obavezno):** nigdje na javnoj strani (stranice, meta/OG/JSON-LD, forma, /hvala, javna ponuda, PDF, WhatsApp tekstovi, obavijesti) ne piše da je procjena bez naplate (ni u jednom obliku riječi), ni „gratis”, „bez naknade”, „ne naplaćujemo”, a ni da se procjena plaća. Neutralno: glavni gumb **„Procjena”**, gumb za poziv **„Nazovite za procjenu”**. Isto vrijedi za tekstove u adminu.
+
+| Što | Gdje |
+|---|---|
+| Zadani tekstovi | `src/data/site.ts` → `homepage` (zaglavlja sekcija, hero, Za zgrade, završna forma), `steps` (5 koraka), `labels` (natpisi gumba) |
+| Tipovi | `src/lib/types.ts`: `HomepageContent` (potpuno), `HomepageSettings` (samo izmjene), `LabelsSettings`, `HOMEPAGE_SECTIONS` |
+| Spajanje | `src/lib/defaults.ts`: `defaultHomepage(ctx)`, `resolveHomepage(stored, ctx)`, `defaultLabels()`, `resolveLabels(stored)`; `ctx = { responseTime, hasReviews, cta }` |
+| Za build | `getContent().homepage` (HomepageContent) i `getContent().labels` |
+| Validacija | `src/lib/server/schemas.ts`: `HomepageSchema`, `LabelsSchema`, `HOMEPAGE_LIMITS` |
+| Admin | `/admin/naslovnica` (`src/pages/admin/naslovnica/index.astro`), polje `src/components/admin/content/TextField.astro` + `textFields.ts` |
+
+**Oblik `HomepageContent`** (ugovor; svi tekstovi su obični stringovi, bez HTML-a):
+```ts
+{ hero: { eyebrow, title /* "\n" = prijelom retka */, lead, trust: [s, s, s] },
+  services: { eyebrow, title, lead }, projects: { eyebrow, title, lead },
+  process: { eyebrow, title, lead, steps: [{ title, text }] /* točno 5 */ },
+  reviews: { eyebrow, title, lead }, managers: { eyebrow, title, lead, points: [s, s, s], cta },
+  faq: { eyebrow, title }, finalCta: { eyebrow, title, lead } }
+```
+- `hero.eyebrow` je samo prvi dio oznake („limeni krovovi, opšavi i oluci”); komponenta iza njega dodaje ` · <contact.area>`.
+- `hero.trust[2]` je zadano `contact.responseTime`.
+- `reviews`: zadano je „Recenzije · Pitajte one kojima više ne curi.” kad postoje objavljene recenzije ili Google poveznica, inače „U brojkama · Brojke iza svakog krova.” (`hasReviews`). Izmjena iz admina vrijedi u oba slučaja.
+- `lead: ''` (reviews, managers) znači „bez uvoda” — komponenta ga tada ne ispisuje.
+- `finalCta` su tekstovi za naslovnicu; podstranice i dalje šalju svoje propove. `finalCta.eyebrow` je zadano `labels.cta` (`ctx.cta`), kao oznaka iste forme na podstranicama: kad vlasnik preimenuje glavni gumb, mijenja se i ta oznaka, osim ako je posebno upisana.
+
+**Spremanje (`settings.homepage`):** u bazi su **samo izmjene**. Prazno (`''`) ili izostavljeno = zadano, i za pojedinu stavku `trust`/`points`/`steps`. Server trima, sažima razmake, miče kontrolne znakove; jedan redak svugdje osim `hero.title` (najviše 3 retka). `trust` i `points` moraju imati **točno 3**, `steps` **točno 5** stavki (inače 400 „Točno N stavki.”). Duljine (`HOMEPAGE_LIMITS`): oznaka 60, naslov 120, uvod 320, stavka u heru 70, naslov koraka 60, opis koraka 300, stavka Za zgrade 80, natpis gumba sekcije 50, natpis gumba (labels) 40. Tekstualno polje mora biti string (broj, objekt ili popis → 400 „Mora biti tekst.”; `null` = prazno). Nepoznata polja se odbacuju; prazni tekstovi, prazni popisi i prazne sekcije ne idu u bazu. `PUT {value:{}}` vraća sve na zadano. Spremanje zove `touchContent()`.
+
+**Admin `/admin/naslovnica`:** kartice redom kao na stranici (Vrh stranice, Usluge, Radovi, Kako radimo, Recenzije, Za zgrade, Pitanja, Procjena) + „Natpisi gumba”. Svako polje: izvorni tekst kao siva poruka u polju, brojač znakova, „Vrati izvorno” (isprazni) ili „Uredi izvorni tekst” (upiše izvorni tekst za doradu). „Vrati izvorno” u zaglavlju kartice isprazni cijelu sekciju. Tekst jednak izvornom šalje se prazan (ostaje „izvorno”). „Spremi” šalje tekstove i natpise **jednim zahtjevom** (`PUT /api/admin/settings` `{values:{homepage, labels}}`): ako išta ne prođe provjeru, ništa se ne sprema i greške se prikažu uz polja. Pregled vrha stranice uživo (oznaka, H1, uvod, gumbi, stavke). Ljepljiva traka „Spremi”, upozorenje na nespremljene promjene, nakon spremanja `kr:content-changed` (gumb „Objavi” postaje crven) i poruka da se promjene vide nakon objave. Izbornik: „Naslovnica” (između Ponude i Radovi); Pregled ima brzu radnju „Tekstovi naslovnice”, redak u „Sadržaj stranice” i broji izmjene (`homepage`, `labels`) u „Neobjavljene promjene”.
+
+**Migracija `003_procjena_tekstovi.sql`:** u bazi mijenja samo retke koji još imaju točno početni tekst (FAQ o cijeni i o procjeni → „Kako izgleda procjena?”, `services.seo_description` za limene krovove i opšav atike, izraz u `quote.paymentTerms/footer` ako postoji). Idempotentna; ako je išta promijenila, postavlja `content_updated_at`. Popis pitanja na naslovnici bez baze (`content.ts` HOME_FAQ) i seed (`scripts/db-seed.mjs`) koriste novo pitanje.
+
+**Javna stranica (gdje se tekstovi koriste):**
+| Polje | Komponenta |
+|---|---|
+| `homepage.hero` | `home/Hero.astro`: oznaka (+ ` · contact.area`), H1 (`\n` → `<br>`; LCP, ne animira se), uvod, 3 stavke ispod gumba |
+| `homepage.services/projects/process/reviews` | `home/Services.astro`, `Projects`, `Process`, `Reviews` (zaglavlje sekcije; `process.steps` → 5 koraka, broj = redni broj) |
+| `homepage.managers` | `home/Managers.astro` (oznaka, naslov, uvod ako nije prazan, 3 točke s fiksnim ikonama, natpis gumba) |
+| `homepage.faq`, `homepage.finalCta` | `pages/index.astro` → `Faq` (`eyebrow`, `title` propovi) i `FinalCta` (`eyebrow`, `title`, `lead`) |
+| `labels.cta` | svi gumbi „Procjena”: zaglavlje, mobilni dock, izbornik, hero, `PageHero`, `FinalCta` oznaka (podstranice), Warranty, o-nama, zgrade, /radovi |
+| `labels.ctaPhone` | tekst uz broj u heru, `PageHero` (phoneFirst, npr. /usluge/popravak-krova) i o-nama (ispod 30rem broj ide u drugi redak); kontakt list; aria-label poziva u `FinalCta` i /radovi. „Nazovite odmah” (hitno curenje u formi) i „Nazovite” na /hvala namjerno ostaju |
+| `labels.ctaWhatsapp` | svi WhatsApp gumbi „Pošaljite slike” (zaglavlje na /hvala, izbornik, hero, `PageHero`, `FinalCta`, kontakt, /radovi, /hvala) |
+
+Dugi tekstovi ne lome raspored: H1 heroa se smanjuje s duljinom (`--hx-fit`, najmanje 0,55; zadani naslov ostaje 1), dugačke riječi se prelamaju (`overflow-wrap`), `ui/Button` ima `min-height` pa se dug natpis prelomi u dva retka (kratki ostaju u jednom), natpis u mobilnom doku se skrati s „…”. Provjereno s tekstovima na maksimalnim duljinama na 1440, 1024, 390 i 360 px (bez vodoravnog skrola).

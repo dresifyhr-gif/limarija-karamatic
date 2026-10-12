@@ -7,6 +7,7 @@
  * Props (sve opcionalno, zadano = naslovnica):
  *  title?         naslov h2 (default "Ne čekajte da počne kapati."); '' = bez zaglavlja (npr. /procjena, gdje je h1 iznad)
  *  lead?          uvodni red ispod naslova
+ *  eyebrow?       mono oznaka iznad naslova (default: labels.cta "Procjena"; zgrada: "Upit za zgradu")
  *  preselect?     id iz jobTypes ili slug usluge → odabran korak 1 forme
  *  variant?       'standard' | 'zgrada' (forma za upravitelje, prilagođen kontakt i koraci)
  *  index?         zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju
@@ -26,11 +27,12 @@ import Button from '@/components/ui/Button.astro';
 import RadniNalog from '@/components/form/RadniNalog.astro';
 import { getContent } from '@/lib/content';
 
-const { contact: site, services, telHref, waHref } = await getContent();
+const { contact: site, services, telHref, waHref, labels } = await getContent();
 
 interface Props {
   title?: string;
   lead?: string;
+  eyebrow?: string;
   preselect?: string;
   variant?: 'standard' | 'zgrada';
   index?: string;
@@ -40,7 +42,7 @@ interface Props {
 }
 const {
   title = 'Ne čekajte da počne kapati.',
-  lead = 'Besplatna procjena na terenu. Pisana ponuda stavku po stavku.',
+  lead = 'Procjena na terenu. Pisana ponuda stavku po stavku.',
   preselect,
   variant = 'standard',
   contact = true,
@@ -49,7 +51,7 @@ const zgrada = variant === 'zgrada';
 const hasHead = !!title;
 const headingLevel = Astro.props.headingLevel ?? (hasHead ? 3 : 2);
 
-const eyebrow = zgrada ? 'Upit za zgradu' : 'Besplatna procjena';
+const eyebrow = Astro.props.eyebrow || (zgrada ? 'Upit za zgradu' : labels.cta);
 // usluga odabrana unaprijed (servisne stranice, radovi) → WhatsApp poruka već kaže o čemu se radi
 const preService = preselect ? services.find((sv) => sv.slug === preselect) : undefined;
 const waText = zgrada
@@ -64,7 +66,7 @@ const waLine = zgrada ? 'Ili pošaljite adresu i 3 slike krova na WhatsApp.' : '
   id="procjena"
   class="fc relative isolate overflow-hidden bg-papir py-24 text-tinta sm:py-28 lg:py-32"
   aria-labelledby={hasHead ? 'procjena-naslov' : undefined}
-  aria-label={hasHead ? undefined : zgrada ? 'Upit za zgradu' : 'Upit za besplatnu procjenu'}
+  aria-label={hasHead ? undefined : zgrada ? 'Upit za zgradu' : 'Upit za procjenu'}
   data-variant={variant}
 >
   <div
@@ -78,7 +80,7 @@ const waLine = zgrada ? 'Ili pošaljite adresu i 3 slike krova na WhatsApp.' : '
       <!-- naslov -->
       {
         hasHead && (
-          <header class="lg:col-span-5 lg:row-start-1">
+          <header class="min-w-0 [overflow-wrap:anywhere] lg:col-span-5 lg:row-start-1">
             <p class="eyebrow mb-4 text-tinta/70" data-reveal>
               {eyebrow}
             </p>
@@ -115,7 +117,7 @@ const waLine = zgrada ? 'Ili pošaljite adresu i 3 slike krova na WhatsApp.' : '
           <a
             href={telHref}
             class="fc-tel group inline-flex min-h-11 items-center gap-3.5 font-mono text-[1.5rem] leading-none font-medium tracking-[-0.01em] [word-spacing:-0.25em] text-tinta tabular-nums sm:text-[1.75rem]"
-            aria-label={`Nazovite ${site.phoneDisplay}`}
+            aria-label={`${labels.ctaPhone}: ${site.phoneDisplay}`}
           >
             <Icon name="phone" size={20} class="flex-none text-tinta/55 transition-colors duration-150 group-hover:text-tinta" />
             <span class="fc-tel-u">{site.phoneDisplay}</span>
@@ -128,7 +130,7 @@ const waLine = zgrada ? 'Ili pošaljite adresu i 3 slike krova na WhatsApp.' : '
         <div class="mt-10" data-reveal>
           <p class="text-[1.0625rem] leading-snug">{waLine}</p>
           <Button href={waHref(waText)} variant="whatsapp" size="lg" icon="whatsapp" class="mt-4 w-full sm:w-auto">
-            Pošaljite slike
+            {labels.ctaWhatsapp}
           </Button>
         </div>
         </>)}

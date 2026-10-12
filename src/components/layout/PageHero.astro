@@ -4,7 +4,7 @@
  * (grid-paper-light) i tamna tinta. Tamni su samo zaglavlje, hero naslovnice, footer i mobilni dock.
  *
  * UGOVOR
- *  eyebrow?     string                mono oznaka iznad naslova ("Zagreb i šire · besplatna procjena")
+ *  eyebrow?     string                mono oznaka iznad naslova ("Zagreb i šire · procjena na terenu")
  *  title        string                H1 (type-display). Jedini h1 na stranici, NE animira se (LCP).
  *                                     Veličina se računa iz duljine: najviše 3 retka < 64rem, 2 retka ≥ 64rem.
  *  lead?        string                uvod ispod naslova
@@ -17,8 +17,8 @@
  *  profileLabel? string               natpis uz kotu (default: naziv profila · RAL 7016)
  *  index?       string                crveni broj ispred eyebrowa ("01") — podstranice ga više ne koriste
  *  phoneFirst?  boolean               telefon je glavni (crveni) gumb — hitne stranice (popravak krova).
- *                                     Inače: "Besplatna procjena" (crveno) + "Pošaljite slike" (WhatsApp, obrub).
- *  ctaHref?     string                cilj gumba "Besplatna procjena". Default '/procjena' + data-quote-link:
+ *                                     Inače: labels.cta "Procjena" (crveno) + "Pošaljite slike" (WhatsApp, obrub).
+ *  ctaHref?     string                cilj gumba "Procjena" (labels.cta). Default '/procjena' + data-quote-link:
  *                                     skripta ga prebaci na '#procjena' kad stranica ima svoju formu.
  *  cta?         boolean               prikaži CTA red (default true)
  *  media?       'default' | 'large'  'large': fotografija zauzima pola širine (studija rada), H1 malo manji
@@ -79,7 +79,7 @@ export const profileNames: Record<Profile, string> = {
   trapez: 'Trapezni lim',
 };
 
-const { contact: site, telHref, waHref } = await getContent();
+const { contact: site, telHref, waHref, labels } = await getContent();
 
 interface Props {
   eyebrow?: string;
@@ -224,20 +224,20 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
               <div class="ph-cta flex flex-col gap-3 min-[30rem]:flex-row min-[30rem]:flex-wrap">
                 {phoneFirst ? (
                   <>
-                    <Button href={telHref} size="lg" icon="phone">
-                      Nazovite <span class="font-mono tracking-[0.02em]">{site.phoneDisplay}</span>
+                    <Button href={telHref} size="lg" icon="phone" aria-label={`${labels.ctaPhone}: ${site.phoneDisplay}`}>
+                      <span>{labels.ctaPhone} <span class="block min-[30rem]:inline-block font-mono tracking-[0.02em] whitespace-nowrap">{site.phoneDisplay}</span></span>
                     </Button>
                     <Button href={ctaHref} variant="outline-dark" size="lg" iconRight="arrow-right" {...(quoteLink ? { 'data-quote-link': '' } : {})}>
-                      Besplatna procjena
+                      {labels.cta}
                     </Button>
                   </>
                 ) : (
                   <>
                     <Button href={ctaHref} size="lg" iconRight="arrow-right" {...(quoteLink ? { 'data-quote-link': '' } : {})}>
-                      Besplatna procjena
+                      {labels.cta}
                     </Button>
                     <Button href={waHref()} variant="outline-dark" size="lg" icon="whatsapp" class="ph-wa">
-                      Pošaljite slike
+                      {labels.ctaWhatsapp}
                     </Button>
                   </>
                 )}
@@ -751,7 +751,7 @@ const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title
 <script>
   import { gsap, ScrollTrigger, motionOn } from '@/lib/motion';
 
-  /* "Besplatna procjena": na stranici s vlastitom formom ostaje na stranici (D4) */
+  /* gumb "Procjena": na stranici s vlastitom formom ostaje na stranici (D4) */
   function quoteLinks() {
     if (!document.getElementById('procjena')) return;
     document.querySelectorAll<HTMLAnchorElement>('.ph a[data-quote-link]').forEach((a) => a.setAttribute('href', '#procjena'));

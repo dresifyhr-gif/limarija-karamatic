@@ -125,11 +125,61 @@ export type StatSetting = {
   label: string;
 };
 
+/* ── Naslovnica i natpisi gumba (settings.homepage / settings.labels) ───── */
+
+/** Zaglavlje sekcije naslovnice. */
+export type HomeHead = { eyebrow: string; title: string; lead: string };
+export type HomeStep = { title: string; text: string };
+
+/** Tekstovi naslovnice, POTPUNO razriješeni (zadano + izmjene iz admina). Ugovor: docs/ADMIN-SPEC.md §12. */
+export type HomepageContent = {
+  /** title: "\n" = prijelom retka. eyebrow = oznaka iznad naslova (komponenta iza nje dodaje " · <contact.area>"). */
+  hero: { eyebrow: string; title: string; lead: string; trust: [string, string, string] };
+  services: HomeHead;
+  projects: HomeHead;
+  /** steps: točno 5 */
+  process: HomeHead & { steps: HomeStep[] };
+  reviews: HomeHead;
+  managers: HomeHead & { points: [string, string, string]; cta: string };
+  faq: { eyebrow: string; title: string };
+  finalCta: HomeHead;
+};
+
+/**
+ * Što je spremljeno u settings.homepage: samo izmjene. Sve je opcionalno;
+ * izostavljeno ili prazno ('') = zadani tekst. trust/points imaju točno 3, steps točno 5 stavki (prazna stavka = zadano).
+ */
+export type HomepageSettings = {
+  hero?: { eyebrow?: string; title?: string; lead?: string; trust?: [string, string, string] };
+  services?: Partial<HomeHead>;
+  projects?: Partial<HomeHead>;
+  process?: Partial<HomeHead> & { steps?: HomeStep[] };
+  reviews?: Partial<HomeHead>;
+  managers?: Partial<HomeHead> & { points?: [string, string, string]; cta?: string };
+  faq?: { eyebrow?: string; title?: string };
+  finalCta?: Partial<HomeHead>;
+};
+export const HOMEPAGE_SECTIONS = ['hero', 'services', 'projects', 'process', 'reviews', 'managers', 'faq', 'finalCta'] as const;
+export type HomepageSection = (typeof HOMEPAGE_SECTIONS)[number];
+
+/** Natpisi gumba na cijeloj javnoj stranici. getSettings() ih vraća razriješene (prazno → zadano). */
+export type LabelsSettings = {
+  /** glavni gumb: zaglavlje, mobilni dock, izbornik, hero, podstranice, završna forma */
+  cta: string;
+  /** poziv telefonom */
+  ctaPhone: string;
+  /** WhatsApp gumb */
+  ctaWhatsapp: string;
+};
+
 export type SettingsMap = {
   contact: ContactSettings;
   company: CompanySettings;
   quote: QuoteSettings;
   stats: StatSetting[];
+  /** SAMO izmjene. Razriješeno: getContent().homepage ili resolveHomepage() iz @/lib/defaults */
+  homepage: HomepageSettings;
+  labels: LabelsSettings;
 };
 export type SettingsKey = keyof SettingsMap;
-export const SETTINGS_KEYS = ['contact', 'company', 'quote', 'stats'] as const satisfies readonly SettingsKey[];
+export const SETTINGS_KEYS = ['contact', 'company', 'quote', 'stats', 'homepage', 'labels'] as const satisfies readonly SettingsKey[];

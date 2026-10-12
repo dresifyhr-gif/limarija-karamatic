@@ -14,7 +14,17 @@ import Icon from '@/components/ui/Icon.astro';
 import RoofModels from './hero3d/RoofModels.astro';
 import { getContent } from '@/lib/content';
 
-const { contact: site, telHref, waHref } = await getContent();
+const { contact: site, telHref, waHref, homepage, labels } = await getContent();
+
+/* Tekstovi iz admina (Naslovnica → Hero); "\n" u naslovu = prijelom retka. */
+const hero = homepage.hero;
+const titleLines = hero.title.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+/* Dulji naslov iz admina: font se smanjuje s duljinom (zadani naslov ostaje na 1), da hero ne naraste preko ekrana.
+ * Mjeri se najdulji redak i ukupna duljina (≈ 2 retka po 20 znakova pri punoj veličini). */
+const longest = Math.max(...titleLines.map((l) => l.length), 1);
+const total = titleLines.join(' ').length;
+const fit = Math.max(0.55, Math.min(1, Math.sqrt(20 / longest), Math.sqrt(40 / total)));
+const titleFit = fit < 1 ? `--hx-fit: ${fit.toFixed(2)}` : undefined;
 ---
 
 <section id="vrh" class="hx relative overflow-hidden bg-grafit grid-paper" aria-labelledby="vrh-naslov">
@@ -22,22 +32,21 @@ const { contact: site, telHref, waHref } = await getContent();
     <!-- tekst (data-hero-copy: RoofModels ga mjeri — model nikad ne ide preko njega) -->
     <div class="hx-copy flex flex-col" data-hero-copy>
       <h1 id="vrh-naslov" class="order-1">
-        <span class="hx-kw eyebrow block text-celik">
-          <span class="sr-only">Limarija Karamatić · </span><span class="hx-kw-seg">limeni krovovi, opšavi i oluci</span
+        <span class:list={['hx-kw eyebrow block text-celik', hero.eyebrow.length > 34 && 'hx-kw--long']}>
+          <span class="sr-only">Limarija Karamatić · </span><span class="hx-kw-seg hx-kw-main">{hero.eyebrow}</span
           ><span class="hx-sep">&nbsp;· </span><span class="hx-kw-seg">{site.area}</span>
         </span>
-        <span class="hx-display type-display mt-3 block text-white sm:mt-5 lg:mt-6">
-          Sedam puta mjerimo.<br /> Jednom savijemo.
+        <span class="hx-display type-display mt-3 block text-white sm:mt-5 lg:mt-6" style={titleFit}>
+          {titleLines.map((line, i) => (i === 0 ? line : <><br /> {line}</>))}
         </span>
       </h1>
 
       <p class="hx-sub order-5 mt-5 max-w-[34rem] text-[1.0625rem] leading-relaxed text-pretty text-celik sm:text-lg md:mt-6 lg:order-2">
-        Limeni i falcani krovovi, popravci, opšavi atika i dimnjaka, oluci i snjegobrani&nbsp;— sve krojeno i
-        savijeno po mjeri vašeg krova.
+        {hero.lead.replace(/ — /g, "\u00a0— ")}
       </p>
 
       <!-- CTA blok: na mobitelu (contents) primarni ide odmah ispod naslova; od md jedan redak
-           (na tabletu ispred podnaslova). Dva gumba: Besplatna procjena + WhatsApp;
+           (na tabletu ispred podnaslova). Dva gumba: labels.cta ("Procjena") + WhatsApp;
            telefon je tihi tekstualni link ispod (poziv ostaje na jedan dodir, ali se ne gura).
            data-dock-anchor: mobilni dock se pojavi tek kad ovaj gumb izađe iz ekrana. -->
       <div class="hx-ctas contents md:order-2 md:mt-8 md:flex md:gap-3 lg:order-3">
@@ -49,7 +58,7 @@ const { contact: site, telHref, waHref } = await getContent();
           class="hx-cta-main order-2 mt-6 w-full md:order-none md:mt-0 md:w-auto"
           data-dock-anchor
         >
-          Besplatna procjena
+          {labels.cta}
         </Button>
         <Button
           href={waHref()}
@@ -58,26 +67,26 @@ const { contact: site, telHref, waHref } = await getContent();
           icon="whatsapp"
           class="hx-cta-wa order-3 mt-3 w-full md:order-none md:mt-0 md:w-auto"
         >
-          Pošaljite slike
+          {labels.ctaWhatsapp}
         </Button>
         <a href={telHref} class="hx-tel order-4 md:order-none">
           <Icon name="phone" size={16} />
-          <span>Ili nazovite <span class="type-mono text-white">{site.phoneDisplay}</span></span>
+          <span>{labels.ctaPhone} <span class="type-mono whitespace-nowrap text-white">{site.phoneDisplay}</span></span>
         </a>
       </div>
 
       <ul class="hx-trust order-6 mt-9 md:mt-10" aria-label="Što dobivate">
         <li>
           <span class="hx-trust-i" aria-hidden="true"><Icon name="ruler" size={18} /></span>
-          <span class="hx-trust-l">Besplatna procjena na terenu</span>
+          <span class="hx-trust-l">{hero.trust[0]}</span>
         </li>
         <li>
           <span class="hx-trust-i" aria-hidden="true"><Icon name="file" size={18} /></span>
-          <span class="hx-trust-l">Pisana ponuda stavku po stavku</span>
+          <span class="hx-trust-l">{hero.trust[1]}</span>
         </li>
         <li>
           <span class="hx-trust-i" aria-hidden="true"><Icon name="clock" size={18} /></span>
-          <span class="hx-trust-l">{site.responseTime}</span>
+          <span class="hx-trust-l">{hero.trust[2]}</span>
         </li>
       </ul>
     </div>
@@ -128,7 +137,7 @@ const { contact: site, telHref, waHref } = await getContent();
       padding-bottom: 2.25rem;
     }
     .hx .hx-display {
-      font-size: min(clamp(2.9rem, 4.95vw, 4.4rem), 7.4svh);
+      font-size: calc(min(clamp(2.9rem, 4.95vw, 4.4rem), 7.4svh) * var(--hx-fit, 1));
       margin-top: 1rem;
     }
     .hx .hx-sub {
@@ -143,6 +152,9 @@ const { contact: site, telHref, waHref } = await getContent();
   }
   .hx-copy {
     max-width: 40rem;
+    min-width: 0;
+    /* tekstovi iz admina: dugačka riječ se prelomi umjesto da izađe iz stupca */
+    overflow-wrap: break-word;
   }
   @media (width >= 64rem) {
     .hx-copy {
@@ -164,20 +176,20 @@ const { contact: site, telHref, waHref } = await getContent();
 
   /* ── tipografija ───────────────────────────────────────────── */
   .hx-display {
-    font-size: clamp(2.6rem, 10.6vw, 3.6rem);
+    font-size: calc(clamp(2.6rem, 10.6vw, 3.6rem) * var(--hx-fit, 1));
     line-height: 0.94;
     letter-spacing: -0.02em;
     text-wrap: balance;
   }
   @media (width >= 48rem) {
     .hx-display {
-      font-size: clamp(3.6rem, 8.4vw, 5rem);
+      font-size: calc(clamp(3.6rem, 8.4vw, 5rem) * var(--hx-fit, 1));
     }
   }
   /* lg+: stupac teksta je najviše min(38rem, 42vw), pa veličina staje na 4,4rem */
   @media (width >= 64rem) {
     .hx-display {
-      font-size: clamp(2.9rem, 4.95vw, 4.4rem);
+      font-size: calc(clamp(2.9rem, 4.95vw, 4.4rem) * var(--hx-fit, 1));
     }
   }
   .hx-kw {
@@ -186,6 +198,10 @@ const { contact: site, telHref, waHref } = await getContent();
   }
   .hx-kw-seg {
     white-space: nowrap;
+  }
+  /* dulja oznaka iz admina smije se prelomiti */
+  .hx-kw--long .hx-kw-main {
+    white-space: normal;
   }
   /* mobitel i uski lg stupac: dva čista retka, bez točke koja visi na kraju retka */
   @media (width < 48rem), (width >= 64rem) and (width < 80rem) {

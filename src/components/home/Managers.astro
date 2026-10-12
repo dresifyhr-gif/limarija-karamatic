@@ -7,36 +7,38 @@
  */
 import Icon, { type IconName } from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
+import { getContent } from '@/lib/content';
 
 interface Props {
   /** zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju */
   index?: string;
 }
 
-const points: { icon: IconName; text: string }[] = [
-  { icon: 'building', text: 'Ponuda za odluku suvlasnika' },
-  { icon: 'file', text: 'Račun na zgradu, plaćanje iz pričuve' },
-  { icon: 'camera', text: 'Fotografije prije i poslije radova' },
-];
+/* Tekstovi iz admina (Naslovnica → Za zgrade); ikone točaka ostaju u kodu. */
+const { homepage } = await getContent();
+const m = homepage.managers;
+const icons: IconName[] = ['building', 'file', 'camera'];
+const points = m.points.map((text, i) => ({ icon: icons[i] ?? 'check', text }));
 ---
 
 <section id="zgrade" class="bg-papir-2 py-10 text-tinta sm:py-16 lg:py-20" aria-labelledby="zgrade-naslov">
   <div class="wrap flex flex-col gap-y-7 lg:flex-row lg:items-center lg:justify-between lg:gap-x-16">
-    <div class="min-w-0">
-      <p class="eyebrow text-tinta/70" data-reveal>Stambene zgrade</p>
+    <div class="min-w-0 [overflow-wrap:anywhere]">
+      <p class="eyebrow text-tinta/70" data-reveal>{m.eyebrow}</p>
       <h2
         id="zgrade-naslov"
         class="type-display mt-4 max-w-[24ch] text-[1.75rem] text-balance sm:text-[2.125rem] lg:text-[2.375rem]"
         data-reveal
       >
-        Krov zgrade bez natezanja sa suvlasnicima.
+        {m.title}
       </h2>
+      {m.lead && <p class="mt-4 max-w-[40rem] text-[1.0625rem] leading-relaxed text-pretty text-tinta/70" data-reveal>{m.lead}</p>}
       <ul class="mt-5 flex flex-col gap-y-2 sm:mt-7 sm:flex-row sm:flex-wrap sm:gap-x-9" data-reveal-group>
         {
           points.map((p) => (
             <li class="flex items-center gap-2.5 text-[1rem] leading-snug text-tinta/80" data-reveal>
               <Icon name={p.icon} size={18} class="flex-none text-tinta/55" />
-              <span>{p.text}</span>
+              <span class="min-w-0">{p.text}</span>
             </li>
           ))
         }
@@ -45,7 +47,7 @@ const points: { icon: IconName; text: string }[] = [
 
     <div class="flex-none" data-reveal>
       <Button href="/upravitelji-zgrada" variant="outline-dark" size="lg" iconRight="arrow-right" class="w-full sm:w-auto">
-        Sve za upravitelje zgrada
+        {m.cta}
       </Button>
     </div>
   </div>

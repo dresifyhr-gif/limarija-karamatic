@@ -15,7 +15,7 @@ import Icon from '@/components/ui/Icon.astro';
 import StatLine from '@/components/ui/StatLine.astro';
 import { getContent, type ContentReview } from '@/lib/content';
 
-const { contact: site, reviews: allReviews } = await getContent();
+const { contact: site, reviews: allReviews, homepage } = await getContent();
 
 interface Props {
   /** zadržano radi kompatibilnosti; brojevi sekcija se više ne prikazuju */
@@ -31,17 +31,15 @@ const reviewsHref = site.googleReviewsUrl as string;
 const reviewsExternal = reviewsHref.startsWith('http');
 const total = String(list.length).padStart(2, '0');
 
-// Bez recenzija (i bez poveznice na Google) zaglavlje ne obećava citate — govori o brojkama.
-const voices = hasReviews || reviewsExternal;
-const head = voices
-  ? { eyebrow: 'Recenzije', title: 'Pitajte one kojima više ne curi.' }
-  : { eyebrow: 'U brojkama', title: 'Brojke iza svakog krova.' };
+// Zaglavlje iz admina (Naslovnica → Recenzije). Zadano ovisi o recenzijama: bez recenzija (i bez poveznice
+// na Google) zadano zaglavlje ne obećava citate — govori o brojkama (razrješava getContent / resolveHomepage).
+const head = homepage.reviews;
 ---
 
 <section id="recenzije" class="bg-white py-24 text-tinta sm:py-28 lg:py-32">
   <div class="wrap">
     <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
-      <SectionHead tone="light" eyebrow={head.eyebrow} title={head.title} />
+      <SectionHead tone="light" eyebrow={head.eyebrow} title={head.title} lead={head.lead || undefined} />
       {
         reviewsExternal && (
           <a

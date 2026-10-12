@@ -13,7 +13,8 @@ import Photo from '@/components/ui/Photo.astro';
 import ProfileIcon from '@/components/ui/ProfileIcon.astro';
 import Icon from '@/components/ui/Icon.astro';
 
-const { services } = await getContent();
+const { services, homepage } = await getContent();
+const head = homepage.services; // Naslovnica → Usluge (admin)
 
 /* jedan kratki red po usluzi — sažetak `service.short` iz site.ts (bez novih tvrdnji) */
 const line: Record<string, string> = {
@@ -31,13 +32,15 @@ const focus: Record<string, string> = { dimnjaci: 'object-[50%_30%]' };
 <section id="usluge" class="bg-papir py-24 text-tinta sm:py-28 lg:py-32">
   <div class="wrap">
     <div class="grid gap-5 lg:grid-cols-12 lg:items-end lg:gap-8">
-      <SectionHead class="lg:col-span-7" tone="light" eyebrow="Usluge" title="Sve što se na krovu radi limom." />
-      <p
-        class="max-w-[34rem] text-lg leading-relaxed text-pretty text-tinta/70 lg:col-span-5 lg:mb-1.5 lg:justify-self-end"
-        data-reveal
-      >
-        Od cijelog novog krova do jednog opšava uz dimnjak. Lim krojimo i savijamo po mjeri vašeg krova.
-      </p>
+      <SectionHead class="lg:col-span-7" tone="light" eyebrow={head.eyebrow} title={head.title} />
+      {head.lead && (
+        <p
+          class="max-w-[34rem] text-lg leading-relaxed text-pretty text-tinta/70 lg:col-span-5 lg:mb-1.5 lg:justify-self-end"
+          data-reveal
+        >
+          {head.lead}
+        </p>
+      )}
     </div>
 
     <ul class="svc-grid mt-12 sm:mt-14 lg:mt-16" role="list" data-reveal-group>

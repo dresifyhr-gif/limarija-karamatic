@@ -23,7 +23,7 @@ import ConfirmDialog from '@/components/admin/ConfirmDialog.astro';
 import { getPublishState, type PublishState } from '@/lib/server/meta';
 import { db } from '@/lib/server/db';
 
-export type AdminNavKey = 'pregled' | 'upiti' | 'ponude' | 'radovi' | 'usluge' | 'recenzije' | 'pitanja' | 'postavke';
+export type AdminNavKey = 'pregled' | 'upiti' | 'ponude' | 'naslovnica' | 'radovi' | 'usluge' | 'recenzije' | 'pitanja' | 'postavke';
 
 interface Props {
   title: string;
@@ -37,6 +37,7 @@ const nav: { key: AdminNavKey; href: string; label: string; icon: AdminIconName 
   { key: 'pregled', href: '/admin', label: 'Pregled', icon: 'home' },
   { key: 'upiti', href: '/admin/upiti', label: 'Upiti', icon: 'inbox' },
   { key: 'ponude', href: '/admin/ponude', label: 'Ponude', icon: 'file' },
+  { key: 'naslovnica', href: '/admin/naslovnica', label: 'Naslovnica', icon: 'edit' },
   { key: 'radovi', href: '/admin/radovi', label: 'Radovi', icon: 'image' },
   { key: 'usluge', href: '/admin/usluge', label: 'Usluge', icon: 'layers' },
   { key: 'recenzije', href: '/admin/recenzije', label: 'Recenzije', icon: 'star' },

@@ -1,0 +1,138 @@
+---
+/**
+ * Polje teksta s izvornom vrijednošću (naslovnica, natpisi gumba).
+ *   <TextField name="hero.title" label="Naslov" value={stored} def={defaults.hero.title} max={120} rows={2} />
+ *
+ * - Prazno polje = izvorni tekst; izvorni tekst se vidi kao siva pozadinska poruka (placeholder).
+ * - Brojač znakova (n/max), "Vrati izvorno" (isprazni polje) i "Uredi izvorni tekst" (prepiše izvorni tekst u polje).
+ * - rows > 0 → textarea (rows = 2 za naslove s prijelomom retka), inače input.
+ * Klijentski dio: initTextFields() iz ./textFields (poziva ga stranica).
+ */
+import '@/components/admin/content/content.css';
+
+interface Props {
+  name: string;
+  label: string;
+  value?: string | null;
+  /** izvorni (zadani) tekst */
+  def: string;
+  max: number;
+  rows?: number;
+  hint?: string;
+  class?: string;
+}
+const { name, label, value, def, max, rows = 0, hint, class: className = '' } = Astro.props;
+const id = `f-${name.replace(/[^\w-]/g, '-')}`;
+const v = value ?? '';
+const len = [...v].length;
+---
+
+<div class:list={['a-field tf', className]} data-tf data-state={v ? 'custom' : 'default'}>
+  <div class="tf__head">
+    <label class="a-label" for={id}>{label}</label>
+    <span class="tf__count" data-tf-count aria-hidden="true">{v ? `${len}/${max}` : 'izvorno'}</span>
+  </div>
+  {
+    rows > 0 ? (
+      <textarea
+        id={id}
+        name={name}
+        class="a-textarea tf__input"
+        rows={rows}
+        maxlength={max}
+        placeholder={def}
+        data-tf-input
+        data-default={def}
+        data-max={max}
+        aria-describedby={hint ? `${id}-hint` : undefined}
+      >{v}</textarea>
+    ) : (
+      <input
+        id={id}
+        name={name}
+        class="a-input tf__input"
+        value={v}
+        maxlength={max}
+        placeholder={def}
+        autocomplete="off"
+        data-tf-input
+        data-default={def}
+        data-max={max}
+        aria-describedby={hint ? `${id}-hint` : undefined}
+      />
+    )
+  }
+  <div class="tf__foot">
+    {hint && <p class="a-hint" id={`${id}-hint`}>{hint}</p>}
+    <span class="tf__btns">
+      <button type="button" class="cb-reset tf__reset" data-tf-reset>Vrati izvorno</button>
+      <button type="button" class="cb-reset tf__edit" data-tf-edit>Uredi izvorni tekst</button>
+    </span>
+  </div>
+  <p class="a-error" data-field-error={name} hidden role="alert"></p>
+</div>
+
+<style is:global>
+  .tf__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .tf__count {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--a-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .tf[data-state='default'] .tf__count {
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+  }
+  .tf[data-near='1'] .tf__count {
+    color: var(--a-warn);
+    font-weight: 600;
+  }
+  .tf__input {
+    transition:
+      border-color 150ms var(--ease-draft),
+      box-shadow 150ms var(--ease-draft),
+      background 150ms var(--ease-draft);
+  }
+  /* izmijenjeno polje: tanka crta lijevo (vidi se koje je polje različito od izvornog) */
+  .tf[data-state='custom'] .tf__input {
+    box-shadow: inset 3px 0 0 var(--color-tinta);
+  }
+  .tf[data-state='custom'] .tf__input:focus {
+    box-shadow:
+      inset 3px 0 0 var(--color-tinta),
+      0 0 0 3px rgb(21 24 27 / 0.12);
+  }
+  textarea.tf__input {
+    min-height: 0;
+  }
+  .tf__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    min-height: 0;
+  }
+  .tf__foot .a-hint {
+    flex: 1 1 14rem;
+    margin-top: 0.3rem;
+  }
+  .tf__btns {
+    display: flex;
+    margin-left: auto;
+    margin-right: -0.25rem;
+  }
+  .tf[data-state='default'] .tf__reset,
+  .tf[data-state='custom'] .tf__edit {
+    display: none;
+  }
+</style>

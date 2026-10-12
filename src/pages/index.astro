@@ -18,8 +18,8 @@ import FinalCta from '@/components/home/FinalCta.astro';
 import { getContent } from '@/lib/content';
 
 /* Pitanja na naslovnici: u adminu označena "na naslovnici" (on_home), redom iz admina.
- * Početno stanje: cijena, besplatna procjena, trajanje, jamstvo, kiša i zima. */
-const { homeFaq } = await getContent();
+ * Početno stanje: cijena, kako izgleda procjena, trajanje, jamstvo, kiša i zima. */
+const { homeFaq, homepage } = await getContent();
 
 const faqSchema = {
   '@context': 'https://schema.org',
@@ -34,7 +34,7 @@ const faqSchema = {
 
 <Base
   title="Limarija Karamatić — limeni krovovi, opšavi i oluci | Zagreb"
-  description="Limeni i falcani krovovi, popravak krova, opšav atike, dimnjaci, oluci i snjegobrani. Sjedište u Zagrebu — radimo gdje god se posao isplati. Besplatna procjena: nazovite ili pošaljite slike na WhatsApp."
+  description="Limeni i falcani krovovi, popravak krova, opšav atike, dimnjaci, oluci i snjegobrani. Sjedište u Zagrebu — radimo gdje god se posao isplati. Nazovite za procjenu ili pošaljite slike krova na WhatsApp."
   schema={homeFaq.length ? [faqSchema] : []}
 >
   <Hero />
@@ -43,6 +43,6 @@ const faqSchema = {
   <Process />
   <Reviews />
   <Managers />
-  {homeFaq.length > 0 && <Faq items={homeFaq} ask={false} />}
-  <FinalCta />
+  {homeFaq.length > 0 && <Faq items={homeFaq} ask={false} eyebrow={homepage.faq.eyebrow} title={homepage.faq.title} />}
+  <FinalCta eyebrow={homepage.finalCta.eyebrow} title={homepage.finalCta.title} lead={homepage.finalCta.lead} />
 </Base>

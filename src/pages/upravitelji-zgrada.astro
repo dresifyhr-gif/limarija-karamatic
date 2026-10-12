@@ -20,13 +20,13 @@ const { faq } = await getContent();
 const crumbs = [homeCrumb, { href: '/upravitelji-zgrada', label: 'Za upravitelje zgrada' }];
 
 // 4 pitanja (kompaktni FAQ): 2 lokalna (za upravitelje i izvođače) + 2 iz admina (Česta pitanja)
-const pick = (start: string) => faq.find((f) => f.q.startsWith(start));
+const pick = (...starts: string[]) => faq.find((f) => starts.some((s) => f.q.startsWith(s)));
 const items = [
   {
     q: 'Kako ide plaćanje iz pričuve?',
     a: 'Upravitelj ponudu stavlja na odluku suvlasnika. Nakon izvedbe izdajemo račun na zgradu, s OIB-om zgrade, a plaćanje ide s računa pričuve prema dogovoru iz ponude.',
   },
-  pick('Je li procjena stvarno besplatna'),
+  pick('Kako izgleda procjena', 'Je li procjena'),
   {
     q: 'Radite li za izvođače i investitore?',
     a: 'Da. Na novogradnji i nadogradnji radimo limarski dio posla: opšave atika, ravne krovove, oluke i dimnjake. Rokove usklađujemo s gradilištem, a tvrtkama izdajemo R1 račun.',
@@ -70,7 +70,7 @@ const faqSchema = {
   <FinalCta
     variant="zgrada"
     title="Pošaljite adresu zgrade."
-    lead="Odaberite posao i upišite adresu. Dolazimo izmjeriti i fotografirati krov, besplatno i bez obveze."
+    lead="Odaberite posao i upišite adresu. Dolazimo izmjeriti i fotografirati krov, a ponudu dobivate pisanu."
   >
     <Fragment slot="note">
       <!-- svijetla završna forma (X12): tamna tinta, crvena samo kao broj stavke -->

@@ -8,19 +8,19 @@ import Icon from '@/components/ui/Icon.astro';
 import Button from '@/components/ui/Button.astro';
 import { getContent } from '@/lib/content';
 
-const { contact: site, telHref, waHref } = await getContent();
+const { contact: site, telHref, waHref, labels } = await getContent();
 ---
 
 <div class="cs relative w-full lg:ml-auto lg:max-w-[30rem]">
   <div class="cs-msg">
     <Button href={waHref('Pozdrav, šaljem slike krova. Lokacija: ')} variant="whatsapp" icon="whatsapp" class="w-full">
-      Pošaljite slike
+      {labels.ctaWhatsapp}
     </Button>
     <p class="cs-hint">Tri slike krova i mjesto. Javimo vam što vidimo.</p>
   </div>
 
-  <a href={telHref} class="cs-tel group" aria-label={`Nazovite ${site.phoneDisplay}`}>
-    <span class="cs-k">Nazovite</span>
+  <a href={telHref} class="cs-tel group" aria-label={`${labels.ctaPhone}: ${site.phoneDisplay}`}>
+    <span class="cs-k">{labels.ctaPhone}</span>
     <span class="cs-num">{site.phoneDisplay}</span>
     <span class="cs-call" aria-hidden="true"><Icon name="phone" size={22} /></span>
   </a>

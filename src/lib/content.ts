@@ -3,13 +3,14 @@
  *
  *   ---
  *   import { getContent, imageAlt } from '@/lib/content';
- *   const { contact, services, projects, faq, homeFaq, stats, reviews } = await getContent();
+ *   const { contact, services, projects, faq, homeFaq, stats, reviews, homepage, labels } = await getContent();
  *   ---
  *
  * - Ako DATABASE_URL nema ili baza padne → vraća site.ts (+ console.warn). Build NIKAD ne pada zbog baze.
  * - Fotografije su `SiteImage`: lokalni ImageMetadata (iz repozitorija) ILI RemoteImage {src,width,height,remote:true}
  *   (Vercel Blob; Astro ih u buildu skine i optimizira jer je host u image.remotePatterns).
  * - Ista fotografija = isti objekt (identitet radi u Set/===), i za lokalne i za udaljene.
+ * - homepage = tekstovi naslovnice (HomepageContent, potpuni); labels = natpisi gumba (cta, ctaPhone, ctaWhatsapp).
  * - Rezultat se pamti za cijeli build (u devu 3 s, da se izmjene iz admina vide nakon osvježavanja).
  */
 import type { ImageMetadata } from 'astro';
@@ -26,8 +27,8 @@ import {
   type Stat,
 } from '@/data/site';
 import { assetByKey } from '@/lib/assets';
-import { isBlobRef, type ContactSettings, type ImageRef } from '@/lib/types';
-import { defaultSettings } from '@/lib/defaults';
+import { isBlobRef, type ContactSettings, type HomepageContent, type ImageRef, type LabelsSettings } from '@/lib/types';
+import { defaultLabels, defaultSettings, resolveHomepage } from '@/lib/defaults';
 import { hasDatabase } from '@/lib/server/db';
 
 /* ── tipovi ──────────────────────────────────────────────────────────────── */
@@ -56,7 +57,14 @@ export type SiteContent = {
   faq: FaqItem[];
   /** pitanja s oznakom "na naslovnici" (on_home), poredana */
   homeFaq: FaqItem[];
+  /** tekstovi naslovnice, potpuno razriješeni (izmjene iz admina preko zadanih iz site.ts) */
+  homepage: HomepageContent;
+  /** natpisi gumba za cijelu javnu stranicu (prazno u adminu → zadano) */
+  labels: LabelsSettings;
 };
+
+/** Ima li sekcija Recenzije "glasove" (objavljene recenzije ili Google poveznicu) — o tome ovisi zadano zaglavlje. */
+const hasVoices = (reviews: unknown[], c: ContactSettings) => reviews.length > 0 || /^https?:\/\//.test(c.googleReviewsUrl || '');
 
 /* ── alt tekstovi po fotografiji ─────────────────────────────────────────── */
 
@@ -93,7 +101,7 @@ const links = (c: ContactSettings) => ({
 
 const HOME_FAQ = [
   'Koliko košta limeni krov po m²?',
-  'Je li procjena stvarno besplatna?',
+  'Kako izgleda procjena?',
   'Koliko traje izrada novog krova?',
   'Dajete li jamstvo?',
   'Radite li po kiši i zimi?',
@@ -115,6 +123,8 @@ function fromDefaults(): SiteContent {
     reviews: defaultReviews,
     faq: defaultFaq.map(({ q, a }) => ({ q, a })),
     homeFaq: HOME_FAQ.map((q) => defaultFaq.find((f) => f.q === q)).filter((f): f is FaqItem => !!f),
+    homepage: resolveHomepage({}, { responseTime: contact.responseTime, hasReviews: hasVoices(defaultReviews, contact) }),
+    labels: defaultLabels(),
   };
 }
 
@@ -191,6 +201,11 @@ async function fromDb(): Promise<SiteContent> {
   }
 
   const faq = faqRows.map(({ q, a }) => ({ q, a }));
+  const homepage = resolveHomepage(settings.homepage, {
+    responseTime: settings.contact.responseTime,
+    hasReviews: hasVoices(rev, settings.contact),
+    cta: settings.labels.cta,
+  });
   return {
     source: 'db',
     contact: settings.contact,
@@ -201,6 +216,8 @@ async function fromDb(): Promise<SiteContent> {
     reviews: rev.map((r) => ({ name: r.name, place: r.place, text: r.text, stars: r.stars, source: r.source, date: r.reviewDate })),
     faq,
     homeFaq: faqRows.filter((f) => f.onHome).map(({ q, a }) => ({ q, a })),
+    homepage,
+    labels: settings.labels,
   };
 }
 

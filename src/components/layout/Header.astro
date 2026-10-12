@@ -7,7 +7,7 @@
  * Vanjska kutija ima stalnu visinu (nema pomaka sadržaja); smanjuje se samo unutarnja traka.
  * Telefon je u zaglavlju od lg (1024) naviše; ispod lg je ikona + plutajući dok (MobileCtaBar).
  * Mobilni izbornik: dijalog preko cijelog ekrana (grafit + milimetarski papir), focus trap, Esc, zaključan skrol.
- *   Redom: crvena "Besplatna procjena" · WhatsApp ("Pošaljite slike") + telefon · navigacija · usluge.
+ *   Redom: crvena "Procjena" (labels.cta) · WhatsApp ("Pošaljite slike") + telefon · navigacija · usluge.
  *   Poruke samo preko WhatsAppa (nema Vibera).
  *   Bez JS-a: umjesto gumba izbornika je link (ista ikona) na navigaciju u podnožju.
  *
@@ -21,7 +21,7 @@ import MotionToggle from './MotionToggle.astro';
 import { nav } from '@/data/site';
 import { getContent } from '@/lib/content';
 
-const { contact: site, services, telHref, waHref } = await getContent();
+const { contact: site, services, telHref, waHref, labels } = await getContent();
 
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 /* "page" za točnu stranicu, "true" za roditeljsku sekciju (npr. Usluge na /usluge/dimnjaci) */
@@ -30,7 +30,7 @@ const current = (href: string): 'page' | 'true' | undefined => {
   if (path === href) return 'page';
   return path.startsWith(`${href}/`) ? 'true' : undefined;
 };
-/* Na /hvala je upit već poslan: umjesto "Besplatna procjena" nudimo slanje slika uz broj upita */
+/* Na /hvala je upit već poslan: umjesto gumba "Procjena" nudimo slanje slika uz broj upita */
 const isThanks = path === '/hvala';
 const homeLabel = `${site.name} — naslovnica`;
 ---
@@ -70,11 +70,11 @@ const homeLabel = `${site.name} — naslovnica`;
               class="kr-header__cta"
               data-thanks-wa
             >
-              Pošaljite slike
+              {labels.ctaWhatsapp}
             </Button>
           ) : (
             <Button href="/procjena" class="kr-header__cta" data-quote-link>
-              Besplatna procjena
+              {labels.cta}
             </Button>
           )
         }
@@ -158,11 +158,11 @@ const homeLabel = `${site.name} — naslovnica`;
               class="w-full"
               data-thanks-wa
             >
-              Pošaljite slike
+              {labels.ctaWhatsapp}
             </Button>
           ) : (
             <Button href="/procjena" size="lg" iconRight="arrow-right" class="w-full" data-quote-link>
-              Besplatna procjena
+              {labels.cta}
             </Button>
           )
         }
@@ -171,7 +171,7 @@ const homeLabel = `${site.name} — naslovnica`;
             !isThanks && (
               <a href={waHref()} class="kr-menu__alt" target="_blank" rel="noopener" aria-label="Pošaljite slike na WhatsApp">
                 <Icon name="whatsapp" size={18} class="shrink-0 text-whatsapp" />
-                <span>Pošaljite slike</span>
+                <span>{labels.ctaWhatsapp}</span>
               </a>
             )
           }

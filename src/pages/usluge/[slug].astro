@@ -111,7 +111,7 @@ const faqSchema = {
   schema={[serviceSchema, breadcrumbSchema(crumbs, Astro.site), faqSchema]}
 >
   <PageHero
-    eyebrow={`${site.area} · besplatna procjena`}
+    eyebrow={`${site.area} · procjena na terenu`}
     title={service.h1}
     lead={service.lead ?? service.short}
     crumbs={crumbs}
@@ -123,7 +123,7 @@ const faqSchema = {
   >
     <HeroFacts
       items={[
-        { k: 'Mjerenje', v: 'Besplatno, na terenu' },
+        { k: 'Mjerenje', v: 'Na terenu, prije ponude' },
         { k: 'Ponuda', v: 'Pisana, stavku po stavku' },
         { k: 'Jamstvo', v: 'Pisano, na izvedbu' },
       ]}

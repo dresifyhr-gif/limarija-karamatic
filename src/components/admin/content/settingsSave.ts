@@ -7,7 +7,7 @@ import { save } from './client';
 
 export function bindSettingsForm(
   form: HTMLFormElement,
-  key: 'contact' | 'company' | 'quote' | 'stats',
+  key: 'contact' | 'company' | 'quote' | 'stats' | 'homepage' | 'labels',
   build: (d: Record<string, any>) => unknown,
   opts: { publicContent: boolean; success?: string },
 ): void {

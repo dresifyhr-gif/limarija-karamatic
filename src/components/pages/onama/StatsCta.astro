@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button.astro';
 import StatLine from '@/components/ui/StatLine.astro';
 import { getContent } from '@/lib/content';
 
-const { contact: site, telHref } = await getContent();
+const { contact: site, telHref, labels } = await getContent();
 
 interface Props {
   class?: string;
@@ -32,13 +32,13 @@ const { class: sectionClass = 'bg-white grid-paper-light py-24 sm:py-28 lg:py-32
           Izmjerit ćemo i vaš krov.
         </h2>
         <p class="mt-6 max-w-lg text-lg leading-relaxed text-pretty text-tinta/75" data-reveal>
-          Besplatna procjena na terenu i pisana ponuda stavku po stavku. Bez obveze.
+          Procjena na terenu i pisana ponuda stavku po stavku.
         </p>
       </div>
       <div class="flex flex-col gap-3 min-[30rem]:flex-row min-[30rem]:flex-wrap lg:col-span-5 lg:justify-end" data-reveal>
-        <Button href="/procjena" size="lg" iconRight="arrow-right" data-quote-link>Besplatna procjena</Button>
-        <Button href={telHref} variant="outline-dark" size="lg" icon="phone">
-          Nazovite <span class="font-mono tracking-[0.02em]">{site.phoneDisplay}</span>
+        <Button href="/procjena" size="lg" iconRight="arrow-right" data-quote-link>{labels.cta}</Button>
+        <Button href={telHref} variant="outline-dark" size="lg" icon="phone" aria-label={`${labels.ctaPhone}: ${site.phoneDisplay}`}>
+          <span>{labels.ctaPhone} <span class="block min-[30rem]:inline-block font-mono tracking-[0.02em] whitespace-nowrap">{site.phoneDisplay}</span></span>
         </Button>
       </div>
     </div>

@@ -77,7 +77,7 @@ const { contact, telHref } = await getContent();
       method="post"
       enctype="multipart/form-data"
       data-rn
-      aria-label={zgrada ? 'Upit za zgradu — besplatna procjena' : 'Upit za besplatnu procjenu'}
+      aria-label={zgrada ? 'Upit za zgradu — procjena' : 'Upit za procjenu'}
     >
       {/* zamka za botove: ljudi je ne vide; server tada ništa ne sprema (uz to i ograničenje učestalosti po IP-u) */}
       <div class="hidden" aria-hidden="true">

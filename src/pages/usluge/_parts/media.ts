@@ -106,13 +106,13 @@ export function servicePhotos(service: ContentService, data: MediaData, reserved
    Vlastita pitanja usluge + 2 opća koja odgovaraju poslu (bez ponavljanja teme). */
 const generalFor: Record<string, RegExp[]> = {
   'limeni-krovovi': [/^Koliko košta/, /^Koliko traje/],
-  'falcani-krovovi': [/^Je li procjena/, /^Dajete li jamstvo/],
+  'falcani-krovovi': [/^(Kako izgleda procjena|Je li procjena)/, /^Dajete li jamstvo/],
   'popravak-krova': [/^Pomažete li kod prijave štete/, /^Radite li po kiši/],
-  'opsav-atike': [/^Je li procjena/, /^Dajete li jamstvo/],
-  dimnjaci: [/^Je li procjena/, /^Dajete li jamstvo/],
-  'oluci-snjegobrani': [/^Je li procjena/, /^Dajete li jamstvo/],
+  'opsav-atike': [/^(Kako izgleda procjena|Je li procjena)/, /^Dajete li jamstvo/],
+  dimnjaci: [/^(Kako izgleda procjena|Je li procjena)/, /^Dajete li jamstvo/],
+  'oluci-snjegobrani': [/^(Kako izgleda procjena|Je li procjena)/, /^Dajete li jamstvo/],
 };
-const generalDefault = [/^Je li procjena/, /^Dajete li jamstvo/, /^Koliko traje/];
+const generalDefault = [/^(Kako izgleda procjena|Je li procjena)/, /^Dajete li jamstvo/, /^Koliko traje/];
 
 export function faqFor(service: ContentService, faq: FaqItem[], max = 5): FaqItem[] {
   const picks = (generalFor[service.slug] ?? generalDefault)

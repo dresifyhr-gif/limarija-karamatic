@@ -17,7 +17,8 @@ import Icon from '@/components/ui/Icon.astro';
 import { getContent, type ContentProject, type SiteImage } from '@/lib/content';
 import processPoster from '@/assets/projects/krov-crijep-lim-spoj-radnik.jpg';
 
-const { projects, services } = await getContent();
+const { projects, services, homepage } = await getContent();
+const head = homepage.projects; // Naslovnica → Radovi (admin)
 
 const MAX = 6;
 const shown = new Set<string>(
@@ -50,9 +51,9 @@ const allLink =
   <div class="wrap">
     <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-16">
       <SectionHead
-        eyebrow="Radovi"
-        title="Ovo nije render."
-        lead="Pravi krovovi s naših gradilišta."
+        eyebrow={head.eyebrow}
+        title={head.title}
+        lead={head.lead || undefined}
         tone="light"
       />
       <a href="/radovi" class:list={[allLink, 'hidden shrink-0 lg:mb-1.5 lg:inline-flex']} data-reveal>

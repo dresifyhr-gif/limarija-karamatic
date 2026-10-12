@@ -33,8 +33,10 @@ try {
       (SELECT count(*)::int FROM services WHERE updated_at > ${since}) AS services,
       (SELECT count(*)::int FROM reviews WHERE updated_at > ${since}) AS reviews,
       (SELECT count(*)::int FROM faq WHERE updated_at > ${since}) AS faq,
-      (SELECT count(*)::int FROM settings WHERE key IN ('contact', 'stats') AND updated_at > ${since}) AS settings`;
+      (SELECT count(*)::int FROM settings WHERE key IN ('contact', 'stats') AND updated_at > ${since}) AS settings,
+      (SELECT count(*)::int FROM settings WHERE key IN ('homepage', 'labels') AND updated_at > ${since}) AS homepage`;
     changed = [
+      { label: 'Naslovnica', href: '/admin/naslovnica', n: r.homepage as number },
       { label: 'Radovi', href: '/admin/radovi', n: r.projects as number },
       { label: 'Usluge', href: '/admin/usluge', n: r.services as number },
       { label: 'Recenzije', href: '/admin/recenzije', n: r.reviews as number },
@@ -55,6 +57,7 @@ const quick: { href: string; label: string; hint: string; icon: AdminIconName }[
   { href: '/admin/radovi/novi', label: 'Dodaj rad', hint: 'Fotografije s gradilišta', icon: 'camera' },
   { href: '/admin/recenzije/nova', label: 'Dodaj recenziju', hint: 'Stvarna, od klijenta', icon: 'star' },
   { href: '/admin/postavke/kontakt', label: 'Kontakt', hint: 'Telefon, radno vrijeme', icon: 'phone' },
+  { href: '/admin/naslovnica', label: 'Tekstovi naslovnice', hint: 'Naslovi, uvodi i gumbi', icon: 'edit' },
 ];
 ---
 
@@ -111,9 +114,9 @@ const quick: { href: string; label: string; hint: string; icon: AdminIconName }[
           <StatCard label="Prihvaćene" value={d.quotes.prihvacena} href="/admin/ponude?status=prihvacena" hint="ponude" icon="check" />
         </section>
 
-        <nav aria-label="Brze radnje" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <nav aria-label="Brze radnje" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
           {quick.map((q, i) => (
-            <a href={q.href} class:list={['a-card quick', i === 0 && 'is-main']}>
+            <a href={q.href} class:list={['a-card quick', i === 0 && 'is-main', i === quick.length - 1 && quick.length % 2 && 'col-span-2 lg:col-span-1']}>
               <span class="quick__icon">
                 <AdminIcon name={q.icon} size={20} />
               </span>
@@ -206,6 +209,9 @@ const quick: { href: string; label: string; hint: string; icon: AdminIconName }[
 
             <Card title="Sadržaj stranice" eyebrow="Na stranici" flush>
               <ul role="list">
+                <li>
+                  <ListRow href="/admin/naslovnica" title="Naslovnica" meta="Tekstovi početne stranice i natpisi gumba" />
+                </li>
                 <li>
                   <ListRow href="/admin/radovi" title="Radovi" meta={`${d.content.projectsPublished} na stranici od ${d.content.projects}`} />
                 </li>
