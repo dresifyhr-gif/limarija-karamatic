@@ -1,12 +1,12 @@
 ---
-import '@fontsource-variable/archivo/wdth.css';
+/* Fontovi: IBM Plex Mono je fiksan (tehničke oznake, natpisi na 3D modelima). Naslove i tekst bira vlasnik
+   (admin → Izgled, settings.design): Astro Fonts API (astro.config.mjs → fonts), ovdje SAMO odabrana pisma + Archivo za znak. */
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '@/styles/global.css';
-import archivoLatin from '@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url';
-import archivoLatinExt from '@fontsource-variable/archivo/files/archivo-latin-ext-wdth-normal.woff2?url';
 
-import { getImage } from 'astro:assets';
+import { Font, fontData, getImage } from 'astro:assets';
+import { cssVars, designFor, type FontFamilyDef } from '@/lib/fonts';
 import UtilityBar from '@/components/layout/UtilityBar.astro';
 import Header from '@/components/layout/Header.astro';
 import Footer from '@/components/layout/Footer.astro';
@@ -39,7 +39,33 @@ const {
   hideMobileBar = false,
   preload,
 } = Astro.props;
-const { contact: site } = await getContent();
+const { contact: site, design } = await getContent();
+
+/* ── fontovi ──────────────────────────────────────────────────────────────
+   Samo obitelji koje stranica stvarno koristi (naslovi, tekst, Archivo za logo); <Font> ispisuje @font-face
+   (+ zamjenski font s prilagođenim metrikama, da tekst ne skače) i varijablu --kr-ff-<id>.
+   Preload: pismo naslova (H1 = LCP) latin + latin-ext za odabranu debljinu; pismo teksta (ako je drugo) također oba —
+   hrvatski tekst ima č ć š ž đ u gotovo svakom retku, bez latin-ext bi se kvačice nakratko crtale zamjenskim fontom.
+   Izvorni izgled = iste dvije datoteke kao prije (Archivo latin + latin-ext). */
+const look = designFor(design);
+type Subset = 'latin' | 'latin-ext';
+/** URL-ovi za preload. Varijante su redom [latin, latin-ext] po debljini (src/lib/font-config.ts). */
+function preloadUrls(f: FontFamilyDef, weight: number, subsets: Subset[]): string[] {
+  const data = (fontData as unknown as Record<string, { weight?: string; src: { url: string }[] }[]>)[f.cssVar] ?? [];
+  for (let i = 0; i + 1 < data.length; i += 2) {
+    const [lo, hi = lo] = String(data[i].weight ?? '').split(' ').map(Number);
+    if (!(weight >= lo && weight <= hi)) continue;
+    return subsets.map((s) => data[s === 'latin' ? i : i + 1]?.src[0]?.url).filter((u): u is string => !!u);
+  }
+  return [];
+}
+const displayFamily = look.families.find((f) => f.id === look.display.family)!;
+const bodyFamily = look.families.find((f) => f.id === look.body.family)!;
+const fontPreloads = [
+  ...preloadUrls(displayFamily, look.weight, ['latin', 'latin-ext']),
+  ...(bodyFamily === displayFamily ? [] : preloadUrls(bodyFamily, 400, ['latin', 'latin-ext'])),
+];
+const designCss = `:root{${cssVars(look.vars)}}`;
 
 // kanonski URL bez završne kose crte — isto kao svi interni linkovi
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -84,8 +110,9 @@ const business = {
         <link rel="preload" as="image" type={preload.type} imagesrcset={preload.srcset} imagesizes={preload.sizes} fetchpriority="high" />
       )
     }
-    <link rel="preload" as="font" type="font/woff2" href={archivoLatin} crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href={archivoLatinExt} crossorigin />
+    {fontPreloads.map((href) => <link rel="preload" as="font" type="font/woff2" href={href} crossorigin />)}
+    {look.families.map((f) => <Font cssVariable={f.cssVar as never} />)}
+    <style is:inline set:html={designCss}></style>
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#0E1013" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

@@ -6,6 +6,7 @@ import { site, stats, services, projects, steps, labels as siteLabels, homepage 
 import { keyOfAsset } from '@/lib/assets';
 import type { AssetImageRef, HomepageContent, HomepageSettings, ImageRef, LabelsSettings, SettingsMap } from '@/lib/types';
 import type { ImageMetadata } from 'astro';
+import { DEFAULT_DESIGN } from '@/lib/fonts';
 
 export function defaultSettings(): SettingsMap {
   return {
@@ -30,6 +31,7 @@ export function defaultSettings(): SettingsMap {
     /** samo izmjene; zadani tekstovi su u defaultHomepage() */
     homepage: {},
     labels: defaultLabels(),
+    design: { ...DEFAULT_DESIGN },
   };
 }
 

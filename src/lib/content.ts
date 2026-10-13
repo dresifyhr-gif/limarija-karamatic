@@ -11,6 +11,7 @@
  *   (Vercel Blob; Astro ih u buildu skine i optimizira jer je host u image.remotePatterns).
  * - Ista fotografija = isti objekt (identitet radi u Set/===), i za lokalne i za udaljene.
  * - homepage = tekstovi naslovnice (HomepageContent, potpuni); labels = natpisi gumba (cta, ctaPhone, ctaWhatsapp).
+ * - design = fontovi (admin → Izgled), razriješeni (nepoznat id → izvorno); Base.astro ih pretvara u <Font> + CSS varijable.
  * - Rezultat se pamti za cijeli build (u devu 3 s, da se izmjene iz admina vide nakon osvježavanja).
  */
 import type { ImageMetadata } from 'astro';
@@ -27,7 +28,8 @@ import {
   type Stat,
 } from '@/data/site';
 import { assetByKey } from '@/lib/assets';
-import { isBlobRef, type ContactSettings, type HomepageContent, type ImageRef, type LabelsSettings } from '@/lib/types';
+import { isBlobRef, type ContactSettings, type DesignSettings, type HomepageContent, type ImageRef, type LabelsSettings } from '@/lib/types';
+import { DEFAULT_DESIGN } from '@/lib/fonts';
 import { defaultLabels, defaultSettings, resolveHomepage } from '@/lib/defaults';
 import { hasDatabase } from '@/lib/server/db';
 
@@ -61,6 +63,8 @@ export type SiteContent = {
   homepage: HomepageContent;
   /** natpisi gumba za cijelu javnu stranicu (prazno u adminu → zadano) */
   labels: LabelsSettings;
+  /** fontovi javne stranice (admin → Izgled), razriješeni; bez baze = izvorni izgled */
+  design: DesignSettings;
 };
 
 /** Ima li sekcija Recenzije "glasove" (objavljene recenzije ili Google poveznicu) — o tome ovisi zadano zaglavlje. */
@@ -125,6 +129,7 @@ function fromDefaults(): SiteContent {
     homeFaq: HOME_FAQ.map((q) => defaultFaq.find((f) => f.q === q)).filter((f): f is FaqItem => !!f),
     homepage: resolveHomepage({}, { responseTime: contact.responseTime, hasReviews: hasVoices(defaultReviews, contact) }),
     labels: defaultLabels(),
+    design: { ...DEFAULT_DESIGN },
   };
 }
 
@@ -218,6 +223,7 @@ async function fromDb(): Promise<SiteContent> {
     homeFaq: faqRows.filter((f) => f.onHome).map(({ q, a }) => ({ q, a })),
     homepage,
     labels: settings.labels,
+    design: settings.design,
   };
 }
 

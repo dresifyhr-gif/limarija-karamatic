@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/settings → SettingsMap { contact, company, quote, stats, homepage (samo izmjene), labels } (baza preko zadanih)
+ * GET /api/admin/settings → SettingsMap { contact, company, quote, stats, homepage (samo izmjene), labels, design } (baza preko zadanih)
  * PUT /api/admin/settings  JSON { values: { homepage?, labels?, … } } → spremljene vrijednosti.
  *     Ili sve ili ništa: najprije se provjere sve postavke, tek onda se spremaju (jednim upitom).
  *     Greške polja imaju prefiks ključa: { fields: { "labels.cta": "…", "homepage.hero.title": "…" } }.

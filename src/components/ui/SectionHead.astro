@@ -32,7 +32,7 @@ const red = tone === 'dark' ? 'text-redline' : 'text-redline-dark';
   <p class:list={['eyebrow mb-4 flex items-center gap-3', muted, align === 'center' && 'justify-center']} data-reveal>
     <span>{eyebrow}</span>
   </p>
-  <Tag class:list={['type-display text-[2.125rem] sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)] text-balance', strong]} data-reveal>
+  <Tag class:list={['type-display type-grow text-[2.125rem] sm:text-5xl lg:text-[clamp(2.625rem,4.1vw,3.75rem)] text-balance', strong]} data-reveal>
     {title}
   </Tag>
   {lead && <p class:list={['mt-5 text-lg leading-relaxed text-pretty', muted]} data-reveal>{lead}</p>}

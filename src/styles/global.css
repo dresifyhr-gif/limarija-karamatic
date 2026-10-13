@@ -79,19 +79,36 @@
   }
 }
 
-/* Naslovni rez: Archivo široki (wdth 125) i težak — prati KARAMATIĆ wordmark */
+/* Naslovni rez: izvorno Archivo široki (wdth 125) i težak — prati KARAMATIĆ wordmark.
+   Pismo, debljinu i tokene bira vlasnik (admin → Izgled): Base.astro na javnoj stranici postavlja
+   --font-display, --display-weight/-stretch/-tracking/-leading/-pad (src/lib/fonts.ts → designFor).
+   Bez njih (admin, /ponuda) vrijede izvorne vrijednosti iz zamjenskih vrijednosti ispod. */
 @utility type-display {
-  font-family: var(--font-sans);
-  font-stretch: 125%;
-  font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 0.95;
-  /* prostor iznad za Č Ć Š Ž Đ kad je tekst maskiran */
-  padding-top: 0.06em;
+  font-family: var(--font-display, var(--font-sans));
+  font-stretch: var(--display-stretch, 125%);
+  font-weight: var(--display-weight, 800);
+  letter-spacing: var(--display-tracking, -0.015em);
+  line-height: var(--display-leading, 0.95);
+  /* prostor iznad za Č Ć Š Ž Đ kad je tekst maskiran (ovisi o pismu) */
+  padding-top: var(--display-pad, 0.06em);
 }
 
+/* Naslovi sekcija (h2/h1 s type-display): uža pisma (admin → Izgled) malo veća, da ne izgledaju sitno.
+   --display-scale iz src/lib/fonts.ts (izvorno 1 → bez promjene); zoom skalira i razmak slova i prored zajedno. */
+@utility type-grow {
+  zoom: var(--display-scale, 1);
+}
+
+/* Podnaslovi u Archivu blago prošireni (sub-wide-112 = 112 %) — samo uz široke naslove (Archivo široki);
+   uz druga pisma naslova normalna širina, da dvije širine ne stoje jedna uz drugu. --sub-wide: Base.astro (1 / 0). */
+@utility sub-wide-* {
+  font-stretch: calc(100% + (--value(integer) - 100) * 1% * var(--sub-wide, 1));
+}
+
+/* Široki podnaslov (koraci "Kako radimo"): pismo naslova, izvorno Archivo wdth 125 */
 @utility type-wide {
-  font-stretch: 125%;
+  font-family: var(--font-display, var(--font-sans));
+  font-stretch: var(--display-stretch, 125%);
 }
 
 /* Kote, specifikacije, broj telefona */

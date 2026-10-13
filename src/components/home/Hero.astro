@@ -13,18 +13,19 @@ import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import RoofModels from './hero3d/RoofModels.astro';
 import { getContent } from '@/lib/content';
+import { designFor, heroTitleFit } from '@/lib/fonts';
 
-const { contact: site, telHref, waHref, homepage, labels } = await getContent();
+const { contact: site, telHref, waHref, homepage, labels, design } = await getContent();
 
 /* Tekstovi iz admina (Naslovnica → Hero); "\n" u naslovu = prijelom retka. */
 const hero = homepage.hero;
 const titleLines = hero.title.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 /* Dulji naslov iz admina: font se smanjuje s duljinom (zadani naslov ostaje na 1), da hero ne naraste preko ekrana.
- * Mjeri se najdulji redak i ukupna duljina (≈ 2 retka po 20 znakova pri punoj veličini). */
-const longest = Math.max(...titleLines.map((l) => l.length), 1);
-const total = titleLines.join(' ').length;
-const fit = Math.max(0.55, Math.min(1, Math.sqrt(20 / longest), Math.sqrt(40 / total)));
-const titleFit = fit < 1 ? `--hx-fit: ${fit.toFixed(2)}` : undefined;
+ * Mjeri se najdulji redak i ukupna duljina (≈ 2 retka po 20 znakova pri punoj veličini).
+ * Pismo naslova (admin → Izgled): veličina se dijeli širinom pisma — šira pisma manja, uža veća (do scale pisma).
+ * Isto pravilo koristi pregled u adminu (heroTitleFit, src/lib/fonts.ts). */
+const fit = heroTitleFit(titleLines, designFor(design));
+const titleFit = fit !== 1 ? `--hx-fit: ${fit.toFixed(2)}` : undefined;
 ---
 
 <section id="vrh" class="hx relative overflow-hidden bg-grafit grid-paper" aria-labelledby="vrh-naslov">
@@ -177,8 +178,9 @@ const titleFit = fit < 1 ? `--hx-fit: ${fit.toFixed(2)}` : undefined;
   /* ── tipografija ───────────────────────────────────────────── */
   .hx-display {
     font-size: calc(clamp(2.6rem, 10.6vw, 3.6rem) * var(--hx-fit, 1));
-    line-height: 0.94;
-    letter-spacing: -0.02em;
+    /* malo gušće od ostalih naslova; vrijednosti po pismu postavlja Base.astro (admin → Izgled) */
+    line-height: var(--hx-leading, 0.94);
+    letter-spacing: var(--hx-tracking, -0.02em);
     text-wrap: balance;
   }
   @media (width >= 48rem) {

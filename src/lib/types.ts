@@ -2,6 +2,10 @@
  * Zajednički tipovi i konstante za admin, API, PDF ponuda i build (bez ovisnosti — sigurno i u pregledniku).
  * Ugovor: docs/ADMIN-SPEC.md
  */
+import type { DesignSettings } from './fonts';
+
+/** Izgled javne stranice: fontovi naslova i teksta (admin → Izgled). Popis pisama i tokeni: src/lib/fonts.ts. */
+export type { DesignSettings };
 
 /* ── Fotografije ─────────────────────────────────────────────────────────── */
 
@@ -180,6 +184,8 @@ export type SettingsMap = {
   /** SAMO izmjene. Razriješeno: getContent().homepage ili resolveHomepage() iz @/lib/defaults */
   homepage: HomepageSettings;
   labels: LabelsSettings;
+  /** fontovi javne stranice; getSettings() vraća razriješeno (nepoznat id → izvorno) */
+  design: DesignSettings;
 };
 export type SettingsKey = keyof SettingsMap;
-export const SETTINGS_KEYS = ['contact', 'company', 'quote', 'stats', 'homepage', 'labels'] as const satisfies readonly SettingsKey[];
+export const SETTINGS_KEYS = ['contact', 'company', 'quote', 'stats', 'homepage', 'labels', 'design'] as const satisfies readonly SettingsKey[];

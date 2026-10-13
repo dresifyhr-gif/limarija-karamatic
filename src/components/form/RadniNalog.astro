@@ -609,12 +609,14 @@ const { contact, telHref } = await getContent();
     padding-right: 0;
     min-height: 0;
   }
+  /* pismo naslova (admin → Izgled); izvorno Archivo široki 800 */
   .rn-h {
-    font-stretch: 125%;
-    font-weight: 800;
-    letter-spacing: -0.015em;
+    font-family: var(--font-display, var(--font-sans));
+    font-stretch: var(--display-stretch, 125%);
+    font-weight: var(--display-weight, 800);
+    letter-spacing: var(--display-tracking, -0.015em);
     line-height: 1;
-    padding-top: 0.08em;
+    padding-top: max(0.08em, var(--display-pad, 0em));
     font-size: 1.75rem;
     outline: none;
   }
@@ -1164,7 +1166,7 @@ const { contact, telHref } = await getContent();
     letter-spacing: 0.08em;
   }
   .rn-stamp-big {
-    font-stretch: 110%;
+    font-stretch: calc(100% + 10% * var(--sub-wide, 1));
     font-weight: 700;
     font-size: 1.375rem;
     line-height: 1.1;

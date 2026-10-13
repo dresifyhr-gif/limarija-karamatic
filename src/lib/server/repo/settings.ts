@@ -4,10 +4,11 @@ import { parse } from '../validate';
 import { HttpError } from '../http';
 import { SETTINGS_SCHEMAS } from '../schemas';
 import { defaultSettings, resolveLabels } from '@/lib/defaults';
+import { resolveDesign } from '@/lib/fonts';
 import type { SettingsKey, SettingsMap } from '@/lib/types';
 
 /** Ključevi čija promjena utječe na javnu stranicu (→ touchContent). company/quote su samo za ponude. */
-const PUBLIC_KEYS: SettingsKey[] = ['contact', 'stats', 'homepage', 'labels'];
+const PUBLIC_KEYS: SettingsKey[] = ['contact', 'stats', 'homepage', 'labels', 'design'];
 
 /**
  * Sve postavke, spojene preko zadanih (site.ts) — uvijek potpun objekt.
@@ -25,6 +26,7 @@ export async function getSettings(): Promise<SettingsMap> {
     else out[key] = { ...(def as object), ...(r.value && typeof r.value === 'object' ? (r.value as object) : {}) };
   }
   out.labels = resolveLabels(out.labels as SettingsMap['labels']);
+  out.design = resolveDesign(out.design);
   return out as SettingsMap;
 }
 

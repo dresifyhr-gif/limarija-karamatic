@@ -1,8 +1,9 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
 import { loadEnv } from 'vite';
+import { fontFamiliesConfig } from './src/lib/font-config.ts';
 
 // Točan host NAŠEG Blob storea (ne *.public.blob.vercel-storage.com — inače javni /_image
 // preuzima i pretvara slike s bilo čijeg Blob storea). storeId je javni dio tokena i vidi se u svakom URL-u fotografije.
@@ -32,6 +33,9 @@ export default defineConfig({
     // Astro odbija cross-site POST forme na on-demand rutama; JSON zahtjeve dodatno provjerava middleware
     checkOrigin: true,
   },
+  // Fontovi javne stranice (admin → Izgled): sva ponuđena pisma iz npm paketa (src/lib/fonts.ts), samostalno posluživana.
+  // Stranica (Base.astro) ispisuje <Font> samo za odabrana; admin → Izgled za sva (pregled).
+  fonts: fontFamiliesConfig(fontProviders.local),
   build: {
     // sav CSS inline: nema render-blocking zahtjeva (≈ 28 KB gzip po stranici)
     inlineStylesheets: 'always',

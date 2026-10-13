@@ -165,7 +165,7 @@ const sectionCls = ['faq text-tinta', bg, compact ? 'faq--compact py-20 sm:py-24
   @media (width >= 40rem) {
     .faq-qtext {
       font-size: 1.25rem;
-      font-stretch: 106%;
+      font-stretch: calc(100% + 6% * var(--sub-wide, 1));
     }
   }
 

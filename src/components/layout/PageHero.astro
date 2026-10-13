@@ -45,6 +45,7 @@
  */
 import type { Profile } from '@/data/site';
 import { getContent, type SiteImage } from '@/lib/content';
+import { designFor } from '@/lib/fonts';
 import Button from '@/components/ui/Button.astro';
 import Icon from '@/components/ui/Icon.astro';
 import Photo from '@/components/ui/Photo.astro';
@@ -79,7 +80,7 @@ export const profileNames: Record<Profile, string> = {
   trapez: 'Trapezni lim',
 };
 
-const { contact: site, telHref, waHref, labels } = await getContent();
+const { contact: site, telHref, waHref, labels, design } = await getContent();
 
 interface Props {
   eyebrow?: string;
@@ -162,7 +163,11 @@ function fitEm(text: string, lines: number): number {
   // broj redaka jamči sam izračun: ako optimalni prijelom stane, ni pohlepni ni balance ne trebaju više redaka
   return Math.max(best, 4) * 1.02;
 }
-const titleFit = `--ph-w2: ${fitEm(title, 2).toFixed(2)}; --ph-w3: ${fitEm(title, 3).toFixed(2)}`;
+/* Drugo pismo naslova (admin → Izgled): tablica vrijedi za Archivo široki 800, pa se širina množi omjerom
+   širine odabranog pisma i debljine (src/lib/fonts.ts → width) i dodaje 3 % rezerve (druga raspodjela širina slova). */
+const look = designFor(design);
+const fontScale = look.widthFactor === 1 ? 1 : look.widthFactor * 1.03;
+const titleFit = `--ph-w2: ${(fitEm(title, 2) * fontScale).toFixed(2)}; --ph-w3: ${(fitEm(title, 3) * fontScale).toFixed(2)}`;
 ---
 
 <section

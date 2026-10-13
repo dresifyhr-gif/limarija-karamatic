@@ -19,11 +19,12 @@ Dizajn i ton javne stranice opisani su u `docs/BUILD-SPEC.md`. Admin je na hrvat
 | Klijentski pomoćnici | `src/lib/admin/ui.ts` (api, toast, confirmDialog, forme) i `src/lib/admin/upload.ts`. |
 | UI kit | `src/components/admin/*`, `src/layouts/Admin.astro`, `src/styles/admin.css` |
 | Sadržaj za build | `src/lib/content.ts` → `getContent()` |
+| Fontovi javne stranice | `src/lib/fonts.ts` (popis pisama, tokeni, `designFor()`), `src/lib/font-config.ts` (Astro Fonts API u `astro.config.mjs`), admin → Izgled (§13) |
 
 **Pravila (obavezno):**
 - Svaka admin stranica i API ruta ima `export const prerender = false;`.
 - Javne stranice ostaju statičke. Na njima nema `prerender = false`. Sadržaj iz baze dolazi u buildu preko `getContent()`, a na stranicu ide gumbom **"Objavi na stranicu"** (deploy hook).
-- Nakon svake promjene **javnog** sadržaja (settings contact/stats, services, projects/project_images, reviews, faq) pozovi `touchContent()`. Repo funkcije to već rade. Upiti i ponude nisu javni sadržaj.
+- Nakon svake promjene **javnog** sadržaja (settings contact/stats/homepage/labels/design, services, projects/project_images, reviews, faq) pozovi `touchContent()`. Repo funkcije to već rade. Upiti i ponude nisu javni sadržaj.
 - Tajne se nikad ne logiraju ni ispisuju. Lozinka postoji samo u `ADMIN-PRISTUP.txt` (gitignored).
 - Testni podaci počinju s `TEST `, a prije kraja rada ih obriši, i iz baze i s Bloba (`DELETE /api/admin/upload`).
 - Ne pokreći `astro build` dok drugi agent radi na istom repou. Provjera tipova: `npx astro check`. Instalirani su TypeScript 6 i `@astrojs/check`. Jedina greška koja je već postojala je u `src/lib/reveal.ts`.
@@ -38,7 +39,7 @@ JSON odgovori API-ja su **camelCase**. Mapiranje rade repo funkcije.
 ### `settings`: ključ → JSON
 | stupac | tip |
 |---|---|
-| key | text PK: `contact` \| `company` \| `quote` \| `stats` \| `homepage` \| `labels` |
+| key | text PK: `contact` \| `company` \| `quote` \| `stats` \| `homepage` \| `labels` \| `design` |
 | value | jsonb NOT NULL |
 | updated_at | timestamptz |
 
@@ -49,8 +50,9 @@ Oblici vrijednosti su u `src/lib/types.ts` (`SettingsMap`):
 - `stats: StatSetting[]`, polja: `{ value, decimals?, prefix?, suffix?, label }`. Javno.
 - `homepage: HomepageSettings`: **samo izmjene** tekstova naslovnice (vidi §12). Javno.
 - `labels: LabelsSettings`, polja: `{ cta, ctaPhone, ctaWhatsapp }` (natpisi gumba na cijeloj stranici; prazno = zadano). Javno.
+- `design: DesignSettings`, polja: `{ fontDisplay, fontBody, displayWeight }` (fontovi javne stranice, §13). Zadano (i bez retka u bazi) `{ fontDisplay: 'archivo-expanded', fontBody: 'archivo', displayWeight: 800 }` = izvorni izgled. Javno.
 
-`getSettings()` uvijek vraća potpun objekt (baza preko zadanih vrijednosti iz site.ts). Iznimka: `homepage` su samo izmjene (razrješava ih `resolveHomepage`), a `labels` su razriješeni. `getStoredSetting(key)` vraća sirovu spremljenu vrijednost ili null.
+`getSettings()` uvijek vraća potpun objekt (baza preko zadanih vrijednosti iz site.ts). Iznimka: `homepage` su samo izmjene (razrješava ih `resolveHomepage`), a `labels` i `design` su razriješeni (`design`: nepoznat id ili debljina → izvorno, `resolveDesign`). `getStoredSetting(key)` vraća sirovu spremljenu vrijednost ili null.
 **Seed:** `quote.pdvEnabled = true`, 25 %. Vlasnik mora potvrditi je li u sustavu PDV-a.
 
 ### `admin_meta`: interni ključevi (nije sadržaj)
@@ -301,7 +303,7 @@ Konvencije:
 | DELETE `/api/admin/upload` | `{urls: string[], force?}` | `{deleted, skipped}` (skipped = još se koristi) |
 | GET `/api/admin/settings` | | `SettingsMap` |
 | PUT `/api/admin/settings` | `{values: {homepage?, labels?, …}}`: više ključeva odjednom, **sve ili ništa** (najprije se provjere svi, pa se spreme jednim upitom). Greške polja s prefiksom ključa (`homepage.hero.title`, `labels.cta`) | spremljene vrijednosti po ključu |
-| GET/PUT `/api/admin/settings/:key` | PUT `{value}` (CIJELA vrijednost). Ključevi: contact, company, quote, stats, homepage, labels (§12) | vrijednost |
+| GET/PUT `/api/admin/settings/:key` | PUT `{value}` (CIJELA vrijednost). Ključevi: contact, company, quote, stats, homepage, labels (§12), design (§13) | vrijednost |
 | GET `/api/admin/services` | | `{items: AdminService[]}` |
 | GET/PUT `/api/admin/services/:slug` | `ServicePatch` (null = vrati zadano) | `AdminService` |
 | POST `/api/admin/services/reorder` | `{slugs}` | `{ok}` |
@@ -397,7 +399,7 @@ const { homeFaq, projects, contact } = await getContent();
 ## 7. Admin UI
 
 ### Layout: `src/layouts/Admin.astro`
-Props: `{ title: string; active?: 'pregled'|'upiti'|'ponude'|'naslovnica'|'radovi'|'usluge'|'recenzije'|'pitanja'|'postavke'; wide?: boolean }`. Stavlja noindex i ne koristi javno zaglavlje ni podnožje.
+Props: `{ title: string; active?: 'pregled'|'upiti'|'ponude'|'naslovnica'|'izgled'|'radovi'|'usluge'|'recenzije'|'pitanja'|'postavke'; wide?: boolean }`. Stavlja noindex i ne koristi javno zaglavlje ni podnožje. Slot `head`: dodatni elementi u `<head>` (npr. `<Font>` za pregled pisama na /admin/izgled).
 - Grafit traka sadrži KARAMATIĆ logo, gumb "Objavi na stranicu" i odjavu. Gumb je crven kad postoje neobjavljene promjene, a obrubljen ("Sve je objavljeno") kad ih nema.
 - Izbornik je ispod trake. Na mobitelu klizi vodoravno, a uz "Upiti" stoji broj novih upita.
 - `<Toast/>` i `<ConfirmDialog/>` su već uključeni.
@@ -422,7 +424,7 @@ Props: `{ title: string; active?: 'pregled'|'upiti'|'ponude'|'naslovnica'|'radov
 | `EmptyState` | `title; text?; icon?`, slot su radnje |
 | `ImageUploader` | `name; label?; hint?; value?: (ImageRef & {thumb?, id?})[] \| ImageRef \| null; single?; max?; folder?; withAlt?` |
 | `Toast`, `ConfirmDialog` | bez propova (već su u layoutu) |
-| `AdminIcon` | `name: AdminIconName; size?; class?; label?`. Imena: home inbox file image layers star help settings upload publish camera trash edit plus check close chevron-* arrow-left/right logout eye eye-off external phone grip alert info refresh download copy search menu more map-pin clock lock user whatsapp |
+| `AdminIcon` | `name: AdminIconName; size?; class?; label?`. Imena: home inbox file image layers star help settings upload publish camera trash edit plus type check close chevron-* arrow-left/right logout eye eye-off external phone grip alert info refresh download copy search menu more map-pin clock lock user whatsapp |
 
 **ImageUploader:**
 - Vrijednost je JSON u skrivenom polju `name` (`data-json`). `formData()` ga sam parsira u `ImageRef[]`, a sa `single` u `ImageRef|null`.
@@ -469,6 +471,7 @@ Dizajn:
 - `/admin/login`: gotovo. Radi s JS-om (fetch, prikaz lozinke) i bez njega (form POST).
 - `/admin`: Pregled je gotov (brojke, zadnji upiti, stanje objave, sadržaj; brza radnja i redak „Naslovnica”).
 - `/admin/naslovnica`: tekstovi naslovnice i natpisi gumba (§12).
+- `/admin/izgled`: fontovi javne stranice (§13).
 - **Privremene** stranice za zamjenu: `src/pages/admin/{upiti,ponude,radovi,usluge,recenzije,pitanja,postavke}.astro`. Kad gradiš odjeljak s podstranicama, **obriši** `X.astro` i napravi `X/index.astro` (+ `X/[id].astro`, `X/novi.astro`…).
 - Pregled već linka na `/admin/ponude/nova`, `/admin/radovi/novi`, `/admin/upiti/:id`, `/admin/upiti?status=novo` i `/admin/ponude?status=…`. Napravi te rute.
 - Postavke trebaju formu za promjenu lozinke (`POST /api/admin/password`) i PDV prekidač (`settings.quote`).
@@ -610,3 +613,35 @@ Dodano u zajedničke datoteke (aditivno):
 | `labels.ctaWhatsapp` | svi WhatsApp gumbi „Pošaljite slike” (zaglavlje na /hvala, izbornik, hero, `PageHero`, `FinalCta`, kontakt, /radovi, /hvala) |
 
 Dugi tekstovi ne lome raspored: H1 heroa se smanjuje s duljinom (`--hx-fit`, najmanje 0,55; zadani naslov ostaje 1), dugačke riječi se prelamaju (`overflow-wrap`), `ui/Button` ima `min-height` pa se dug natpis prelomi u dva retka (kratki ostaju u jednom), natpis u mobilnom doku se skrati s „…”. Provjereno s tekstovima na maksimalnim duljinama na 1440, 1024, 390 i 360 px (bez vodoravnog skrola).
+
+---
+
+## 13. Izgled: fontovi javne stranice (admin → Izgled)
+
+**Zahtjev vlasnika:** font se može mijenjati u adminu. Bira se pismo za **naslove**, **debljina naslova** i pismo za **tekst**. Ne mijenjaju se: logo i golemi KARAMATIĆ u podnožju (znak tvrtke, uvijek Archivo), IBM Plex Mono (oznake, kote, telefon), natpisi na 3D modelima u heru, javna ponuda `/ponuda/:token`, PDF ponude i sam admin.
+
+| Što | Gdje |
+|---|---|
+| Popis pisama, tokeni, logika | `src/lib/fonts.ts`: `FONT_FAMILIES` (datoteke), `DISPLAY_FONTS`, `BODY_FONTS`, `DISPLAY_WEIGHTS`, `DEFAULT_DESIGN`, `resolveDesign()` (nepoznat id → izvorno, debljina ≤ najveće za pismo), `designFor()` → `{ display, body, weight, widthFactor, families, vars }`, `heroTitleFit()`, `mottoScale()`, `cssVars()`. Radi i u pregledniku. |
+| Datoteke fontova | Astro Fonts API, **lokalni** provider: `astro.config.mjs` → `fonts: fontFamiliesConfig(fontProviders.local)` (`src/lib/font-config.ts` čita @font-face iz npm paketa `@fontsource(-variable)/…`, samo latin + latin-ext). Bez Google Fonts CDN-a i bez mrežnog dohvaćanja u buildu. Datoteke idu u `/_astro/fonts/`. |
+| Tip | `DesignSettings = { fontDisplay: string; fontBody: string; displayWeight: 600\|700\|800\|900 }` (`@/lib/types`, `SettingsMap.design`) |
+| Validacija | `DesignSchema` (`schemas.ts`): id-jevi samo s popisa, debljina samo 600/700/800/900 → inače 400 `Neispravan odabir.`; debljina iznad najveće za pismo (npr. Manrope 900) sprema se kao najveća (800). |
+| Za build | `getContent().design` (razriješeno; bez baze = izvorno) |
+| Javna stranica | `layouts/Base.astro`: `designFor(design)` → `<Font cssVariable=…>` SAMO za potrebne obitelji (naslovi, tekst, Archivo za znak) + `<style>:root{…}` s varijablama; preload: pismo naslova latin + latin-ext za odabranu debljinu, pismo teksta (ako je drugo) također latin + latin-ext (č ć š ž đ su u gotovo svakom retku). Izvorni izgled = iste 2 datoteke kao prije. |
+| Admin | `/admin/izgled` (`src/pages/admin/izgled.astro`), izbornik „Izgled” (iza „Naslovnica”), ikona `type` |
+
+**Ponuđena pisma** (sva imaju Č Ć Ž Š Đ č ć ž š đ u latin-ext datoteci — provjereno u datotekama — i potrebne debljine):
+- Naslovi (`fontDisplay`, 8): `archivo-expanded` Archivo široki (izvorno, wdth 125), `archivo` Archivo (wdth 100), `archivo-condensed` Archivo uski (wdth 80), `montserrat` Montserrat, `unbounded` Unbounded (najviše 800 — 900 je preširok za „Karamatić” na mobitelu), `sora` Sora (najviše 800), `manrope` Manrope (najviše 800), `dm-sans` DM Sans.
+  Odbačeni nakon pregleda: Plus Jakarta Sans kao naslov (točka i uskličnik vizualno odvojeni od riječi u velikim naslovima; ostaje za tekst), Barlow Semi Condensed (gotovo isto kao Archivo uski, a ~60 KB više i dodatna datoteka), Space Grotesk (najviše 700). Spremljeni nepoznat id → izvorno (`resolveDesign`).
+- Tekst (`fontBody`): `archivo` (izvorno), `inter`, `dm-sans`, `manrope`, `plus-jakarta-sans`, `ibm-plex-sans` (najviše 700; jači tekst se svodi na 700).
+- Debljina (`displayWeight`): Normalno 600 · Jako 700 · Vrlo jako 800 (izvorno) · Najjače 900. Pismo koje nema 900 koristi 800 (`effectiveWeight`); admin tada onemogući „Najjače” i to napiše.
+
+**CSS varijable** (Base.astro na `:root`; bez njih — admin, /ponuda — vrijede izvorne zamjenske vrijednosti):
+`--font-sans` (tekst), `--font-display` (naslovi), `--font-brand` (Archivo), `--display-weight`, `--display-stretch` (125 % samo za Archivo široki), `--display-tracking`, `--display-leading`, `--display-pad` (prostor iznad za kvačice), `--hx-tracking` / `--hx-leading` (H1 naslovnice), `--display-scale` (povećanje naslova sekcija za uža pisma, izvorno 1), `--sub-wide` (1 = podnaslovi u Archivu blago prošireni, samo uz Archivo široki; inače 0). Vrijednosti po pismu su u `DISPLAY_FONTS` (`tracking`, `leading`, `pad`, `scale`, `width`).
+Koriste ih: `type-display`, `type-wide`, `type-grow` (`zoom: var(--display-scale)` — naslovi sekcija: `SectionHead`, `FinalCta`, `StatsCta`, `Managers`, h2 na `/usluge/:slug` i `/radovi(/:slug)`, h1 na 404 i `/hvala`, citat u `Story`) i `sub-wide-<postotak>` (`global.css`), `home/Hero.astro` (`.hx-display`), `form/RadniNalog.astro` (`.rn-h`), `ui/Logo.astro` i golemi KARAMATIĆ u `layout/Footer.astro` (`--font-brand`). Podnaslovi u pismu teksta s blagim proširenjem (kartice usluga `wdth 112`, `ContactRows`, `NextSteps`, `Faq`, `Scope`, zgrade h3, `Privacy`, 404, `/usluge`) koriste `calc(100% + N% * var(--sub-wide, 1))` / `sub-wide-1NN`: uz Archivo široki isto kao prije, uz druga pisma naslova normalna širina.
+
+**Dugi naslovi i uža pisma:** `width[debljina]` = širina tipičnih hrvatskih naslova u odnosu na Archivo široki 800 (izmjereno u Chromeu, s razmakom slova pisma). H1 naslovnice: `heroTitleFit()` = izvorno smanjivanje po duljini ÷ širina pisma, najviše `scale` pisma (uža pisma do 1,2×, šira se smanje) → `--hx-fit`; isto u pregledu u adminu. `PageHero` množi izračunatu širinu (`--ph-w2/3`) omjerom + 3 % rezerve. Naslovi sekcija: `type-grow` (`scale`: Archivo uski 1,2; Manrope/DM Sans 1,08; Archivo/Sora 1,06; Montserrat 1,04; ostali 1). Moto u podnožju se nikad ne lomi; za pisma šira od izvornog (Archivo široki 900, Unbounded) smanji se (`mottoScale` = 0,98 ÷ širina, `--motto-s`). Provjereno (buildovi iz baze, 360/390/1440 px): bez vodoravnog skrola i bez izlaska naslova iz okvira za Archivo uski 800, Archivo 800, Unbounded 900→800, Archivo široki 900, Sora 800, Manrope 900→800 + Inter, DM Sans 900 + IBM Plex Sans, Montserrat 700 + Plus Jakarta Sans; H1 naslovnice u svim pismima zauzme otprilike istu širinu kao izvorno (3 retka na 390 px), moto u podnožju uvijek 2 retka. Izvorni izgled: snimke cijelih stranica (10 stranica × 1440/390/360) piksel-identične buildu prije ove mogućnosti.
+
+**Admin `/admin/izgled`:** pregled (tamni vrh naslovnice s vašim naslovom, uvodom i gumbima + svijetla sekcija) — ista pravila kao javna stranica (`type-display` i varijable iz `designFor` na elementu pregleda); debljina (4 gumba s „Aa” u odabranom pismu); kartice „Naslovi” i „Tekst”, svaka s uzorkom u tom pismu („Sedam puta mjerimo. Jednom savijemo.”, „ČĆŽŠĐ čćžšđ”, odlomak, crveni gumb) uz trenutni odabir drugog pisma. Kartice pisma za tekst počinju odlomkom (pa rečenica podebljano, ČĆŽŠĐ, gumb). H1 pregleda ima veličinu u odnosu na širinu stupca kao na stranici (`cqi`), pa se prelama u isto redaka. Fontovi za pregled učitavaju se samo na toj stranici (`<Font>` za sve obitelji u slotu `head`) i lijeno: uzorak kartice dobije svoje varijable (`data-vars` → `style`) tek kad se kartica približi ekranu (IntersectionObserver), do tada je u pismu admina. „Vrati izvorno” vraća odabir na `DEFAULT_DESIGN` (vrijedi nakon „Spremi”). „Spremi” (ljepljiva traka) → `PUT /api/admin/settings/design` → `touchContent()` → „Objavi” postaje crven; poruka da se promjena vidi nakon objave. Pregled (`/admin`) broji izmjenu u „Neobjavljene promjene” (Izgled) i ima redak „Izgled” u „Sadržaj stranice”.
+
+**Dodavanje pisma:** `npm i @fontsource-variable/<ime>` → `FONT_FAMILIES` (css datoteka s latin i latin-ext) → `DISPLAY_FONTS`/`BODY_FONTS` (izmjeri `width`, odredi `leading`/`pad`). U devu nakon promjene `font-config.ts`/`fonts.ts` obitelji ponovno pokreni dev server (Astro ne prati datoteke koje uvozi config).

@@ -1,0 +1,636 @@
+---
+/**
+ * Admin → Izgled: pisma (fontovi) javne stranice — naslovi, debljina naslova i tekst (settings.design).
+ * Popis pisama i tokeni po pismu: src/lib/fonts.ts. Sprema: PUT /api/admin/settings/design { value }
+ * (server prihvaća samo pisma s popisa; touchContent → "Objavi" postaje crven).
+ * Pregled koristi ISTA pravila kao javna stranica (type-display + CSS varijable iz designFor), pa izgleda isto.
+ * Fontovi za pregled učitavaju se samo na ovoj stranici, lijeno: uzorak kartice dobiva svoje pismo (CSS varijable iz
+ * data-vars) tek kad se kartica približi ekranu (IntersectionObserver); do tada je u pismu admina (već učitano).
+ * Logo, mono oznake, natpisi na 3D modelima i PDF ponude se ne mijenjaju.
+ */
+import '@/components/admin/content/content.css';
+import { Font } from 'astro:assets';
+import Admin from '@/layouts/Admin.astro';
+import PageHeader from '@/components/admin/PageHeader.astro';
+import Card from '@/components/admin/Card.astro';
+import AdminIcon from '@/components/admin/AdminIcon.astro';
+import SaveBar from '@/components/admin/content/SaveBar.astro';
+import { getSettings } from '@/lib/server/repo/settings';
+import { resolveHomepage } from '@/lib/defaults';
+import {
+  BODY_FONTS,
+  DEFAULT_DESIGN,
+  DISPLAY_FONTS,
+  DISPLAY_WEIGHTS,
+  DISPLAY_WEIGHT_LABEL,
+  FONT_FAMILIES,
+  cssVars,
+  designFor,
+  displayFont,
+  heroTitleFit,
+  type DesignSettings,
+} from '@/lib/fonts';
+
+export const prerender = false;
+
+const settings = await getSettings();
+const design = settings.design;
+const home = resolveHomepage(settings.homepage, { responseTime: settings.contact.responseTime, cta: settings.labels.cta });
+const labels = settings.labels;
+const area = settings.contact.area;
+
+const look = designFor(design);
+const titleLines = home.hero.title.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+const varsOf = (d: Partial<DesignSettings>) => cssVars(designFor({ ...design, ...d }).vars);
+/* isto smanjivanje/povećanje H1 kao u home/Hero.astro */
+const previewStyle = `${cssVars(look.vars)};--hx-fit:${heroTitleFit(titleLines, look)}`;
+const maxWeight = displayFont(design.fontDisplay).maxWeight;
+
+const SPEC = 'Sedam puta mjerimo. Jednom savijemo.';
+const DIA = 'ČĆŽŠĐ čćžšđ';
+const PARA = 'Dolazimo izmjeriti krov, a pisanu ponudu šaljemo u dva dana. Bez skrivenih stavki.';
+---
+
+<Admin title="Izgled" active="izgled">
+  <Fragment slot="head">
+    {Object.values(FONT_FAMILIES).map((f) => <Font cssVariable={f.cssVar as never} />)}
+  </Fragment>
+
+  <PageHeader
+    title="Izgled"
+    description="Pisma (fontovi) na javnoj stranici: jedno za naslove, drugo za tekst. Logo, sitne tehničke oznake i ponude ostaju isti."
+  />
+
+  <form class="cb-form iz" data-guard data-design-form novalidate>
+    <p class="cb-note">
+      <AdminIcon name="info" size={18} class="mt-0.5 flex-none" />
+      <span>
+        Nakon spremanja novo pismo se na stranici vidi tek kad pritisnete <strong>Objavi na stranicu</strong> (gore desno). Sva pisma imaju
+        Č, Ć, Ž, Š i Đ.
+      </span>
+    </p>
+
+    <!-- Pregled: vrh naslovnice i svijetla sekcija, istim pravilima kao javna stranica -->
+    <Card id="pregled" eyebrow="Pregled" title="Ovako će izgledati" description="Vrh naslovnice i naslov jedne sekcije, s vašim tekstovima.">
+      <button slot="actions" type="button" class="cb-reset" data-design-reset>Vrati izvorno</button>
+      <div class="iz-prev" data-preview style={previewStyle}>
+        <div class="iz-hero grid-paper">
+          <div class="iz-hero__in">
+          <p class="iz-hero__kw">{home.hero.eyebrow} · {area}</p>
+          <p class="iz-hero__h1 type-display">
+            {titleLines.map((line, i) => (i === 0 ? line : <><br />{line}</>))}
+          </p>
+          <p class="iz-hero__lead">{home.hero.lead}</p>
+          <div class="iz-hero__btns">
+            <span class="iz-btn iz-btn--red">{labels.cta} <AdminIcon name="arrow-right" size={16} /></span>
+            <span class="iz-btn iz-btn--wa"><AdminIcon name="whatsapp" size={16} /> {labels.ctaWhatsapp}</span>
+          </div>
+          </div>
+        </div>
+        <div class="iz-light grid-paper-light">
+          <p class="iz-light__kw">{home.services.eyebrow}</p>
+          <p class="iz-light__h2 type-display type-grow">{home.services.title}</p>
+          <p class="iz-light__lead">{home.services.lead}</p>
+          <p class="iz-light__h3">Limeni krovovi</p>
+          <p class="iz-light__p">{PARA}</p>
+        </div>
+      </div>
+      <p class="iz-current a-hint" data-current>
+        Naslovi: <strong data-current-display>{look.display.label}</strong> · <span data-current-weight>{DISPLAY_WEIGHT_LABEL[look.weight]}</span>
+        &nbsp;·&nbsp; Tekst: <strong data-current-body>{look.body.label}</strong>
+      </p>
+    </Card>
+
+    <!-- Naslovi -->
+    <Card id="naslovi" eyebrow="1 · Naslovi" title="Pismo za naslove" description="Veliki naslov na vrhu, naslovi sekcija i brojke.">
+      <fieldset class="iz-weights" style={varsOf({})} data-weights>
+        <legend class="a-label">Debljina naslova</legend>
+        <div class="iz-seg" role="presentation">
+          {
+            DISPLAY_WEIGHTS.map((w) => (
+              <label class="iz-seg__opt" data-weight-opt={w} data-off={w > maxWeight ? '' : undefined}>
+                <input type="radio" name="displayWeight" value={w} checked={design.displayWeight === w || (design.displayWeight > maxWeight && w === maxWeight)} disabled={w > maxWeight} />
+                <span class="iz-seg__aa type-display" style={`--display-weight:${w}`} aria-hidden="true">Aa</span>
+                <span class="iz-seg__l">{DISPLAY_WEIGHT_LABEL[w]}</span>
+                <span class="iz-seg__n">{w}</span>
+              </label>
+            ))
+          }
+        </div>
+        <p class="a-hint" data-weight-note hidden={maxWeight >= 900}>
+          <span data-weight-note-text>{displayFont(design.fontDisplay).label} nema najjaču debljinu, koristi se {DISPLAY_WEIGHT_LABEL[maxWeight].toLowerCase()} ({maxWeight}).</span>
+        </p>
+      </fieldset>
+
+      <div class="iz-list" role="radiogroup" aria-label="Pismo za naslove">
+        {
+          DISPLAY_FONTS.map((f) => (
+            <label class="iz-opt" data-opt="display" data-id={f.id}>
+              <input type="radio" class="iz-opt__radio" name="fontDisplay" value={f.id} checked={design.fontDisplay === f.id} />
+              <span class="iz-opt__top">
+                <span class="iz-opt__name">{f.label}</span>
+                {f.id === DEFAULT_DESIGN.fontDisplay && <span class="iz-opt__tag">Izvorno</span>}
+                <span class="iz-opt__check" aria-hidden="true"><AdminIcon name="check" size={16} /></span>
+              </span>
+              <span class="iz-spec" data-spec data-vars={varsOf({ fontDisplay: f.id })}>
+                <span class="iz-spec__h type-display">{SPEC}</span>
+                <span class="iz-spec__dia iz-spec__dia--display type-display">{DIA}</span>
+                <span class="iz-spec__p">{PARA}</span>
+                <span class="iz-spec__btn">{labels.cta} <AdminIcon name="arrow-right" size={14} /></span>
+              </span>
+              <span class="iz-opt__note">{f.note}</span>
+            </label>
+          ))
+        }
+      </div>
+    </Card>
+
+    <!-- Tekst -->
+    <Card id="tekst" eyebrow="2 · Tekst" title="Pismo za tekst" description="Uvodi, opisi, gumbi, izbornik i forma za upit.">
+      <div class="iz-list" role="radiogroup" aria-label="Pismo za tekst">
+        {
+          BODY_FONTS.map((f) => (
+            <label class="iz-opt" data-opt="body" data-id={f.id}>
+              <input type="radio" class="iz-opt__radio" name="fontBody" value={f.id} checked={design.fontBody === f.id} />
+              <span class="iz-opt__top">
+                <span class="iz-opt__name">{f.label}</span>
+                {f.id === DEFAULT_DESIGN.fontBody && <span class="iz-opt__tag">Izvorno</span>}
+                <span class="iz-opt__check" aria-hidden="true"><AdminIcon name="check" size={16} /></span>
+              </span>
+              <span class="iz-spec" data-spec data-vars={varsOf({ fontBody: f.id })}>
+                <span class="iz-spec__p iz-spec__p--lead">{PARA}</span>
+                <span class="iz-spec__b">{SPEC}</span>
+                <span class="iz-spec__dia">{DIA}</span>
+                <span class="iz-spec__btn">{labels.cta} <AdminIcon name="arrow-right" size={14} /></span>
+              </span>
+              <span class="iz-opt__note">{f.note}</span>
+            </label>
+          ))
+        }
+      </div>
+    </Card>
+
+    <SaveBar label="Spremi" cancelHref="/admin" />
+  </form>
+</Admin>
+
+<style is:global>
+  .iz .a-card {
+    scroll-margin-top: 8.5rem;
+  }
+  .iz-current {
+    margin-top: 0.75rem;
+  }
+
+  /* ── pregled (javna pravila: type-display + varijable na .iz-prev) ── */
+  .iz-prev {
+    container-type: inline-size;
+    overflow: hidden;
+    border-radius: var(--a-radius);
+    border: 1px solid var(--a-line);
+    font-family: var(--font-sans);
+  }
+  .iz-hero {
+    padding: 1.5rem 1.1rem 1.4rem;
+    background-color: var(--color-grafit);
+    color: #fff;
+  }
+  @container (width >= 34rem) {
+    .iz-hero {
+      padding: 2.25rem 2rem 2rem;
+    }
+  }
+  .iz-hero__kw,
+  .iz-light__kw {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.5;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-celik);
+  }
+  /* stupac teksta kao na naslovnici (najviše ~38rem); veličina H1 u odnosu na širinu stupca kao na stranici
+     (≈ 11,8 % širine stupca na mobitelu, 4,4rem na 38rem stupcu na računalu), da se naslov prelama u isto redaka */
+  .iz-hero__in {
+    container-type: inline-size;
+    max-width: 38rem;
+  }
+  .iz-hero__h1 {
+    margin-top: 0.75rem;
+    color: #fff;
+    font-size: calc(clamp(1.75rem, 11.8cqi, 4.4rem) * var(--hx-fit, 1));
+    line-height: var(--hx-leading, 0.94);
+    letter-spacing: var(--hx-tracking, -0.02em);
+    text-wrap: balance;
+    overflow-wrap: break-word;
+  }
+  .iz-hero__lead {
+    margin-top: 1rem;
+    max-width: 34rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-celik);
+    text-wrap: pretty;
+  }
+  .iz-hero__btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+  }
+  .iz-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 1.15rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    max-width: 100%;
+  }
+  .iz-btn--red {
+    background: var(--color-crvena);
+    color: #fff;
+  }
+  .iz-btn--wa {
+    background: var(--color-whatsapp);
+    color: #06290f;
+  }
+  .iz-light {
+    padding: 1.5rem 1.1rem 1.5rem;
+    background-color: var(--color-papir);
+    color: var(--color-tinta);
+  }
+  @container (width >= 34rem) {
+    .iz-light {
+      padding: 2rem;
+    }
+  }
+  .iz-light__kw {
+    color: rgb(21 24 27 / 0.7);
+  }
+  .iz-light__h2 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.75rem, 7cqi, 2.75rem);
+    text-wrap: balance;
+    overflow-wrap: break-word;
+  }
+  .iz-light__lead {
+    margin-top: 0.75rem;
+    max-width: 34rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: rgb(21 24 27 / 0.8);
+  }
+  .iz-light__h3 {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgb(21 24 27 / 0.15);
+    font-size: 1.25rem;
+    font-weight: 750;
+    font-stretch: calc(100% + 12% * var(--sub-wide, 1));
+    line-height: 1.15;
+  }
+  .iz-light__p {
+    margin-top: 0.4rem;
+    max-width: 34rem;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: rgb(21 24 27 / 0.75);
+  }
+
+  /* ── debljina ── */
+  .iz-weights {
+    margin: 0 0 1.25rem;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .iz-weights > legend {
+    margin-bottom: 0.6rem;
+    padding: 0;
+  }
+  .iz-seg {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  @media (width >= 40rem) {
+    .iz-seg {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .iz-seg__opt {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 0.65rem;
+    align-items: center;
+    min-height: 56px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: var(--a-radius);
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 150ms var(--ease-draft), box-shadow 150ms var(--ease-draft);
+  }
+  .iz-seg__opt input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .iz-seg__aa {
+    grid-row: span 2;
+    padding-top: 0;
+    font-size: 1.625rem;
+    line-height: 1;
+    font-family: var(--font-display);
+  }
+  .iz-seg__l {
+    font-size: 0.875rem;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+  .iz-seg__n {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    color: var(--a-muted);
+  }
+  .iz-seg__opt:hover {
+    border-color: var(--color-tinta);
+  }
+  .iz-seg__opt:has(input:checked) {
+    border-color: var(--color-tinta);
+    box-shadow: inset 0 0 0 1px var(--color-tinta);
+  }
+  .iz-seg__opt:has(input:focus-visible) {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+  .iz-seg__opt[data-off] {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  .iz-weights [data-weight-note] {
+    margin-top: 0.5rem;
+  }
+
+  /* ── kartice pisama ── */
+  .iz-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (width >= 48rem) {
+    .iz-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .iz-opt {
+    position: relative;
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+    min-width: 0;
+    padding: 0.85rem 0.95rem 0.95rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: var(--a-radius);
+    background: #fff;
+    cursor: pointer;
+    /* kartice izvan ekrana se ne crtaju (brže); pismo uzorka dobivaju tek blizu ekrana (skripta, data-vars) */
+    content-visibility: auto;
+    contain-intrinsic-size: auto 20rem;
+    transition: border-color 150ms var(--ease-draft), box-shadow 150ms var(--ease-draft);
+  }
+  .iz-opt:hover {
+    border-color: var(--color-tinta);
+  }
+  .iz-opt:has(.iz-opt__radio:checked) {
+    border-color: var(--color-tinta);
+    box-shadow: inset 0 0 0 1px var(--color-tinta);
+    background: #fbfaf8;
+  }
+  .iz-opt:has(.iz-opt__radio:focus-visible) {
+    outline: 2px solid var(--color-redline-dark);
+    outline-offset: 2px;
+  }
+  .iz-opt__radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .iz-opt__top {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 1.75rem;
+  }
+  .iz-opt__name {
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+  .iz-opt__tag {
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--a-muted);
+  }
+  .iz-opt__check {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-left: auto;
+    border: 1px solid var(--a-line-strong);
+    border-radius: 999px;
+    color: transparent;
+    transition: background 150ms var(--ease-draft), color 150ms var(--ease-draft);
+  }
+  .iz-opt:has(.iz-opt__radio:checked) .iz-opt__check {
+    border-color: var(--color-tinta);
+    background: var(--color-tinta);
+    color: #fff;
+  }
+  .iz-opt__note {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--a-muted);
+  }
+  /* uzorak u pismu kartice (varijable na .iz-spec, ista pravila kao javna stranica) */
+  .iz-spec {
+    display: grid;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.9rem 0.85rem 0.95rem;
+    border-radius: 2px;
+    background: var(--color-papir);
+    color: var(--color-tinta);
+  }
+  .iz-spec__h {
+    font-size: clamp(1.5rem, 6.5vw, 1.875rem);
+    text-wrap: balance;
+    overflow-wrap: break-word;
+  }
+  .iz-spec__dia {
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+  }
+  .iz-spec__dia--display {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  .iz-spec__p {
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: rgb(21 24 27 / 0.8);
+    text-wrap: pretty;
+  }
+  /* kartice pisma za tekst: tekst je glavni uzorak (naslovi su u pismu naslova) */
+  .iz-spec__p--lead {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--color-tinta);
+  }
+  .iz-spec__b {
+    font-family: var(--font-sans);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.25;
+    font-stretch: calc(100% + 12% * var(--sub-wide, 1));
+  }
+  .iz-spec__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    justify-self: start;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    background: var(--color-crvena);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+</style>
+
+<script>
+  import { api, toast } from '@/lib/admin/ui';
+  import { save } from '@/components/admin/content/client';
+  import { DEFAULT_DESIGN, DISPLAY_WEIGHT_LABEL, cssVars, designFor, displayFont, bodyFont, heroTitleFit, type DesignSettings, type DisplayWeight } from '@/lib/fonts';
+
+  const form = document.querySelector<HTMLFormElement>('[data-design-form]');
+  if (form) {
+    const radios = (name: string) => [...form.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${name}"]`)];
+    const valueOf = (name: string) => radios(name).find((r) => r.checked)?.value ?? '';
+    const current = (): DesignSettings => ({
+      fontDisplay: valueOf('fontDisplay') || DEFAULT_DESIGN.fontDisplay,
+      fontBody: valueOf('fontBody') || DEFAULT_DESIGN.fontBody,
+      displayWeight: (Number(valueOf('displayWeight')) || DEFAULT_DESIGN.displayWeight) as DisplayWeight,
+    });
+    const preview = form.querySelector<HTMLElement>('[data-preview]');
+    const weights = form.querySelector<HTMLElement>('[data-weights]');
+    const titleLines = (preview?.querySelector('.iz-hero__h1')?.innerHTML ?? '').split(/<br\s*\/?>/i).map((l) => l.replace(/<[^>]*>/g, '').trim()).filter(Boolean);
+    const setStyle = (el: HTMLElement, css: string) => el.setAttribute('style', css);
+
+    /* Lijeno učitavanje pisama: uzorak kartice dobiva svoje varijable (→ svoje pismo) tek blizu ekrana. */
+    const seen = new WeakSet<HTMLElement>();
+    const show = (spec: HTMLElement) => {
+      seen.add(spec);
+      setStyle(spec, spec.dataset.vars ?? '');
+    };
+    const io =
+      'IntersectionObserver' in window
+        ? new IntersectionObserver(
+            (entries, obs) => {
+              for (const e of entries) {
+                if (!e.isIntersecting) continue;
+                const spec = e.target.querySelector<HTMLElement>('[data-spec]');
+                if (spec) show(spec);
+                obs.unobserve(e.target);
+              }
+            },
+            { rootMargin: '150px 0px' },
+          )
+        : null;
+    form.querySelectorAll<HTMLElement>('[data-opt]').forEach((card) => {
+      const spec = card.querySelector<HTMLElement>('[data-spec]');
+      if (io) io.observe(card);
+      else if (spec) show(spec);
+    });
+
+    /** Uskladi debljine (pismo bez 900 → 800), pregled i uzorke s odabirom. */
+    const apply = () => {
+      const pick = current();
+      const disp = displayFont(pick.fontDisplay);
+      let changed = false;
+      for (const r of radios('displayWeight')) {
+        const off = Number(r.value) > disp.maxWeight;
+        r.disabled = off;
+        r.closest<HTMLElement>('[data-weight-opt]')?.toggleAttribute('data-off', off);
+        if (off && r.checked) {
+          r.checked = false;
+          const max = radios('displayWeight').find((x) => Number(x.value) === disp.maxWeight);
+          if (max) max.checked = true;
+          changed = true;
+        }
+      }
+      const note = form.querySelector<HTMLElement>('[data-weight-note]');
+      if (note) {
+        note.hidden = disp.maxWeight >= 900;
+        const t = note.querySelector('[data-weight-note-text]');
+        if (t) t.textContent = `${disp.label} nema najjaču debljinu, koristi se ${DISPLAY_WEIGHT_LABEL[disp.maxWeight].toLowerCase()} (${disp.maxWeight}).`;
+      }
+      const d = current();
+      const look = designFor(d);
+      if (preview) setStyle(preview, `${cssVars(look.vars)};--hx-fit:${heroTitleFit(titleLines, look)}`);
+      if (weights) setStyle(weights, cssVars(look.vars));
+      form.querySelectorAll<HTMLElement>('[data-opt]').forEach((card) => {
+        const spec = card.querySelector<HTMLElement>('[data-spec]');
+        const id = card.dataset.id ?? '';
+        if (!spec) return;
+        spec.dataset.vars = cssVars(designFor(card.dataset.opt === 'display' ? { ...d, fontDisplay: id } : { ...d, fontBody: id }).vars);
+        if (seen.has(spec)) setStyle(spec, spec.dataset.vars);
+      });
+      const set = (sel: string, text: string) => {
+        const el = form.querySelector(sel);
+        if (el) el.textContent = text;
+      };
+      set('[data-current-display]', look.display.label);
+      set('[data-current-weight]', DISPLAY_WEIGHT_LABEL[look.weight]);
+      set('[data-current-body]', bodyFont(d.fontBody).label);
+      // programska promjena debljine: javi formi (traka "Nespremljene promjene")
+      if (changed) form.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    form.addEventListener('change', apply);
+
+    form.querySelector('[data-design-reset]')?.addEventListener('click', () => {
+      const d = current();
+      if (d.fontDisplay === DEFAULT_DESIGN.fontDisplay && d.fontBody === DEFAULT_DESIGN.fontBody && d.displayWeight === DEFAULT_DESIGN.displayWeight) {
+        toast('Već je odabran izvorni izgled.', 'info');
+        return;
+      }
+      for (const [name, val] of Object.entries(DEFAULT_DESIGN)) {
+        for (const r of radios(name)) r.checked = r.value === String(val);
+      }
+      form.dispatchEvent(new Event('change', { bubbles: true }));
+      toast('Vraćen je izvorni izgled. Spremite za potvrdu.', 'info');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const value = current();
+      await save(form, () => api<DesignSettings>('/api/admin/settings/design', { method: 'PUT', body: { value } }), {
+        success: 'Spremljeno. Na stranici će se vidjeti nakon „Objavi na stranicu”.',
+      });
+    });
+  }
+</script>

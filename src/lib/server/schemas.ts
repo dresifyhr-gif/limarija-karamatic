@@ -5,6 +5,7 @@
 import { v, type Infer, type Validator } from './validate';
 import { LEAD_STATUSES, QUOTE_STATUSES } from '@/lib/types';
 import { SERVICE_SLUGS } from '@/lib/defaults';
+import { BODY_FONT_IDS, DISPLAY_FONT_IDS, DISPLAY_WEIGHTS, displayFont, effectiveWeight, type DesignSettings, type DisplayWeight } from '@/lib/fonts';
 
 const PROJECT_KINDS = ['krov', 'falc', 'atika', 'ravni', 'dimnjak', 'snjegobrani'] as const;
 const faqItem = v.object({ q: v.string({ min: 1, max: 300 }), a: v.text({ min: 1, max: 4000 }) });
@@ -177,6 +178,31 @@ export const LabelsSchema = pruned(
   }),
 );
 
+/* izgled (admin → Izgled): samo pisma s popisa u src/lib/fonts.ts */
+const displayWeight = v.int({ min: 600, max: 900 });
+const designObject = v.object({
+  fontDisplay: v.enum(DISPLAY_FONT_IDS),
+  fontBody: v.enum(BODY_FONT_IDS),
+  displayWeight: {
+    run: (input: unknown, path: string, errors: Record<string, string>) => {
+      const n = displayWeight.run(input, path, errors);
+      if (n !== undefined && !(DISPLAY_WEIGHTS as readonly number[]).includes(n)) {
+        errors[path || '_'] ??= 'Neispravan odabir.';
+        return undefined as never;
+      }
+      return n as DisplayWeight;
+    },
+  } as Validator<DisplayWeight>,
+});
+/** + debljina iznad najveće za odabrano pismo (npr. Manrope 900) sprema se kao najveća (800) — baza i admin se slažu */
+export const DesignSchema: Validator<DesignSettings> = {
+  run: (input, path, errors) => {
+    const d = designObject.run(input, path, errors);
+    if (d && typeof d === 'object' && d.fontDisplay && d.displayWeight) d.displayWeight = effectiveWeight(displayFont(d.fontDisplay), d.displayWeight);
+    return d as DesignSettings;
+  },
+};
+
 export const SETTINGS_SCHEMAS = {
   contact: ContactSchema,
   company: CompanySchema,
@@ -184,6 +210,7 @@ export const SETTINGS_SCHEMAS = {
   stats: StatsSchema,
   homepage: HomepageSchema,
   labels: LabelsSchema,
+  design: DesignSchema,
 } as const;
 
 /* ── usluge (null = vrati na zadano iz site.ts) ────────────────────────── */

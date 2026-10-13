@@ -15,7 +15,8 @@ telefon uvijek na jedan dodir. Premium dolazi iz suzdržanosti, brzine i stvarni
 - **GSAP 3.15**: svi pluginovi su besplatni (DrawSVG, MorphSVG, CustomEase, ScrollTrigger, Flip). SplitText se više ne koristi i `@/lib/motion` ga ne izvozi.
   **Uvozi ih isključivo iz `@/lib/motion`**: `import { gsap, ScrollTrigger, DrawSVGPlugin, MorphSVGPlugin, motionOn } from '@/lib/motion'`.
   Za Flip: `import { Flip } from 'gsap/Flip'` pa `gsap.registerPlugin(Flip)` (samo gdje treba).
-- Fontovi: **Archivo Variable** (wdth 62–125, wght 100–900, latin-ext ima Č Ć Đ Š Ž) i **IBM Plex Mono** 400/500.
+- Fontovi: izvorno **Archivo Variable** (wdth 62–125, wght 100–900, latin-ext ima Č Ć Đ Š Ž) i **IBM Plex Mono** 400/500.
+  Pismo naslova, debljinu naslova i pismo teksta vlasnik bira u adminu (Izgled, `docs/ADMIN-SPEC.md` §13): ne piši `font-family`/`font-stretch: 125%` za naslove ručno, koristi `type-display` (ili varijable `--font-display`, `--display-*`). Logo i golemi KARAMATIĆ su uvijek Archivo (`--font-brand`).
 - Ikone: `@/components/ui/Icon.astro` (phone, whatsapp, viber, google, arrow-right, arrow-up-right, check, menu, close, star, map-pin, camera, clock, shield, plus, minus, mail, ruler, file, building).
 - **Dev server već radi na http://localhost:4321** i ima HMR. NE pokreći ga, NE gasi ga i **NE pokreći `astro build` ni `astro check`**: paralelni buildovi se sudaraju. Za provjeru koristi dev server i screenshot skriptu.
 
@@ -53,7 +54,7 @@ Boje (Tailwind): `grafit` #0E1013, `grafit-2` #171A1E, `grafit-3` #22272C, `antr
 
 Klase:
 
-- `type-display`: naslovi, Archivo wdth 125 / 800
+- `type-display`: naslovi, izvorno Archivo wdth 125 / 800 (pismo i debljina iz admina → Izgled)
 - `type-wide`: samo širina 125
 - `type-mono`: mono font
 - `eyebrow`: mono oznaka velikim slovima

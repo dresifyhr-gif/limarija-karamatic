@@ -1,10 +1,11 @@
 /**
  * GET /api/admin/settings/:key → vrijednost
  * PUT /api/admin/settings/:key  JSON { value } → spremljena vrijednost (cijeli objekt/niz, ne djelomično)
- * key ∈ contact | company | quote | stats | homepage | labels
+ * key ∈ contact | company | quote | stats | homepage | labels | design
  * homepage: GET/PUT su SAMO izmjene (HomepageSettings; prazno = zadano, u bazu ide bez praznih polja).
  *           trust/points točno 3, steps točno 5. Razriješeni tekstovi: getContent().homepage.
  * labels:   PUT {cta?, ctaPhone?, ctaWhatsapp?} (prazno = zadano); GET/PUT vraćaju razriješene natpise.
+ * design:   PUT {fontDisplay, fontBody, displayWeight} — samo id-jevi s popisa u src/lib/fonts.ts (inače 400), debljina 600|700|800|900.
  */
 import { json, readJson, route, HttpError } from '@/lib/server/http';
 import { getSetting, saveSetting } from '@/lib/server/repo/settings';

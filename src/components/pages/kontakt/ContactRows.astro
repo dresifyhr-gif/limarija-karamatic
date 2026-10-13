@@ -58,7 +58,7 @@ const areaLine = site.areaLine.replace(' — ', '\u00a0— ');
     font-size: 1.625rem;
     line-height: 1.2;
     font-weight: 700;
-    font-stretch: 112%;
+    font-stretch: calc(100% + 12% * var(--sub-wide, 1));
     letter-spacing: -0.01em;
   }
   @media (width >= 40rem) {
@@ -70,7 +70,7 @@ const areaLine = site.areaLine.replace(' — ', '\u00a0— ');
     font-size: 1.5rem;
     line-height: 1.1;
     font-weight: 800;
-    font-stretch: 118%;
+    font-stretch: calc(100% + 18% * var(--sub-wide, 1));
     letter-spacing: -0.01em;
   }
 </style>

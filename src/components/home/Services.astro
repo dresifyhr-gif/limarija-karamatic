@@ -147,7 +147,7 @@ const focus: Record<string, string> = { dimnjaci: 'object-[50%_30%]' };
     line-height: 1.2;
     font-weight: 700;
     letter-spacing: -0.005em;
-    font-variation-settings: 'wdth' 112;
+    font-variation-settings: 'wdth' calc(100 + 12 * var(--sub-wide, 1));
     text-wrap: balance;
   }
   /* mobitel: cijela kartica je link — strelica ne krade širinu naslovu */
